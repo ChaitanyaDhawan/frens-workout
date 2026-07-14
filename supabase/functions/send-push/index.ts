@@ -63,9 +63,9 @@ async function recipientsAndMessage(table: string, record: any):
   }
   if (table === 'reactions') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
-    if (!w || w.member_id === record.member_id) return null; // no self-like ping
+    if (!w || w.member_id === record.member_id) return null; // no self-kudos ping
     const name = await nameOf(record.member_id);
-    return { recipients: [w.member_id], title: 'FRENS', body: `${name} liked your workout 🔥`, url: '/' };
+    return { recipients: [w.member_id], title: 'FRENS', body: `${name} gave you kudos 🔥`, url: '/' };
   }
   if (table === 'comments') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
