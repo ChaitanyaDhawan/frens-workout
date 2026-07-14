@@ -10,7 +10,7 @@ import WeekStrip from "./WeekStrip";
 export default function StatsTile() {
   const { me, frens, doneDoy, rollTick, bounceTick, setTab } = useStore();
   const streak = streakNow(doneDoy);
-  const rank = rankOf(frens, "Chaitanya", "q3");
+  const rank = rankOf(frens, me.name, "q3");
 
   return (
     <div

@@ -1,7 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { AuthProvider } from "@/app/lib/auth";
 import { StoreProvider, useStore } from "@/app/lib/store";
+import AuthGate from "@/app/components/AuthGate";
 import Header from "@/app/components/Header";
 import StatsTile from "@/app/components/StatsTile";
 import Feed from "@/app/components/Feed";
@@ -81,8 +83,12 @@ function Shell() {
 
 export default function Page() {
   return (
-    <StoreProvider>
-      <Shell />
-    </StoreProvider>
+    <AuthProvider>
+      <AuthGate>
+        <StoreProvider>
+          <Shell />
+        </StoreProvider>
+      </AuthGate>
+    </AuthProvider>
   );
 }

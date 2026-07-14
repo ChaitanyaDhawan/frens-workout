@@ -20,9 +20,11 @@ export default function DetailSheet() {
   const [dur, setDur] = useState<string | null>(existing?.dur ?? null);
   const [note, setNote] = useState<string>(existing?.note ?? "");
   const [photo, setPhoto] = useState<boolean>(existing?.photo ?? false);
+  const [file, setFile] = useState<File | null>(null);
   const [customShown, setCustomShown] = useState(false);
   const [customVal, setCustomVal] = useState("");
   const customRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
   const toggleType = (t: string) =>
     setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
@@ -42,7 +44,15 @@ export default function DetailSheet() {
     showToast(`“${t.toUpperCase()}” saved — appears first next time`);
   };
 
-  const onSave = () => saveDetails({ types, dur, note: note.trim(), photo });
+  const onSave = () => saveDetails({ types, dur, note: note.trim(), photo }, file);
+
+  const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    if (f) {
+      setFile(f);
+      setPhoto(true);
+    }
+  };
 
   return (
     <motion.div
@@ -130,9 +140,18 @@ export default function DetailSheet() {
       <div className="sec">
         Proof photo <span style={{ color: "#B8B09C", letterSpacing: ".1em" }}>· optional</span>
       </div>
-      <button className={`photozone${photo ? " got" : ""}`} onClick={() => setPhoto(true)}>
-        {photo ? "✓  PROOF ATTACHED — IMG_2026.JPG" : "＋  Add proof photo"}
+      <button className={`photozone${photo ? " got" : ""}`} onClick={() => photoRef.current?.click()}>
+        {photo
+          ? `✓  ${file ? file.name.toUpperCase() : "PROOF ATTACHED"}`
+          : "＋  Add proof photo"}
       </button>
+      <input
+        ref={photoRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={onPickPhoto}
+      />
 
       <div className="btnrow">
         <button className="savebtn" onClick={onSave}>

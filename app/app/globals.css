@@ -431,4 +431,60 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .dsphoto{margin-top:12px; height:120px; background:linear-gradient(135deg,#E4DDCB,#D5CBB4); border:1px solid var(--line);
   display:grid; place-items:center; font-family:var(--font-ibm-mono),monospace; font-size:9px; letter-spacing:.2em; color:var(--mut)}
 canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
+
+/* ================= AUTH: sign-in / claim ================= */
+.auth-wrap{
+  width:100%; max-width:430px; min-height:100dvh; margin:0 auto;
+  display:flex; align-items:center; justify-content:center;
+  padding:24px 22px calc(24px + env(safe-area-inset-bottom));
+}
+.auth-card{width:100%}
+.auth-eyebrow{
+  font-family:var(--font-ibm-mono),monospace; font-size:9.5px; font-weight:500; letter-spacing:.28em;
+  color:var(--mut); text-transform:uppercase;
+}
+.auth-mark{font-weight:900; font-size:38px; letter-spacing:-.03em; line-height:1.02; margin-top:5px}
+.auth-mark i{font-style:normal; color:var(--ox)}
+.auth-rule{height:1.5px; background:var(--line); margin:18px 0}
+.auth-sub{font-size:14.5px; line-height:1.55; color:#453F33; max-width:34ch}
+.auth-google{
+  display:block; width:100%; margin-top:22px; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper);
+  padding:15px 0; font-family:var(--font-ibm-mono),monospace; font-weight:600; font-size:11.5px; letter-spacing:.16em;
+  text-transform:uppercase; cursor:pointer; transition:transform .1s;
+}
+.auth-google:active{transform:scale(.98)}
+.auth-google:disabled{opacity:.55; cursor:default}
+.auth-fine{
+  margin-top:14px; font-family:var(--font-ibm-mono),monospace; font-size:9px; letter-spacing:.16em;
+  color:var(--mut); text-transform:uppercase;
+}
+.auth-loading{
+  margin-top:18px; font-family:var(--font-ibm-mono),monospace; font-size:10.5px; letter-spacing:.16em;
+  color:var(--mut); text-transform:uppercase;
+}
+.auth-err{
+  margin-top:16px; padding:10px 12px; border:1px solid var(--ox); background:#F7E9E4; color:var(--ox);
+  font-family:var(--font-ibm-mono),monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+}
+.claim-list{display:flex; flex-direction:column; gap:9px; margin-top:20px}
+.claim-row{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  border:1.5px solid var(--ink); background:var(--card); padding:12px 14px; cursor:pointer; transition:transform .1s;
+}
+.claim-row:active{transform:scale(.985)}
+.claim-row:disabled{opacity:.6; cursor:default}
+.claim-ava{
+  width:34px; height:34px; flex:none; border:1.5px solid var(--ink); border-radius:50%; background:var(--paper);
+  display:grid; place-items:center; font-family:var(--font-ibm-mono),monospace; font-weight:600; font-size:12px; color:var(--ink);
+}
+.claim-name{flex:1; font-weight:800; font-size:16px; letter-spacing:-.01em}
+.claim-cta{
+  font-family:var(--font-ibm-mono),monospace; font-size:9.5px; font-weight:600; letter-spacing:.14em;
+  color:var(--brass); text-transform:uppercase;
+}
+.auth-signout{
+  margin-top:22px; border:0; background:none; color:var(--mut); cursor:pointer;
+  font-family:var(--font-ibm-mono),monospace; font-size:9.5px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

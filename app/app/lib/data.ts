@@ -29,7 +29,8 @@ export interface Period {
 }
 
 export interface FeedItem {
-  /** Stable id so React can key freshly-prepended cards. */
+  /** Stable id so React can key freshly-prepended cards. In live mode this is
+   *  the workout row's uuid. */
   id: string;
   n: string;
   tm: string;
@@ -41,6 +42,8 @@ export interface FeedItem {
   pic?: boolean;
   /** Play the card-in animation once, for just-logged entries. */
   fresh?: boolean;
+  /** Whether the signed-in member has reacted (🔥) to this workout. */
+  liked?: boolean;
 }
 
 /** A month in the 2026 calendar model (Monday-start). */
@@ -103,9 +106,33 @@ export const MONTHS: MonthModel[] = [
   { n: "July", days: 31, start: 2, off: 181 },
 ];
 
-export const TODAY_DOY = 196;
-export const TODAY_M = 6;
-export const TODAY_D = 15;
+// "Today" in India Standard Time, computed at module load so the app follows
+// the real calendar date instead of a frozen constant. Deterministic across
+// server render + client hydration because it reads the same instant through
+// the Asia/Kolkata zone on both.
+const pad2 = (n: number) => String(n).padStart(2, "0");
+function istToday(): { y: number; m: number; d: number } {
+  const s = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const [y, m, d] = s.split("-").map(Number);
+  return { y, m: m - 1, d };
+}
+const _ist = istToday();
+/** Calendar year in IST (the tracker models a single year). */
+export const IST_YEAR = _ist.y;
+/** Day-of-year for today, IST (Jan 1 = 1). */
+export const TODAY_DOY =
+  Math.floor((Date.UTC(_ist.y, _ist.m, _ist.d) - Date.UTC(_ist.y, 0, 1)) / 86400000) + 1;
+/** Month index (0 = Jan) for today, IST. */
+export const TODAY_M = _ist.m;
+/** Day-of-month for today, IST. */
+export const TODAY_D = _ist.d;
+/** Today as an ISO calendar date (YYYY-MM-DD), IST. */
+export const TODAY_ISO = `${_ist.y}-${pad2(_ist.m + 1)}-${pad2(_ist.d)}`;
 
 // Activity chip options for the detail sheet.
 export const RECENTS = ["Gym", "Run"];
