@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FRENS — pick a vibe</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:-apple-system,system-ui,sans-serif; background:#101114; color:#F2F3F5;
+    min-height:100dvh; display:flex; justify-content:center;
+  }
+  .wrap{width:100%; max-width:430px; padding:max(28px,env(safe-area-inset-top)) 22px 40px}
+  h1{font-size:26px; letter-spacing:-.02em}
+  p.sub{color:#9AA1AC; font-size:13.5px; margin-top:6px; line-height:1.5}
+  .cards{margin-top:24px; display:flex; flex-direction:column; gap:14px}
+  a.card{
+    display:block; text-decoration:none; border-radius:18px; padding:18px;
+    border:1px solid rgba(255,255,255,.1); transition:transform .15s;
+  }
+  a.card:active{transform:scale(.98)}
+  .tag{font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.75}
+  .name{font-size:21px; font-weight:800; margin-top:6px}
+  .desc{font-size:12.5px; margin-top:6px; line-height:1.5; opacity:.85}
+  .a{background:linear-gradient(135deg,#0B0C10,#191114); color:#F5F7FA}
+  .a .tag{color:#FF7A3C}
+  .b{background:linear-gradient(135deg,#F2F6FF,#FFEFD7); color:#22214A}
+  .b .tag{color:#2B5BFF}
+  .c{background:linear-gradient(135deg,#EDE7D8,#DED5BE); color:#16130E}
+  .c .tag{color:#D8342C}
+  .how{margin-top:26px; border-top:1px solid rgba(255,255,255,.1); padding-top:16px; color:#9AA1AC; font-size:12.5px; line-height:1.7}
+  .how b{color:#F2F3F5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FRENS — pick a vibe</h1>
+  <p class="sub">Round 2 — two adult evolutions of the Scoreboard direction. Real tabs (Board / Feed / You), all quarters browsable (Q1, Q2 finals + live Q3), activity memory with custom entries, prominent photo + skip.</p>
+  <div class="cards">
+    <a class="card c" href="record.html">
+      <div class="tag">D · Round 2 · Warm light</div>
+      <div class="name">THE RECORD</div>
+      <div class="desc">Athletic-club record book. Editorial hairlines, brass/silver/bronze record plaques, refined split-flap counters, red stamp on log.</div>
+    </a>
+    <a class="card a" href="nightboard.html">
+      <div class="tag">E · Round 2 · Dark</div>
+      <div class="name">NIGHTBOARD</div>
+      <div class="desc">Stadium scoreboard after dark. Amber LED glow, live ticker marquee, pylon podium, metal "NO CHEATING" plaque, spark burst on log.</div>
+    </a>
+  </div>
+  <p class="sub" style="margin-top:30px">Round 1 (archived):</p>
+  <div class="cards">
+    <a class="card a" href="ember.html">
+      <div class="tag">A · Dark athletic</div>
+      <div class="name">EMBER</div>
+      <div class="desc">Midnight-gym instrument panel. Heat-glow accents, condensed athletic numerals, ignition-ring log button, ember burst.</div>
+    </a>
+    <a class="card b" href="arena.html">
+      <div class="tag">B · Playful arcade · Light</div>
+      <div class="name">ARENA</div>
+      <div class="desc">Daylight game-show. Chunky pressable everything, podium with bouncing crowns, a real red arcade button, candy confetti.</div>
+    </a>
+    <a class="card c" href="scoreboard.html">
+      <div class="tag">C · Brutalist scoreboard · Warm light</div>
+      <div class="name">SCOREBOARD</div>
+      <div class="desc">Gym-hall departure board. Split-flap counters that mechanically flip, rubber stamps, mustard ink, "DO NOT CHEAT!" energy.</div>
+    </a>
+  </div>
+  <div class="how">
+    In each mock, try: <b>hold the big button</b> to log (confetti + details sheet) · tap <b>▶ demo</b> to watch a friend log and the board reorder live · switch <b>Q3 / 2026 / All-time</b> tabs · tap 🔥 on feed cards.
+  </div>
+</div>
+</body>
+</html>

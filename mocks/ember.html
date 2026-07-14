@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090C">
+<title>FRENS — Ember</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08090C; --surface:#12151A; --surface-2:#181C23;
+    --line:rgba(255,255,255,.07);
+    --ember:#FF4A1F; --ember-2:#FFA24B;
+    --steel:#8E99AB; --ivory:#F5F7FA; --dim:#5A6474;
+    --glow:rgba(255,74,31,.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg); color:var(--ivory);
+    font-family:Inter,system-ui,sans-serif;
+    min-height:100dvh; display:flex; justify-content:center;
+    overscroll-behavior-y:none;
+  }
+  .phone{width:100%; max-width:430px; min-height:100dvh; position:relative; padding-bottom:170px}
+
+  /* ---------- header ---------- */
+  header{padding:max(14px,env(safe-area-inset-top)) 20px 0}
+  .brand-row{display:flex; align-items:baseline; justify-content:space-between}
+  .wordmark{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:34px; letter-spacing:.06em;
+    background:linear-gradient(100deg,var(--ivory) 55%,var(--ember-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .wordmark span{color:var(--ember)}
+  .avatar-you{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--surface-2); border:1px solid var(--line);
+    display:grid;place-items:center;
+    font-family:'Barlow Condensed'; font-weight:700; font-size:15px; color:var(--steel);
+  }
+  .race-label{
+    margin-top:2px; font-size:11px; font-weight:600; letter-spacing:.22em;
+    color:var(--dim); text-transform:uppercase;
+  }
+  .race-label b{color:var(--ember-2); font-weight:600}
+
+  /* fuse = quarter progress */
+  .fuse{margin:14px 20px 0; position:relative; height:14px}
+  .fuse-track{position:absolute; inset:6px 0; height:2px; background:var(--surface-2); border-radius:2px}
+  .fuse-burn{
+    position:absolute; left:0; top:6px; height:2px; width:16.3%;
+    background:linear-gradient(90deg,rgba(255,74,31,.25),var(--ember)); border-radius:2px;
+  }
+  .fuse-spark{
+    position:absolute; top:7px; left:16.3%; width:6px;height:6px; margin:-3px 0 0 -3px;
+    border-radius:50%; background:var(--ember-2);
+    box-shadow:0 0 10px 3px var(--glow), 0 0 2px 1px var(--ember-2);
+    animation:sparkle 1.4s ease-in-out infinite;
+  }
+  @keyframes sparkle{50%{box-shadow:0 0 16px 5px var(--glow),0 0 3px 1px var(--ember-2)}}
+  .fuse-meta{display:flex; justify-content:space-between; margin:8px 20px 0;
+    font-family:'Barlow Condensed'; font-weight:600; font-size:13px; letter-spacing:.14em; color:var(--dim)}
+  .fuse-meta b{color:var(--steel); font-weight:700}
+
+  /* ---------- tabs ---------- */
+  .tabs{
+    display:flex; gap:4px; margin:18px 20px 0; padding:4px;
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  }
+  .tab{
+    flex:1; border:0; background:transparent; color:var(--steel);
+    font-family:'Barlow Condensed'; font-weight:700; font-size:16px; letter-spacing:.12em;
+    padding:9px 0 8px; border-radius:9px; cursor:pointer; text-transform:uppercase;
+    transition:color .2s;
+  }
+  .tab.active{
+    background:linear-gradient(160deg,#1E232B,#171B21); color:var(--ivory);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.4);
+  }
+  .tab.active .q{color:var(--ember-2)}
+  .tab:focus-visible{outline:2px solid var(--ember-2); outline-offset:2px}
+
+  /* ---------- leaderboard ---------- */
+  .board{margin:14px 12px 0; position:relative}
+  .row{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 12px; margin:0 0 6px; border-radius:14px;
+    background:var(--surface); border:1px solid var(--line);
+    position:relative; overflow:hidden;
+  }
+  .row.top1{
+    background:linear-gradient(105deg,#1C1613 0%,#14161A 55%);
+    border-color:rgba(255,122,60,.28);
+    box-shadow:0 0 24px -6px var(--glow);
+  }
+  .row.you-row{border-color:rgba(255,255,255,.16)}
+  .row .rank{
+    width:34px; text-align:center;
+    font-family:'Barlow Condensed'; font-weight:800; font-size:26px; color:var(--dim);
+    font-variant-numeric:tabular-nums;
+  }
+  .row.top1 .rank{color:var(--ember)}
+  .row.top2 .rank,.row.top3 .rank{color:var(--steel)}
+  .ava{
+    width:38px;height:38px;border-radius:50%; flex:none;
+    display:grid;place-items:center;
+    font-family:'Barlow Condensed'; font-weight:700; font-size:16px; color:var(--ivory);
+    background:var(--surface-2); border:1px solid var(--line);
+  }
+  .who{flex:1; min-width:0}
+  .who .nm{font-weight:600; font-size:15px; letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .who .sub{font-size:11.5px; color:var(--dim); margin-top:2px; display:flex; gap:8px; align-items:center}
+  .streak{color:var(--ember-2); font-weight:600}
+  .count{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:34px; line-height:1;
+    font-variant-numeric:tabular-nums; min-width:52px; text-align:right;
+    letter-spacing:.02em;
+  }
+  .count small{font-size:12px; font-weight:600; color:var(--dim); letter-spacing:.14em; display:block; text-align:right; margin-top:1px}
+  .row.top1 .count{
+    background:linear-gradient(180deg,var(--ember-2),var(--ember));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .youtag{
+    font-size:9px; font-weight:700; letter-spacing:.16em; color:var(--bg);
+    background:var(--steel); border-radius:4px; padding:2px 5px; vertical-align:2px; margin-left:6px;
+  }
+
+  /* ---------- feed ---------- */
+  .feed-h{
+    margin:26px 20px 10px; font-family:'Barlow Condensed'; font-weight:700; font-size:17px;
+    letter-spacing:.2em; color:var(--steel); text-transform:uppercase;
+  }
+  .card{
+    margin:0 12px 8px; padding:13px 14px; border-radius:14px;
+    background:var(--surface); border:1px solid var(--line);
+  }
+  .card .top{display:flex; align-items:center; gap:10px}
+  .card .ava{width:32px;height:32px;font-size:13px}
+  .card .meta{flex:1}
+  .card .meta .nm{font-size:14px; font-weight:600}
+  .card .meta .tm{font-size:11px; color:var(--dim); margin-top:1px}
+  .card .note{margin:9px 2px 2px; font-size:13.5px; color:var(--steel); line-height:1.45}
+  .card .acts{display:flex; gap:18px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line)}
+  .act{
+    display:flex; align-items:center; gap:6px; border:0; background:none; cursor:pointer;
+    color:var(--dim); font-family:Inter; font-size:12.5px; font-weight:600;
+  }
+  .act .ico{font-size:15px; transition:transform .15s}
+  .act.liked{color:var(--ember-2)}
+  .act.liked .ico{animation:pop .35s cubic-bezier(.2,2.2,.4,1)}
+  @keyframes pop{40%{transform:scale(1.6)}}
+  .pill{font-size:11px; color:var(--dim); background:var(--surface-2); border-radius:5px; padding:2px 6px; margin-left:6px}
+
+  /* ---------- hold button ---------- */
+  .dock{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px; padding:12px 20px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,transparent,rgba(8,9,12,.86) 34%);
+    display:flex; flex-direction:column; align-items:center; gap:8px; z-index:30;
+  }
+  .holdwrap{position:relative; width:96px; height:96px; touch-action:none;
+    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none}
+  .ring{position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(var(--ember) calc(var(--p)*1%), rgba(255,255,255,.08) 0)}
+  .ring::after{content:""; position:absolute; inset:4px; border-radius:50%; background:var(--bg)}
+  .holdbtn{
+    position:absolute; inset:8px; border-radius:50%; border:0; cursor:pointer;
+    background:radial-gradient(circle at 32% 28%, #23282F, #101318 70%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 6px 24px rgba(0,0,0,.6);
+    color:var(--ivory); display:grid; place-items:center;
+    font-family:'Barlow Condensed'; font-weight:800; font-size:15px; letter-spacing:.1em;
+    transition:transform .12s;
+    touch-action:none;
+  }
+  .holdwrap.holding .holdbtn{transform:scale(.94)}
+  .holdwrap.done .ring{background:conic-gradient(var(--ember) 100%, var(--ember) 0);
+    box-shadow:0 0 30px 4px var(--glow)}
+  .holdbtn:focus-visible{outline:2px solid var(--ember-2); outline-offset:4px}
+  .hold-hint{font-size:11px; letter-spacing:.18em; color:var(--dim); font-weight:600; text-transform:uppercase}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed; top:calc(14px + env(safe-area-inset-top)); left:50%;
+    transform:translate(-50%,-90px); z-index:60;
+    background:#1B1F26; border:1px solid rgba(255,122,60,.3); color:var(--ivory);
+    padding:10px 16px; border-radius:100px; font-size:13px; font-weight:600;
+    box-shadow:0 8px 30px rgba(0,0,0,.5), 0 0 20px -6px var(--glow);
+    transition:transform .45s cubic-bezier(.2,1.4,.4,1); white-space:nowrap;
+  }
+  .toast.show{transform:translate(-50%,0)}
+
+  /* ---------- sheet ---------- */
+  .scrim{position:fixed; inset:0; background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .3s; z-index:40}
+  .scrim.show{opacity:1; pointer-events:auto}
+  .sheet{
+    position:fixed; left:50%; bottom:0; transform:translate(-50%,105%);
+    width:100%; max-width:430px; z-index:50;
+    background:#14171C; border:1px solid var(--line); border-bottom:0;
+    border-radius:22px 22px 0 0; padding:10px 20px calc(22px + env(safe-area-inset-bottom));
+    transition:transform .42s cubic-bezier(.3,1.2,.35,1);
+  }
+  .sheet.show{transform:translate(-50%,0)}
+  .grab{width:38px;height:4px;border-radius:2px;background:#2A3039;margin:2px auto 14px}
+  .sheet h2{font-family:'Barlow Condensed'; font-weight:800; font-size:26px; letter-spacing:.04em}
+  .sheet h2 em{font-style:normal; color:var(--ember-2)}
+  .sheet .sub2{color:var(--dim); font-size:12.5px; margin-top:3px}
+  .sec{margin-top:16px; font-size:11px; font-weight:700; letter-spacing:.18em; color:var(--dim); text-transform:uppercase}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:9px}
+  .chip{
+    border:1px solid var(--line); background:var(--surface-2); color:var(--steel);
+    border-radius:100px; padding:8px 13px; font-size:13px; font-weight:600; cursor:pointer;
+    font-family:Inter; transition:all .15s;
+  }
+  .chip.on{background:rgba(255,74,31,.14); border-color:rgba(255,122,60,.45); color:var(--ember-2)}
+  .noterow{display:flex; gap:8px; margin-top:9px}
+  .note-in{
+    flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:12px;
+    color:var(--ivory); font-family:Inter; font-size:13.5px; padding:11px 13px; outline:none;
+  }
+  .note-in::placeholder{color:var(--dim)}
+  .photo{
+    width:46px; border-radius:12px; border:1px dashed #39414D; background:none;
+    color:var(--dim); font-size:17px; cursor:pointer;
+  }
+  .done{
+    margin-top:20px; width:100%; border:0; border-radius:14px; padding:15px;
+    background:linear-gradient(100deg,var(--ember),#FF7A3C); color:#170A05;
+    font-family:'Barlow Condensed'; font-weight:800; font-size:19px; letter-spacing:.14em;
+    cursor:pointer; box-shadow:0 6px 24px -6px var(--glow);
+  }
+  .skip{width:100%; background:none; border:0; color:var(--dim); font-size:12.5px; font-weight:600; margin-top:10px; cursor:pointer; font-family:Inter}
+
+  /* demo chip */
+  .demo{
+    position:fixed; left:14px; bottom:calc(120px + env(safe-area-inset-bottom)); z-index:31;
+    background:#10141A; border:1px solid var(--line); color:var(--steel);
+    font-size:11px; font-weight:600; letter-spacing:.06em;
+    border-radius:100px; padding:8px 12px; cursor:pointer; font-family:Inter;
+  }
+  canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important; transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="brand-row">
+      <div class="wordmark">FRENS<span>.</span></div>
+      <div class="avatar-you">C</div>
+    </div>
+    <div class="race-label">Quarter 3 · <b>The Race Is On</b></div>
+  </header>
+
+  <div class="fuse">
+    <div class="fuse-track"></div>
+    <div class="fuse-burn"></div>
+    <div class="fuse-spark"></div>
+  </div>
+  <div class="fuse-meta"><span>DAY <b>15</b> / 92</span><span><b>77</b> DAYS LEFT</span></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="q3" role="tab"><span class="q">Q3</span> ’26</button>
+    <button class="tab" data-tab="yr" role="tab">2026</button>
+    <button class="tab" data-tab="all" role="tab">All-time</button>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="feed-h">The Wire</div>
+  <div id="feed"></div>
+
+  <button class="demo" id="demo">▶ demo: a friend logs</button>
+
+  <div class="dock">
+    <div class="holdwrap" id="holdwrap" style="--p:0">
+      <div class="ring"></div>
+      <button class="holdbtn" id="holdbtn">LOG IT</button>
+    </div>
+    <div class="hold-hint">Hold to log today</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h2>LOGGED. <em>+1 FOR TODAY.</em></h2>
+  <div class="sub2">Details are optional — swipe down anytime, it already counted.</div>
+  <div class="sec">What was it</div>
+  <div class="chips" id="typechips">
+    <button class="chip">🏋️ Gym</button><button class="chip">🏃 Run</button>
+    <button class="chip">🏸 Racquet</button><button class="chip">🧘 Yoga</button>
+    <button class="chip">⚽ Football</button><button class="chip">🏊 Swim</button>
+  </div>
+  <div class="sec">How long</div>
+  <div class="chips" id="durchips">
+    <button class="chip">30 min</button><button class="chip">45 min</button>
+    <button class="chip">60 min</button><button class="chip">90+</button>
+  </div>
+  <div class="sec">Say something</div>
+  <div class="noterow">
+    <input class="note-in" placeholder="leg day, no survivors…">
+    <button class="photo" title="Add proof">📸</button>
+  </div>
+  <button class="done" id="doneBtn">DONE</button>
+  <button class="skip" id="skipBtn">skip details</button>
+</div>
+<canvas class="fx" id="fx"></canvas>
+
+<script>
+const FRENS = [
+  {name:'Abhimanyu', q3:8,  yr:38, streak:0, hue:18},
+  {name:'Akshit',    q3:0,  yr:0,  streak:0, hue:200},
+  {name:'Bhawna',    q3:0,  yr:0,  streak:0, hue:320},
+  {name:'Chaitanya', q3:0,  yr:0,  streak:0, hue:210, you:true},
+  {name:'Mugdha',    q3:5,  yr:87, streak:0, hue:270},
+  {name:'Rahul',     q3:9,  yr:18, streak:1, hue:30},
+  {name:'Saksham',   q3:0,  yr:41, streak:0, hue:150},
+  {name:'Saurabh',   q3:0,  yr:0,  streak:0, hue:100},
+  {name:'Shashwat N.',q3:0, yr:6,  streak:0, hue:60},
+  {name:'Vareni',    q3:3,  yr:64, streak:0, hue:340},
+  {name:'Shaswat K.',q3:0,  yr:36, streak:0, hue:230},
+  {name:'Saavy',     q3:1,  yr:29, streak:0, hue:0},
+];
+let tab='q3';
+const board=document.getElementById('board');
+const key=()=> tab==='q3'?'q3':'yr';   // all-time == year (sheet starts 2026)
+const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2);
+
+function render(animate=true){
+  const first = animate ? Object.fromEntries([...board.children].map(el=>[el.dataset.n, el.getBoundingClientRect().top])) : {};
+  const sorted=[...FRENS].sort((a,b)=> b[key()]-a[key()] || a.name.localeCompare(b.name));
+  let rank=0, prev=null, shown=0;
+  const html=sorted.map((f,i)=>{
+    shown++; if(f[key()]!==prev){rank=shown; prev=f[key()];}
+    const cls=['row']; if(rank===1&&f[key()]>0)cls.push('top1'); if(rank===2)cls.push('top2'); if(rank===3)cls.push('top3'); if(f.you)cls.push('you-row');
+    return `<div class="${cls.join(' ')}" data-n="${f.name}">
+      <div class="rank">${rank}</div>
+      <div class="ava" style="background:linear-gradient(150deg,hsl(${f.hue} 30% 22%),hsl(${f.hue} 24% 14%));border-color:hsl(${f.hue} 30% 30%)">${initials(f.name)}</div>
+      <div class="who">
+        <div class="nm">${f.name}${f.you?'<span class="youtag">YOU</span>':''}</div>
+        <div class="sub">${f.streak>0?`<span class="streak">🔥 ${f.streak} day streak</span>`:`<span>${f[key()]===0?'yet to ignite':'workouts this '+(tab==='q3'?'quarter':'year')}</span>`}</div>
+      </div>
+      <div class="count">${f[key()]}<small>DAYS</small></div>
+    </div>`;
+  }).join('');
+  board.innerHTML=html;
+  if(animate){ // FLIP
+    [...board.children].forEach(el=>{
+      const dy=(first[el.dataset.n]??el.getBoundingClientRect().top)-el.getBoundingClientRect().top;
+      if(dy){ el.animate([{transform:`translateY(${dy}px)`},{transform:'translateY(0)'}],{duration:520,easing:'cubic-bezier(.3,1.2,.35,1)'}); }
+    });
+  }
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  tab=t.dataset.tab; render(false);
+}));
+
+/* ---- feed ---- */
+const FEED=[
+  {n:'Rahul',hue:30,tm:'this morning · 7:02',note:'5k before work. streak alive 🔥',likes:4,c:2},
+  {n:'Abhimanyu',hue:18,tm:'yesterday · 19:40',note:'push day. bench felt light 😤',likes:6,c:3},
+  {n:'Mugdha',hue:270,tm:'Sunday · 08:15',note:'yoga + long walk',likes:3,c:1},
+];
+document.getElementById('feed').innerHTML=FEED.map((f,i)=>`
+  <div class="card">
+    <div class="top">
+      <div class="ava" style="background:linear-gradient(150deg,hsl(${f.hue} 30% 22%),hsl(${f.hue} 24% 14%))">${initials(f.n)}</div>
+      <div class="meta"><div class="nm">${f.n} <span class="pill">worked out</span></div><div class="tm">${f.tm}</div></div>
+    </div>
+    <div class="note">${f.note}</div>
+    <div class="acts">
+      <button class="act" data-l="${f.likes}"><span class="ico">🔥</span><span class="lc">${f.likes}</span></button>
+      <button class="act"><span class="ico">💬</span>${f.c}</button>
+    </div>
+  </div>`).join('');
+document.querySelectorAll('.act[data-l]').forEach(b=>b.addEventListener('click',()=>{
+  const on=b.classList.toggle('liked');
+  b.querySelector('.lc').textContent=+b.dataset.l+(on?1:0);
+}));
+
+/* ---- toast ---- */
+const toast=document.getElementById('toast'); let tT;
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show');
+  clearTimeout(tT); tT=setTimeout(()=>toast.classList.remove('show'),2600); }
+
+/* ---- demo: friend logs ---- */
+const demoPool=['Vareni','Mugdha','Saksham','Abhimanyu','Saavy','Bhawna'];
+let dI=0;
+document.getElementById('demo').addEventListener('click',()=>{
+  const who=demoPool[dI++%demoPool.length];
+  const f=FRENS.find(x=>x.name===who);
+  f.q3++; f.yr++;
+  showToast(`${f.name} just worked out 🔥`);
+  render();
+});
+
+/* ---- hold to log ---- */
+const wrap=document.getElementById('holdwrap'), btn=document.getElementById('holdbtn');
+const HOLD=600; let raf,t0,held=false,loggedToday=false;
+function step(ts){
+  const p=Math.min(100,(ts-t0)/HOLD*100);
+  wrap.style.setProperty('--p',p);
+  if(p>=100){complete();return}
+  raf=requestAnimationFrame(step);
+}
+function start(e){ if(loggedToday){showToast('Already counted today ✓');return}
+  held=true; wrap.classList.add('holding'); btn.setPointerCapture(e.pointerId);
+  t0=performance.now(); raf=requestAnimationFrame(step);
+  if(navigator.vibrate)navigator.vibrate(8);
+}
+function cancel(){ if(!held)return; held=false; wrap.classList.remove('holding');
+  cancelAnimationFrame(raf); wrap.style.setProperty('--p',0); }
+function complete(){
+  held=false; loggedToday=true; wrap.classList.remove('holding'); wrap.classList.add('done');
+  btn.textContent='DONE ✓';
+  if(navigator.vibrate)navigator.vibrate([12,40,18]);
+  const me=FRENS.find(f=>f.you); me.q3++; me.yr++;
+  render(); embers(); openSheet();
+}
+btn.addEventListener('pointerdown',start);
+btn.addEventListener('pointerup',cancel);
+btn.addEventListener('pointercancel',cancel);
+btn.addEventListener('contextmenu',e=>e.preventDefault());
+
+/* ---- sheet ---- */
+const sheet=document.getElementById('sheet'), scrim=document.getElementById('scrim');
+function openSheet(){sheet.classList.add('show');scrim.classList.add('show')}
+function closeSheet(){sheet.classList.remove('show');scrim.classList.remove('show')}
+scrim.addEventListener('click',closeSheet);
+document.getElementById('doneBtn').addEventListener('click',()=>{closeSheet();showToast('Saved. Go rest those legs.')});
+document.getElementById('skipBtn').addEventListener('click',closeSheet);
+document.querySelectorAll('#typechips .chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+document.querySelectorAll('#durchips .chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('#durchips .chip').forEach(x=>{if(x!==c)x.classList.remove('on')}); c.classList.toggle('on');
+}));
+
+/* ---- ember particles ---- */
+const cv=document.getElementById('fx'),ctx=cv.getContext('2d');
+function fit(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio)}
+fit(); addEventListener('resize',fit);
+function embers(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const r=wrap.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const ps=Array.from({length:70},()=>({
+    x:cx,y:cy, a:Math.random()*Math.PI*2, v:3+Math.random()*7,
+    g:.12+Math.random()*.08, life:1, sz:1.5+Math.random()*3,
+    hue:15+Math.random()*30
+  }));
+  ps.forEach(p=>{p.vx=Math.cos(p.a)*p.v; p.vy=Math.sin(p.a)*p.v-4});
+  (function tick(){
+    ctx.clearRect(0,0,innerWidth,innerHeight); let alive=false;
+    ps.forEach(p=>{
+      if(p.life<=0)return; alive=true;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.vx*=.985; p.life-=.016;
+      ctx.globalAlpha=Math.max(0,p.life);
+      ctx.fillStyle=`hsl(${p.hue} 100% ${55+p.life*20}%)`;
+      ctx.shadowColor='#FF4A1F'; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz*p.life,0,7); ctx.fill();
+    });
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    if(alive)requestAnimationFrame(tick); else ctx.clearRect(0,0,innerWidth,innerHeight);
+  })();
+}
+render(false);
+</script>
+</body>
+</html>

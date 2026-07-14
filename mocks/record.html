@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3EFE6">
+<title>FRENS — The Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EFE6; --card:#FAF7F0; --ink:#1B1812; --mut:#8A8375;
+    --line:#DCD5C6; --brass:#A98A2F; --ox:#9E2B25;
+    --tile:#24211B; --tiletx:#F2EDE0;
+    --gold:#C0A050; --silver:#A9A9A4; --bronze:#AE7A4B;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:Archivo,system-ui,sans-serif;
+    min-height:100dvh; display:flex; justify-content:center;
+  }
+  .phone{width:100%; max-width:430px; min-height:100dvh; position:relative;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .mono{font-family:'IBM Plex Mono'}
+
+  /* ---------- header ---------- */
+  header{padding:max(18px,env(safe-area-inset-top)) 22px 0; position:relative}
+  .eyebrow{font-family:'IBM Plex Mono'; font-size:9.5px; font-weight:500; letter-spacing:.28em; color:var(--mut); text-transform:uppercase}
+  .wordmark{font-weight:900; font-size:40px; letter-spacing:-.035em; line-height:1; margin-top:4px}
+  .wordmark i{font-style:normal; color:var(--ox)}
+  .wordmark{padding-right:96px}
+  .stamp{
+    position:absolute; right:18px; top:calc(max(18px,env(safe-area-inset-top)) + 34px);
+    transform:rotate(-6deg);
+    border:1.5px solid var(--ox); color:var(--ox); border-radius:2px;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:8.5px; letter-spacing:.18em;
+    padding:4px 7px; text-transform:uppercase; opacity:.8; background:var(--paper);
+  }
+
+  /* ---------- views ---------- */
+  .view{display:none}
+  .view.active{display:block}
+
+  /* ---------- period picker ---------- */
+  .periods{display:flex; gap:6px; margin:20px 0 0; padding:0 22px; overflow-x:auto; scrollbar-width:none}
+  .periods::-webkit-scrollbar{display:none}
+  .period{
+    flex:none; border:1px solid var(--line); background:var(--card); color:var(--mut);
+    font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:600; letter-spacing:.1em;
+    padding:8px 12px; border-radius:2px; cursor:pointer; text-transform:uppercase;
+    display:flex; align-items:center; gap:6px;
+  }
+  .period .dot{width:5px;height:5px;border-radius:50%;background:var(--ox);animation:blink 1.6s steps(2) infinite}
+  @keyframes blink{50%{opacity:.2}}
+  .period.sel{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .period.sel .dot{background:#FF6A5E}
+  .period:focus-visible{outline:2px solid var(--ox); outline-offset:2px}
+
+  .final-line{
+    margin:14px 22px 0; padding:9px 12px; border:1px solid var(--line); background:var(--card);
+    font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.12em; color:var(--mut); text-transform:uppercase;
+  }
+  .final-line b{color:var(--ink)}
+  .final-line .fin{color:var(--ox); font-weight:600}
+
+  /* progress */
+  .prog{margin:16px 22px 0}
+  .prog .rule{height:3px; background:var(--line); position:relative}
+  .prog .fill{position:absolute; inset:0; width:16.3%; background:var(--ink)}
+  .prog .cap{position:absolute; left:16.3%; top:-3.5px; width:1.5px; height:10px; background:var(--ox)}
+  .prog .lbl{display:flex; justify-content:space-between; margin-top:7px;
+    font-family:'IBM Plex Mono'; font-size:9.5px; letter-spacing:.18em; color:var(--mut); text-transform:uppercase}
+
+  /* ---------- podium ---------- */
+  .podium{display:flex; align-items:flex-end; gap:1px; margin:26px 22px 0}
+  .plq{flex:1; text-align:center; padding:0 6px}
+  .plq .cnt{font-weight:800; letter-spacing:-.02em; line-height:1}
+  .plq.p1 .cnt{font-size:56px}
+  .plq.p2 .cnt,.plq.p3 .cnt{font-size:34px; color:#3E3A31}
+  .plq .metal{height:3px; margin:10px 8px 8px}
+  .plq.p1 .metal{background:var(--gold)}
+  .plq.p2 .metal{background:var(--silver)}
+  .plq.p3 .metal{background:var(--bronze)}
+  .plq .pn{font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); font-weight:600}
+  .plq .pr{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.2em; color:var(--mut); margin-top:3px}
+
+  /* ---------- list ---------- */
+  .list{margin:22px 22px 0; border-top:1px solid var(--line)}
+  .row{
+    display:flex; align-items:center; gap:12px; padding:11px 2px;
+    border-bottom:1px solid var(--line); background:var(--paper);
+  }
+  .row .rank{font-family:'IBM Plex Mono'; font-size:11px; color:var(--mut); width:22px}
+  .row.r1 .rank{color:var(--ox); font-weight:600}
+  .ava{
+    width:34px;height:34px;border-radius:50%; flex:none; border:1px solid var(--ink);
+    display:grid;place-items:center; background:var(--card);
+    font-weight:700; font-size:13px; letter-spacing:.02em;
+  }
+  .who{flex:1; min-width:0}
+  .nm{font-weight:700; font-size:14.5px; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .sub{font-family:'IBM Plex Mono'; font-size:9px; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
+  .sub .st{color:var(--brass); font-weight:600}
+  .youtag{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; letter-spacing:.12em; color:var(--paper); background:var(--ink); padding:2px 5px; margin-left:7px; vertical-align:2px}
+  .flaps{display:flex; gap:2.5px; perspective:280px}
+  .tile{
+    width:20px; height:27px; background:var(--tile); border-radius:2.5px;
+    display:grid; place-items:center; position:relative; overflow:hidden;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:16px; color:var(--tiletx);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .tile::after{content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(0,0,0,.65)}
+  .tile.flip{animation:flap .36s cubic-bezier(.4,0,.6,1)}
+  @keyframes flap{0%{transform:rotateX(0)}49%{transform:rotateX(-88deg)}51%{transform:rotateX(88deg)}100%{transform:rotateX(0)}}
+
+  /* ---------- feed ---------- */
+  .sect-h{
+    margin:24px 22px 12px; display:flex; align-items:baseline; gap:12px;
+  }
+  .sect-h h2{font-weight:800; font-size:22px; letter-spacing:-.02em}
+  .sect-h .ln{flex:1; height:1px; background:var(--line); align-self:center}
+  .card{
+    margin:0 22px 10px; background:var(--card); border:1px solid var(--line);
+    padding:13px 15px;
+  }
+  .card .top{display:flex; align-items:center; gap:10px}
+  .card .ava{width:30px;height:30px;font-size:11.5px}
+  .card .meta{flex:1}
+  .card .cnm{font-weight:700; font-size:13.5px}
+  .card .tm{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
+  .card .tag{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.1em; color:var(--mut); border:1px solid var(--line); padding:2px 6px; text-transform:uppercase}
+  .card .note{margin-top:9px; font-size:13.5px; line-height:1.5; color:#453F33}
+  .card .pic{margin-top:10px; height:120px; background:linear-gradient(135deg,#E4DDCB,#D5CBB4); border:1px solid var(--line);
+    display:grid; place-items:center; font-family:'IBM Plex Mono'; font-size:9px; letter-spacing:.2em; color:var(--mut)}
+  .card .acts{display:flex; gap:10px; margin-top:11px}
+  .act{
+    border:1px solid var(--line); background:var(--paper); cursor:pointer; color:var(--ink);
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:10px; letter-spacing:.1em;
+    padding:6px 12px; transition:all .12s; text-transform:uppercase;
+  }
+  .act.liked{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .act.liked .ico{display:inline-block; animation:pop .35s cubic-bezier(.2,2.2,.4,1)}
+  @keyframes pop{40%{transform:scale(1.5)}}
+
+  /* ---------- you / calendar ---------- */
+  .stats{display:flex; margin:20px 22px 0; border:1px solid var(--line); background:var(--card)}
+  .stat{flex:1; padding:14px 8px; text-align:center; border-right:1px solid var(--line)}
+  .stat:last-child{border-right:0}
+  .stat .v{font-weight:800; font-size:26px; letter-spacing:-.02em}
+  .stat .k{font-family:'IBM Plex Mono'; font-size:8px; letter-spacing:.2em; color:var(--mut); margin-top:4px; text-transform:uppercase}
+  .cal{margin:18px 22px 0; border:1px solid var(--line); background:var(--card); padding:16px}
+  .cal .mh{display:flex; justify-content:space-between; align-items:baseline}
+  .cal .mn{font-weight:800; font-size:16px; letter-spacing:-.01em}
+  .cal .my{font-family:'IBM Plex Mono'; font-size:9.5px; letter-spacing:.18em; color:var(--mut)}
+  .dow{display:grid; grid-template-columns:repeat(7,1fr); margin-top:12px}
+  .dow span{font-family:'IBM Plex Mono'; font-size:8px; letter-spacing:.1em; color:var(--mut); text-align:center; text-transform:uppercase}
+  .days{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px}
+  .day{
+    aspect-ratio:1; display:grid; place-items:center; cursor:pointer;
+    font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink); border:1px solid transparent;
+  }
+  .day.pad{cursor:default}
+  .day.past:hover{border-color:var(--line)}
+  .day.done{background:var(--ink); color:var(--paper); font-weight:600}
+  .day.today{border:1px solid var(--ox); color:var(--ox); font-weight:600}
+  .day.today.done{background:var(--ox); color:var(--paper)}
+  .day.fut{color:#C9C2B2; cursor:default}
+  .cal .hint{margin-top:12px; font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
+
+  /* ---------- hold plate ---------- */
+  .dock{
+    position:fixed; bottom:calc(56px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px; padding:10px 22px 12px;
+    background:linear-gradient(180deg,transparent,var(--paper) 42%);
+    z-index:30;
+  }
+  .plate{
+    position:relative; width:100%; height:58px; border:1.5px solid var(--ink);
+    background:var(--card); cursor:pointer; overflow:hidden; touch-action:none;
+    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+  }
+  .plate .fill{position:absolute; inset:0; width:calc(var(--p)*1%); background:var(--ink)}
+  .plate .lbl{
+    position:absolute; inset:0; display:grid; place-items:center;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:12.5px; letter-spacing:.28em;
+    text-transform:uppercase; mix-blend-mode:difference; color:#E8E2D2;
+  }
+  .plate .stampmark{
+    position:absolute; right:16px; top:50%; transform:translateY(-50%) rotate(-6deg) scale(0);
+    border:2px solid var(--ox); color:var(--ox); padding:3px 9px; background:var(--card);
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:11px; letter-spacing:.14em;
+  }
+  .plate.done .fill{width:0}
+  .plate.done .stampmark{animation:slam .35s cubic-bezier(.2,1.6,.4,1) forwards}
+  @keyframes slam{60%{transform:translateY(-50%) rotate(-6deg) scale(1.3)}100%{transform:translateY(-50%) rotate(-6deg) scale(1)}}
+
+  /* ---------- tab bar ---------- */
+  .tabbar{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px; z-index:35;
+    background:var(--paper); border-top:1.5px solid var(--ink);
+    display:flex; padding-bottom:env(safe-area-inset-bottom);
+  }
+  .tb{
+    flex:1; border:0; background:none; cursor:pointer; padding:13px 0 11px;
+    font-family:'IBM Plex Mono'; font-size:10px; font-weight:600; letter-spacing:.26em;
+    color:var(--mut); text-transform:uppercase; position:relative;
+  }
+  .tb.active{color:var(--ink)}
+  .tb.active::after{content:""; position:absolute; left:28%; right:28%; top:0; height:2.5px; background:var(--ox)}
+  .tb:focus-visible{outline:2px solid var(--ox); outline-offset:-3px}
+
+  /* toast + demo + sheet */
+  .toast{
+    position:fixed; top:calc(14px + env(safe-area-inset-top)); left:50%;
+    transform:translate(-50%,-100px); z-index:60;
+    background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-weight:500;
+    font-size:10.5px; letter-spacing:.12em; padding:11px 16px; text-transform:uppercase;
+    transition:transform .4s cubic-bezier(.2,1.3,.4,1); white-space:nowrap;
+  }
+  .toast.show{transform:translate(-50%,0)}
+  .demo{
+    position:fixed; left:16px; bottom:calc(128px + env(safe-area-inset-bottom)); z-index:31;
+    background:var(--card); border:1px solid var(--ink); color:var(--ink);
+    font-family:'IBM Plex Mono'; font-size:8.5px; font-weight:600; letter-spacing:.1em;
+    padding:7px 10px; cursor:pointer; text-transform:uppercase;
+  }
+  .scrim{position:fixed; inset:0; background:rgba(27,24,18,.45); opacity:0; pointer-events:none; transition:opacity .3s; z-index:40}
+  .scrim.show{opacity:1; pointer-events:auto}
+  .sheet{
+    position:fixed; left:50%; bottom:0; transform:translate(-50%,105%);
+    width:100%; max-width:430px; z-index:50; max-height:86dvh; overflow-y:auto;
+    background:var(--paper); border-top:2px solid var(--ink);
+    padding:18px 22px calc(22px + env(safe-area-inset-bottom));
+    transition:transform .4s cubic-bezier(.3,1.15,.35,1);
+  }
+  .sheet.show{transform:translate(-50%,0)}
+  .sheet h2{font-weight:800; font-size:24px; letter-spacing:-.02em}
+  .sheet h2 i{font-style:normal; color:var(--ox)}
+  .sub2{font-family:'IBM Plex Mono'; color:var(--mut); font-size:9px; margin-top:5px; letter-spacing:.16em; text-transform:uppercase}
+  .sec{margin-top:18px; font-family:'IBM Plex Mono'; font-size:9px; font-weight:600; letter-spacing:.22em; color:var(--mut); text-transform:uppercase;
+    display:flex; align-items:center; gap:10px}
+  .sec::after{content:""; flex:1; height:1px; background:var(--line)}
+  .chips{display:flex; gap:7px; flex-wrap:wrap; margin-top:10px}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer;
+    font-family:'IBM Plex Mono'; font-weight:500; font-size:11px; letter-spacing:.06em;
+    padding:8px 12px; transition:all .1s; text-transform:uppercase;
+  }
+  .chip .star{color:var(--brass); margin-right:4px}
+  .chip.on{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .chip.on .star{color:var(--gold)}
+  .chip.addchip{border-style:dashed; color:var(--mut)}
+  .custom-in{
+    display:none; border:1px solid var(--ink); background:var(--card); color:var(--ink);
+    font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.06em; padding:8px 12px;
+    outline:none; width:150px; text-transform:uppercase;
+  }
+  .custom-in.show{display:inline-block}
+  .noterow{margin-top:10px}
+  .note-in{
+    width:100%; background:var(--card); border:1px solid var(--line);
+    font-family:'IBM Plex Mono'; font-size:12px; padding:12px 13px; outline:none; color:var(--ink);
+  }
+  .note-in::placeholder{color:#B8B09C; letter-spacing:.06em}
+  .photozone{
+    margin-top:10px; width:100%; height:74px; border:1.5px dashed var(--mut); background:var(--card);
+    display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+    font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.2em; color:var(--mut); text-transform:uppercase;
+    transition:all .15s;
+  }
+  .photozone.got{border-style:solid; border-color:var(--ink); color:var(--ink)}
+  .btnrow{display:flex; gap:10px; margin-top:22px}
+  .skipbtn{
+    flex:1; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); padding:14px 0;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:11px; letter-spacing:.14em;
+    cursor:pointer; text-transform:uppercase;
+  }
+  .savebtn{
+    flex:1; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); padding:14px 0;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:11px; letter-spacing:.14em;
+    cursor:pointer; text-transform:uppercase;
+  }
+  canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="eyebrow">Frens Athletic Club — Est. 2026</div>
+    <div class="wordmark">THE RECORD<i>.</i></div>
+    <div class="stamp">Do not cheat</div>
+  </header>
+
+  <!-- ============ BOARD VIEW ============ -->
+  <section class="view active" id="view-board">
+    <div class="periods" id="periods"></div>
+    <div class="final-line" id="finalLine" style="display:none"></div>
+    <div class="prog" id="prog">
+      <div class="rule"><div class="fill"></div><div class="cap"></div></div>
+      <div class="lbl"><span>Q3 · Day 15 of 92</span><span>77 days remain</span></div>
+    </div>
+    <div class="podium" id="podium"></div>
+    <div class="list" id="board"></div>
+  </section>
+
+  <!-- ============ FEED VIEW ============ -->
+  <section class="view" id="view-feed">
+    <div class="sect-h"><h2>Dispatches</h2><div class="ln"></div></div>
+    <div id="feed"></div>
+  </section>
+
+  <!-- ============ YOU VIEW ============ -->
+  <section class="view" id="view-you">
+    <div class="sect-h"><h2>Your ledger</h2><div class="ln"></div></div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="stQ">0</div><div class="k">This quarter</div></div>
+      <div class="stat"><div class="v" id="stY">0</div><div class="k">2026</div></div>
+      <div class="stat"><div class="v" id="stS">0</div><div class="k">Streak</div></div>
+    </div>
+    <div class="cal">
+      <div class="mh"><div class="mn">July</div><div class="my mono">2026</div></div>
+      <div class="dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="days" id="days"></div>
+      <div class="hint">Tap a past day to backfill a missed workout</div>
+    </div>
+  </section>
+
+  <button class="demo" id="demo">▶ demo: friend logs</button>
+
+  <div class="dock" id="dock">
+    <button class="plate" id="plate" style="--p:0">
+      <span class="fill"></span>
+      <span class="lbl">Hold to log today</span>
+      <span class="stampmark">✓ LOGGED</span>
+    </button>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tb active" data-v="board">Board</button>
+    <button class="tb" data-v="feed">Feed</button>
+    <button class="tb" data-v="you">You</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <h2>Entry recorded<i>. +1</i></h2>
+  <div class="sub2">The count stands — details are optional</div>
+  <div class="sec">Activity · yours first</div>
+  <div class="chips" id="typechips"></div>
+  <div class="sec">Duration</div>
+  <div class="chips" id="durchips">
+    <button class="chip">30 min</button><button class="chip">45 min</button>
+    <button class="chip">60 min</button><button class="chip">90+</button>
+  </div>
+  <div class="sec">Note</div>
+  <div class="noterow"><input class="note-in" placeholder="For the record…"></div>
+  <button class="photozone" id="photozone">＋ &nbsp;Add proof photo</button>
+  <div class="btnrow">
+    <button class="skipbtn" id="skipBtn">Skip — count stands</button>
+    <button class="savebtn" id="saveBtn">Save details</button>
+  </div>
+</div>
+<canvas class="fx" id="fx"></canvas>
+
+<script>
+const FRENS=[
+  {name:'Abhimanyu', q1:10,q2:20,q3:8, streak:0},
+  {name:'Akshit',    q1:0, q2:0, q3:0, streak:0},
+  {name:'Bhawna',    q1:0, q2:0, q3:0, streak:0},
+  {name:'Chaitanya', q1:0, q2:0, q3:0, streak:0, you:true},
+  {name:'Mugdha',    q1:45,q2:37,q3:5, streak:0},
+  {name:'Rahul',     q1:0, q2:9, q3:9, streak:1},
+  {name:'Saksham',   q1:41,q2:0, q3:0, streak:0},
+  {name:'Saurabh',   q1:0, q2:0, q3:0, streak:0},
+  {name:'Shashwat N.',q1:6,q2:0, q3:0, streak:0},
+  {name:'Vareni',    q1:34,q2:27,q3:3, streak:0},
+  {name:'Shaswat K.',q1:26,q2:10,q3:0, streak:0},
+  {name:'Saavy',     q1:12,q2:16,q3:1, streak:0},
+];
+const PERIODS=[
+  {id:'q1',lbl:'Q1 ’26',final:true},
+  {id:'q2',lbl:'Q2 ’26',final:true},
+  {id:'q3',lbl:'Q3 ’26',live:true},
+  {id:'yr',lbl:'2026'},
+  {id:'all',lbl:'All-time'},
+];
+let period='q3';
+const val=(f,p)=> p==='q1'?f.q1 : p==='q2'?f.q2 : p==='q3'?f.q3 : f.q1+f.q2+f.q3;
+const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const pad=n=>String(n).padStart(2,'0');
+const board=document.getElementById('board');
+const podium=document.getElementById('podium');
+
+/* periods */
+const periodsEl=document.getElementById('periods');
+function renderPeriods(){
+  periodsEl.innerHTML=PERIODS.map(p=>
+    `<button class="period ${p.id===period?'sel':''}" data-p="${p.id}">${p.live?'<span class="dot"></span>':''}${p.lbl}${p.final?' · F':''}</button>`
+  ).join('');
+  periodsEl.querySelectorAll('.period').forEach(b=>b.addEventListener('click',()=>{
+    period=b.dataset.p; renderPeriods(); renderBoard(false); flipAll();
+  }));
+}
+function flipAll(){
+  document.querySelectorAll('#board .tile').forEach((tl,i)=>{
+    setTimeout(()=>{tl.classList.add('flip'); setTimeout(()=>tl.classList.remove('flip'),380)},(i%8)*50);
+  });
+}
+
+function renderBoard(animate=true){
+  const p=PERIODS.find(x=>x.id===period);
+  // final line + progress
+  const fl=document.getElementById('finalLine'), pr=document.getElementById('prog');
+  if(p.final){
+    const win=[...FRENS].sort((a,b)=>val(b,period)-val(a,period))[0];
+    fl.style.display='block';
+    fl.innerHTML=`<span class="fin">Final.</span> <b>${win.name}</b> took ${p.lbl} with <b>${val(win,period)}</b> workout days`;
+    pr.style.display='none';
+  } else if(period==='q3'){ fl.style.display='none'; pr.style.display='block'; }
+  else { fl.style.display='none'; pr.style.display='none'; }
+
+  const first=animate?Object.fromEntries([...board.children].map(el=>[el.dataset.n,{top:el.getBoundingClientRect().top,val:el.dataset.v}])):{};
+  const sorted=[...FRENS].sort((a,b)=>val(b,period)-val(a,period)||a.name.localeCompare(b.name));
+  // podium
+  const meds=sorted.slice(0,3);
+  podium.innerHTML=[1,0,2].map(i=>{
+    const f=meds[i]; if(!f)return'';
+    return `<div class="plq p${i+1}">
+      <div class="cnt">${val(f,period)}</div>
+      <div class="metal"></div>
+      <div class="pn">${f.name}</div>
+      <div class="pr">${['FIRST','SECOND','THIRD'][i]}</div>
+    </div>`;
+  }).join('');
+  // list
+  let rank=0,prev=null,shown=0;
+  board.innerHTML=sorted.map(f=>{
+    shown++; if(val(f,period)!==prev){rank=shown;prev=val(f,period);}
+    const cls=['row']; if(rank===1&&val(f,period)>0)cls.push('r1');
+    return `<div class="${cls.join(' ')}" data-n="${f.name}" data-v="${val(f,period)}">
+      <div class="rank">${pad(rank)}</div>
+      <div class="ava">${initials(f.name)}</div>
+      <div class="who">
+        <div class="nm">${f.name}${f.you?'<span class="youtag">YOU</span>':''}</div>
+        <div class="sub">${f.streak>0&&period==='q3'?`<span class="st">▲ ${f.streak}-day streak</span>`:(val(f,period)===0?'No entries':'Workout days')}</div>
+      </div>
+      <div class="flaps">${pad(val(f,period)).split('').map(d=>`<div class="tile">${d}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+  if(animate){
+    [...board.children].forEach(el=>{
+      const pv=first[el.dataset.n];
+      const dy=(pv?pv.top:el.getBoundingClientRect().top)-el.getBoundingClientRect().top;
+      if(dy)el.animate([{transform:`translateY(${dy}px)`},{transform:'translateY(0)'}],{duration:480,easing:'cubic-bezier(.35,1.1,.4,1)'});
+      if(pv&&pv.val!==el.dataset.v){
+        el.querySelectorAll('.tile').forEach((t,i)=>setTimeout(()=>{t.classList.add('flip');setTimeout(()=>t.classList.remove('flip'),380)},i*90));
+      }
+    });
+  }
+}
+
+/* tabs */
+document.querySelectorAll('.tb').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tb').forEach(x=>x.classList.toggle('active',x===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+t.dataset.v));
+  document.getElementById('dock').style.display = t.dataset.v==='board' ? 'block':'none';
+  document.getElementById('demo').style.display = t.dataset.v==='board' ? 'block':'none';
+}));
+
+/* feed */
+const FEED=[
+  {n:'Rahul',tm:'Today · 07:02',type:'Run',note:'5k before work. Streak holds.',likes:4,c:2,pic:false},
+  {n:'Abhimanyu',tm:'Yesterday · 19:40',type:'Gym',note:'Push day. Bench moved easy.',likes:6,c:3,pic:true},
+  {n:'Mugdha',tm:'Sunday · 08:15',type:'Yoga',note:'Yoga and a long walk.',likes:3,c:1,pic:false},
+];
+document.getElementById('feed').innerHTML=FEED.map(f=>`
+  <div class="card">
+    <div class="top">
+      <div class="ava">${initials(f.n)}</div>
+      <div class="meta"><div class="cnm">${f.n}</div><div class="tm">${f.tm}</div></div>
+      <div class="tag">${f.type}</div>
+    </div>
+    <div class="note">${f.note}</div>
+    ${f.pic?'<div class="pic">PROOF ATTACHED</div>':''}
+    <div class="acts">
+      <button class="act" data-l="${f.likes}"><span class="ico">🔥</span> <span class="lc">${f.likes}</span></button>
+      <button class="act">✎ ${f.c} comments</button>
+    </div>
+  </div>`).join('');
+document.querySelectorAll('.act[data-l]').forEach(b=>b.addEventListener('click',()=>{
+  const on=b.classList.toggle('liked');
+  b.querySelector('.lc').textContent=+b.dataset.l+(on?1:0);
+}));
+
+/* you / calendar — July 2026: 31 days, Jul 1 2026 = Wednesday */
+const done=new Set(); // your logged July days
+const TODAY=15;
+function renderCal(){
+  const days=document.getElementById('days');
+  let html='';
+  for(let i=0;i<2;i++)html+='<div class="day pad"></div>'; // Mon,Tue pads (Wed start)
+  for(let d=1;d<=31;d++){
+    const cls=['day'];
+    if(done.has(d))cls.push('done');
+    if(d===TODAY)cls.push('today');
+    if(d<TODAY&&!done.has(d))cls.push('past');
+    if(d>TODAY)cls.push('fut');
+    html+=`<div class="${cls.join(' ')}" data-d="${d}">${d}</div>`;
+  }
+  days.innerHTML=html;
+  days.querySelectorAll('.day.past').forEach(el=>el.addEventListener('click',()=>{
+    done.add(+el.dataset.d);
+    const me=FRENS.find(f=>f.you); me.q3++;
+    renderCal(); syncStats(); renderBoard(false);
+    showToast(`Backfilled Jul ${pad(el.dataset.d)} — labeled in the feed`);
+  }));
+}
+function syncStats(){
+  const me=FRENS.find(f=>f.you);
+  document.getElementById('stQ').textContent=me.q3;
+  document.getElementById('stY').textContent=me.q1+me.q2+me.q3;
+  document.getElementById('stS').textContent=done.has(TODAY)?'1':'0';
+}
+
+/* toast */
+const toast=document.getElementById('toast'); let tT;
+function showToast(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>toast.classList.remove('show'),2600)}
+
+/* demo */
+const demoPool=['Vareni','Mugdha','Saksham','Abhimanyu','Saavy','Bhawna'];
+let dI=0;
+document.getElementById('demo').addEventListener('click',()=>{
+  const who=demoPool[dI++%demoPool.length];
+  const f=FRENS.find(x=>x.name===who);
+  f.q3++;
+  if(period!=='q3'&&period!=='yr'&&period!=='all'){showToast(`${f.name} logged — see Q3 live board`);return}
+  showToast(`${f.name} just logged a workout`);
+  renderBoard();
+});
+
+/* hold plate */
+const plate=document.getElementById('plate');
+const HOLD=600; let raf,t0,held=false,logged=false;
+function step(ts){const p=Math.min(100,(ts-t0)/HOLD*100); plate.style.setProperty('--p',p);
+  if(p>=100){complete();return} raf=requestAnimationFrame(step)}
+plate.addEventListener('pointerdown',e=>{
+  if(logged){showToast('Already on the record for today ✓');return}
+  held=true; plate.setPointerCapture(e.pointerId);
+  t0=performance.now(); raf=requestAnimationFrame(step);
+  if(navigator.vibrate)navigator.vibrate(8);
+});
+function cancelHold(){if(!held)return; held=false; cancelAnimationFrame(raf); plate.style.setProperty('--p',0)}
+plate.addEventListener('pointerup',cancelHold);
+plate.addEventListener('pointercancel',cancelHold);
+plate.addEventListener('contextmenu',e=>e.preventDefault());
+function complete(){
+  held=false; logged=true; plate.classList.add('done');
+  plate.querySelector('.lbl').textContent='On the record for July 15';
+  if(navigator.vibrate)navigator.vibrate([12,40,18]);
+  const me=FRENS.find(f=>f.you); me.q3++; done.add(TODAY);
+  if(period==='q3'||period==='yr'||period==='all')renderBoard();
+  renderCal(); syncStats(); scraps(); openSheet();
+}
+
+/* sheet: activity memory */
+const RECENTS=['Gym','Run'];              // remembered from your past entries
+const DEFAULTS=['Lift','Yoga','Football','Swim','Badminton'];
+function renderChips(){
+  const el=document.getElementById('typechips');
+  el.innerHTML=[
+    ...RECENTS.map(t=>`<button class="chip" data-t="${t}"><span class="star">★</span>${t}</button>`),
+    ...DEFAULTS.filter(t=>!RECENTS.includes(t)).map(t=>`<button class="chip" data-t="${t}">${t}</button>`),
+    `<button class="chip addchip" id="addChip">＋ Add your own</button>`,
+    `<input class="custom-in" id="customIn" placeholder="NAME IT…" maxlength="18">`
+  ].join('');
+  el.querySelectorAll('.chip[data-t]').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+  const add=document.getElementById('addChip'), inp=document.getElementById('customIn');
+  add.addEventListener('click',()=>{add.style.display='none'; inp.classList.add('show'); inp.focus()});
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&inp.value.trim()){
+      const t=inp.value.trim();
+      if(!RECENTS.includes(t))RECENTS.unshift(t);      // remembered → appears first next time
+      inp.value=''; inp.classList.remove('show');
+      renderChips();
+      const nc=el.querySelector(`.chip[data-t="${t}"]`); if(nc)nc.classList.add('on');
+      showToast(`“${t.toUpperCase()}” saved — it’ll appear first next time`);
+    }
+  });
+}
+const sheet=document.getElementById('sheet'),scrim=document.getElementById('scrim');
+function openSheet(){renderChips();sheet.classList.add('show');scrim.classList.add('show')}
+function closeSheet(){sheet.classList.remove('show');scrim.classList.remove('show')}
+scrim.addEventListener('click',closeSheet);
+document.getElementById('saveBtn').addEventListener('click',()=>{closeSheet();showToast('Details filed.')});
+document.getElementById('skipBtn').addEventListener('click',()=>{closeSheet();showToast('Count stands. Details skipped.')});
+document.querySelectorAll('#durchips .chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('#durchips .chip').forEach(x=>{if(x!==c)x.classList.remove('on')}); c.classList.toggle('on');
+}));
+document.getElementById('photozone').addEventListener('click',function(){
+  this.classList.add('got'); this.textContent='✓  PROOF ATTACHED — IMG_2026.JPG';
+});
+
+/* paper scraps */
+const cv=document.getElementById('fx'),ctx=cv.getContext('2d');
+function fit(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio)}
+fit(); addEventListener('resize',fit);
+const COLS=['#1B1812','#A98A2F','#9E2B25','#FAF7F0','#C0A050'];
+function scraps(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const r=plate.getBoundingClientRect(), cy=r.top+8;
+  const ps=Array.from({length:70},()=>{
+    const cx=r.left+Math.random()*r.width;
+    const a=-Math.PI/2+(Math.random()-.5)*1.1, v=4.5+Math.random()*6.5;
+    return {x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:.24,
+      rot:Math.random()*7,vr:(Math.random()-.5)*.45,
+      w:3.5+Math.random()*6,h:5+Math.random()*8,life:1,
+      col:COLS[Math.random()*COLS.length|0]};
+  });
+  (function tick(){
+    ctx.clearRect(0,0,innerWidth,innerHeight); let alive=false;
+    ps.forEach(p=>{
+      if(p.life<=0)return; alive=true;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.vx*=.99; p.rot+=p.vr; p.life-=.012;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha=Math.max(0,Math.min(1,p.life*1.4));
+      ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    if(alive)requestAnimationFrame(tick); else ctx.clearRect(0,0,innerWidth,innerHeight);
+  })();
+}
+
+renderPeriods(); renderBoard(false); renderCal(); syncStats();
+</script>
+</body>
+</html>
