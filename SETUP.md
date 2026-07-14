@@ -1,6 +1,8 @@
 # FRENS Workout — one-time setup (~10 min, all free)
 
-You do the account-bound steps below; I do everything else (schema is already written, app is being scaffolded). When you finish, paste me the 3 values at the bottom.
+> **Status (2026-07-15):** Project created (`guyrxmiltskqdrfkfjie`) and **schema already applied by Claude** (13 members, RLS, RPCs, realtime, storage — verified; 2026 history imported, 319 rows). So **skip steps 1–2 below.** Remaining: finish **step 3 (Google sign-in)**, then send the **service_role key** + choose the **passcode**.
+
+You do the account-bound steps below; I do everything else. When you finish, paste me the values at the bottom.
 
 ## 1. Create the Supabase project (~3 min)
 1. Go to https://supabase.com → sign in with Google → **New project**.
