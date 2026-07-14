@@ -65,8 +65,13 @@
   .tile-you .t-link{font-family:'IBM Plex Mono'; font-size:9px; font-weight:600; letter-spacing:.16em; color:var(--brass); text-transform:uppercase}
   .tile-you .t-body{display:flex; align-items:center; gap:18px; margin-top:12px}
   .tile-you .t-flaps{display:flex; gap:3px; perspective:300px}
-  .tile-you .tile{width:34px; height:46px; font-size:28px; border-radius:3px}
-  .tile-you .t-cap{font-family:'IBM Plex Mono'; font-size:8px; letter-spacing:.2em; color:var(--mut); text-transform:uppercase; margin-top:6px; text-align:center}
+  .tile-you .tile{
+    width:34px; height:46px; font-size:28px; border-radius:4px;
+    background:linear-gradient(180deg,#B23A31,#8C241D); color:#FBF3E4;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.25), 0 2.5px 0 #6E1B15;
+  }
+  .tile-you .tile::after{background:rgba(60,8,4,.55)}
+  .tile-you .t-cap{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; letter-spacing:.2em; color:var(--ox); text-transform:uppercase; margin-top:7px; text-align:center}
   .t-div{width:1px; align-self:stretch; background:var(--line)}
   .t-stat{text-align:center; flex:1}
   .t-stat .v{font-weight:800; font-size:24px; letter-spacing:-.02em; line-height:1.1; display:flex; align-items:center; justify-content:center; gap:5px}
@@ -204,18 +209,18 @@
   .hero .hflame{font-size:52px; display:inline-block; transform-origin:50% 88%}
   .hero .hnum{font-weight:900; font-size:46px; letter-spacing:-.03em; line-height:1; margin-top:4px}
   .hero .hcap{font-family:'IBM Plex Mono'; font-size:9px; letter-spacing:.3em; color:var(--mut); text-transform:uppercase; margin-top:6px}
-  .week{display:flex; gap:6px; justify-content:center; margin-top:16px}
-  .wd{width:32px}
-  .wd .wl{font-family:'IBM Plex Mono'; font-size:8px; color:var(--mut); text-transform:uppercase}
+  .week{display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-top:16px; padding:0 6px}
+  .wd{text-align:center}
+  .wd .wl{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; color:var(--mut); text-transform:uppercase}
   .wd .wc{
-    margin-top:6px; width:40px; height:40px; border:1.5px solid var(--line); border-radius:50%;
-    display:grid; place-items:center; font-size:17px; background:var(--paper);
+    margin:6px auto 0; width:34px; height:34px; border:1.5px solid var(--line); border-radius:50%;
+    display:grid; place-items:center; font-size:14px; background:var(--paper);
     font-family:Archivo; font-weight:800; color:#CBC4B4; transition:all .15s;
   }
   .wd .wc.hit{
     background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
     border-color:var(--green-d); color:#fff;
-    box-shadow:0 3px 0 var(--green-d), 0 0 18px -4px rgba(39,174,82,.6);
+    box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
     animation:tickpop .45s cubic-bezier(.2,1.8,.4,1);
   }
   .wd .wc.today{border:2px solid var(--ox)}
@@ -258,14 +263,16 @@
   .day.fut{color:#C9C2B2; cursor:default}
   .day.today{border:1px solid var(--ox); font-weight:600}
   .day .tick{
-    position:absolute; inset:3px; display:grid; place-items:center; border-radius:50%;
-    font-size:13px; font-weight:700; color:#fff;
+    position:absolute; inset:0; margin:auto; width:34px; height:34px;
+    display:grid; place-items:center; border-radius:50%;
+    font-size:14px; font-family:Archivo; font-weight:800; color:#fff;
   }
-  .day.done{color:transparent}
+  .day.done{color:transparent; border-color:transparent}
   .day.done .tick{background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
-    box-shadow:0 2px 0 var(--green-d), 0 0 12px -3px rgba(39,174,82,.5);
-    font-size:15px; animation:tickin .4s cubic-bezier(.2,1.8,.4,1)}
-  .day.done.today{border-color:var(--green-d)}
+    border:1.5px solid var(--green-d);
+    box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
+    animation:tickin .4s cubic-bezier(.2,1.8,.4,1)}
+  .day.done.today .tick{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 2px var(--paper), 0 0 0 3.5px var(--green-d)}
   @keyframes tickin{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(6deg)}}
   .cal .hint{margin-top:12px; font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
 
@@ -601,7 +608,7 @@ function renderTileWeek(){
   for(let i=6;i>=0;i--){
     const doy=TODAY_DOY-i, dowIdx=(doy+2)%7, hit=doneDoy.has(doy);
     html+=`<div class="twd"><div class="twl">${wl[dowIdx]}</div>
-      <div class="twc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':'·'}</div></div>`;
+      <div class="twc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':''}</div></div>`;
   }
   document.getElementById('tileWeek').innerHTML=html;
 }
@@ -795,7 +802,7 @@ function renderWeek(){
     const dowIdx=(doy+2)%7; // Jan1(doy1)=Thu -> Mon-start index 3 ; (1+2)%7=3 ✓
     const hit=doneDoy.has(doy);
     html+=`<div class="wd"><div class="wl">${wl[dowIdx]}</div>
-      <div class="wc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':'·'}</div></div>`;
+      <div class="wc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':''}</div></div>`;
   }
   el.innerHTML=html;
 }
@@ -943,7 +950,11 @@ document.getElementById('photozone').addEventListener('click',function(){
 
 /* ---------- paper scraps ---------- */
 const cv=document.getElementById('fx'),ctx=cv.getContext('2d');
-function fit(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio)}
+function fit(){
+  cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio;
+  cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px';
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+}
 fit(); addEventListener('resize',fit);
 const COLS=['#1B1812','#A98A2F','#9E2B25','#FAF7F0','#C0A050'];
 function scraps(){
