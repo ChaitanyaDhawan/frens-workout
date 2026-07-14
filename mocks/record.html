@@ -14,7 +14,7 @@
     --line:#DCD5C6; --brass:#A98A2F; --ox:#9E2B25;
     --tile:#24211B; --tiletx:#F2EDE0;
     --gold:#C0A050; --silver:#A9A9A4; --bronze:#AE7A4B;
-    --flame:#E8590C; --green:#2E9E4F; --green-d:#247B3D;
+    --flame:#E8590C; --green:#27AE52; --green-d:#1E8A40; --green-hi:#43D172;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -80,18 +80,22 @@
   }
   .flame.bounce{animation:fbounce .7s cubic-bezier(.2,2,.4,1)}
   @keyframes fbounce{35%{transform:scale(1.6) rotate(6deg)}70%{transform:scale(.9)}}
-  .t-week{display:flex; gap:5px; justify-content:space-between; margin-top:13px; padding-top:12px; border-top:1px solid var(--line)}
-  .t-week .twd{flex:1; text-align:center}
-  .t-week .twl{font-family:'IBM Plex Mono'; font-size:7.5px; color:var(--mut); text-transform:uppercase}
+  .t-week{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:13px; padding-top:12px; border-top:1px solid var(--line)}
+  .t-week .twd{text-align:center}
+  .t-week .twl{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; color:var(--mut); text-transform:uppercase}
   .t-week .twc{
-    margin:4px auto 0; width:24px; height:24px; border-radius:50%;
-    border:1px solid var(--line); background:var(--paper);
-    display:grid; place-items:center; font-size:11px; color:#C9C2B2;
-    transition:all .15s;
+    margin:5px auto 0; width:34px; height:34px; border-radius:50%;
+    border:1.5px solid var(--line); background:var(--paper);
+    display:grid; place-items:center; font-size:14px; color:#CBC4B4;
+    transition:all .15s; font-weight:800;
   }
-  .t-week .twc.hit{background:var(--green); border-color:var(--green-d); color:#fff; font-weight:700;
-    box-shadow:0 1.5px 0 var(--green-d); animation:tickpop .45s cubic-bezier(.2,1.8,.4,1)}
-  .t-week .twc.today{border:1.5px solid var(--ox)}
+  .t-week .twc.hit{
+    background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
+    border-color:var(--green-d); color:#fff;
+    box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
+    animation:tickpop .45s cubic-bezier(.2,1.8,.4,1);
+  }
+  .t-week .twc.today{border:2px solid var(--ox)}
   .t-week .twc.today.hit{border-color:var(--green-d)}
   @keyframes tickpop{from{transform:scale(0) rotate(-25deg)}60%{transform:scale(1.35) rotate(5deg)}}
 
@@ -177,7 +181,7 @@
   .card .cnm{font-weight:700; font-size:13.5px}
   .card .tm{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
   .card .brag{display:flex; align-items:center; gap:9px; margin-top:12px; flex-wrap:wrap}
-  .card .bact{font-weight:900; font-size:14px; letter-spacing:.03em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:4px 9px 3px}
+  .card .bact{font-weight:800; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:3px 7px}
   .card .bstat{font-family:'IBM Plex Mono'; font-size:9.5px; font-weight:600; letter-spacing:.16em; color:var(--green-d); text-transform:uppercase}
   .card .note{margin-top:10px; font-size:13.5px; line-height:1.5; color:#453F33; padding-left:10px; border-left:2px solid var(--brass)}
   .card .pic{margin-top:10px; height:120px; background:linear-gradient(135deg,#E4DDCB,#D5CBB4); border:1px solid var(--line);
@@ -204,13 +208,17 @@
   .wd{width:32px}
   .wd .wl{font-family:'IBM Plex Mono'; font-size:8px; color:var(--mut); text-transform:uppercase}
   .wd .wc{
-    margin-top:5px; width:32px; height:32px; border:1px solid var(--line); border-radius:50%;
-    display:grid; place-items:center; font-size:13px; background:var(--paper);
-    font-family:'IBM Plex Mono'; color:#C9C2B2; transition:all .15s;
+    margin-top:6px; width:40px; height:40px; border:1.5px solid var(--line); border-radius:50%;
+    display:grid; place-items:center; font-size:17px; background:var(--paper);
+    font-family:Archivo; font-weight:800; color:#CBC4B4; transition:all .15s;
   }
-  .wd .wc.hit{background:var(--green); border-color:var(--green-d); color:#fff; font-weight:700;
-    box-shadow:0 2px 0 var(--green-d); animation:tickpop .45s cubic-bezier(.2,1.8,.4,1)}
-  .wd .wc.today{border:1.5px solid var(--ox)}
+  .wd .wc.hit{
+    background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
+    border-color:var(--green-d); color:#fff;
+    box-shadow:0 3px 0 var(--green-d), 0 0 18px -4px rgba(39,174,82,.6);
+    animation:tickpop .45s cubic-bezier(.2,1.8,.4,1);
+  }
+  .wd .wc.today{border:2px solid var(--ox)}
   .wd .wc.today.hit{border-color:var(--green-d)}
   .stats{display:flex; margin:14px 22px 0; border:1px solid var(--line); background:var(--card)}
   .stat{flex:1; padding:13px 8px; text-align:center; border-right:1px solid var(--line)}
@@ -254,7 +262,9 @@
     font-size:13px; font-weight:700; color:#fff;
   }
   .day.done{color:transparent}
-  .day.done .tick{background:var(--green); box-shadow:0 1.5px 0 var(--green-d); animation:tickin .4s cubic-bezier(.2,1.8,.4,1)}
+  .day.done .tick{background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
+    box-shadow:0 2px 0 var(--green-d), 0 0 12px -3px rgba(39,174,82,.5);
+    font-size:15px; animation:tickin .4s cubic-bezier(.2,1.8,.4,1)}
   .day.done.today{border-color:var(--green-d)}
   @keyframes tickin{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(6deg)}}
   .cal .hint{margin-top:12px; font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
@@ -490,7 +500,6 @@
   <div class="noterow"><input class="note-in" placeholder="For the record…"></div>
   <button class="photozone" id="photozone">＋ &nbsp;Add proof photo</button>
   <div class="btnrow">
-    <button class="skipbtn" id="skipBtn">Skip — count stands</button>
     <button class="savebtn" id="saveBtn">Save details</button>
   </div>
 </div>
@@ -924,7 +933,6 @@ function openSheet(){renderChips();sheet.classList.add('show');scrim.classList.a
 function closeSheet(){sheet.classList.remove('show');scrim.classList.remove('show')}
 scrim.addEventListener('click',closeSheet);
 document.getElementById('saveBtn').addEventListener('click',()=>{closeSheet();showToast('Details filed.')});
-document.getElementById('skipBtn').addEventListener('click',()=>{closeSheet();showToast('Count stands. Details skipped.')});
 document.querySelectorAll('#durchips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#durchips .chip').forEach(x=>{if(x!==c)x.classList.remove('on')}); c.classList.toggle('on');
 }));
