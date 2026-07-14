@@ -12,8 +12,12 @@ const SHEET_EASE: [number, number, number, number] = [0.3, 1.15, 0.35, 1];
 /** Log / edit sheet — activity chips, duration, note, proof photo. */
 export default function DetailSheet() {
   const { sheet, dayData, recents, addRecent, saveDetails, showToast } = useStore();
-  const doy = sheet!.doy;
-  const mode = sheet!.mode;
+  // Keep the last non-null sheet so we don't crash during AnimatePresence exit,
+  // when the store's `sheet` has already gone null but this is still animating out.
+  const snap = useRef(sheet);
+  if (sheet) snap.current = sheet;
+  const doy = snap.current?.doy ?? 0;
+  const mode = snap.current?.mode ?? "log";
   const existing = dayData[doy];
 
   const [types, setTypes] = useState<string[]>(existing?.types ?? []);

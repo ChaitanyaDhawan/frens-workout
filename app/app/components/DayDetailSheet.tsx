@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { motion } from "motion/react";
 import { useStore } from "@/app/lib/store";
 import { fmtDate } from "@/app/lib/helpers";
@@ -36,7 +37,10 @@ function DayBody({ dd }: { dd?: WorkoutDetail }) {
 /** Read-only view of a logged day with Edit / Delete actions. */
 export default function DayDetailSheet() {
   const { daySheet, dayData, openSheet, removeDay } = useStore();
-  const doy = daySheet!.doy;
+  // Snapshot so we don't crash reading a null daySheet during exit animation.
+  const snap = useRef(daySheet);
+  if (daySheet) snap.current = daySheet;
+  const doy = snap.current?.doy ?? 0;
   const dd = dayData[doy];
 
   return (
