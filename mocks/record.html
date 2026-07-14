@@ -67,11 +67,11 @@
   .tile-you .t-flaps{display:flex; gap:3px; perspective:300px}
   .tile-you .tile{
     width:34px; height:46px; font-size:28px; border-radius:4px;
-    background:linear-gradient(180deg,#B23A31,#8C241D); color:#FBF3E4;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.25), 0 2.5px 0 #6E1B15;
+    background:linear-gradient(180deg,#2FBF5C,#1E8A40); color:#fff;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.2), 0 2.5px 0 #176B31;
   }
-  .tile-you .tile::after{background:rgba(60,8,4,.55)}
-  .tile-you .t-cap{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; letter-spacing:.2em; color:var(--ox); text-transform:uppercase; margin-top:7px; text-align:center}
+  .tile-you .tile::after{background:rgba(9,58,26,.5)}
+  .tile-you .t-cap{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; letter-spacing:.2em; color:var(--green-d); text-transform:uppercase; margin-top:7px; text-align:center}
   .t-div{width:1px; align-self:stretch; background:var(--line)}
   .t-stat{text-align:center; flex:1}
   .t-stat .v{font-weight:800; font-size:24px; letter-spacing:-.02em; line-height:1.1; display:flex; align-items:center; justify-content:center; gap:5px}
@@ -85,23 +85,24 @@
   }
   .flame.bounce{animation:fbounce .7s cubic-bezier(.2,2,.4,1)}
   @keyframes fbounce{35%{transform:scale(1.6) rotate(6deg)}70%{transform:scale(.9)}}
+  /* ---- ONE shared tick style: home tile, You strip, calendar ---- */
   .t-week{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:13px; padding-top:12px; border-top:1px solid var(--line)}
-  .t-week .twd{text-align:center}
-  .t-week .twl{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; color:var(--mut); text-transform:uppercase}
-  .t-week .twc{
+  .twd{text-align:center}
+  .twl{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; color:var(--mut); text-transform:uppercase}
+  .twc{
     margin:5px auto 0; width:34px; height:34px; border-radius:50%;
     border:1.5px solid var(--line); background:var(--paper);
-    display:grid; place-items:center; font-size:14px; color:#CBC4B4;
+    display:grid; place-items:center; font-family:Archivo; font-size:14px; color:#CBC4B4;
     transition:all .15s; font-weight:800;
   }
-  .t-week .twc.hit{
+  .twc.hit{
     background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
     border-color:var(--green-d); color:#fff;
     box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
     animation:tickpop .45s cubic-bezier(.2,1.8,.4,1);
   }
-  .t-week .twc.today{border:2px solid var(--ox)}
-  .t-week .twc.today.hit{border-color:var(--green-d)}
+  .twc.today{border:2px solid var(--ox)}
+  .twc.today.hit{border-color:var(--green-d)}
   @keyframes tickpop{from{transform:scale(0) rotate(-25deg)}60%{transform:scale(1.35) rotate(5deg)}}
 
   /* ================= shared: flaps ================= */
@@ -210,21 +211,6 @@
   .hero .hnum{font-weight:900; font-size:46px; letter-spacing:-.03em; line-height:1; margin-top:4px}
   .hero .hcap{font-family:'IBM Plex Mono'; font-size:9px; letter-spacing:.3em; color:var(--mut); text-transform:uppercase; margin-top:6px}
   .week{display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-top:16px; padding:0 6px}
-  .wd{text-align:center}
-  .wd .wl{font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; color:var(--mut); text-transform:uppercase}
-  .wd .wc{
-    margin:6px auto 0; width:34px; height:34px; border:1.5px solid var(--line); border-radius:50%;
-    display:grid; place-items:center; font-size:14px; background:var(--paper);
-    font-family:Archivo; font-weight:800; color:#CBC4B4; transition:all .15s;
-  }
-  .wd .wc.hit{
-    background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
-    border-color:var(--green-d); color:#fff;
-    box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
-    animation:tickpop .45s cubic-bezier(.2,1.8,.4,1);
-  }
-  .wd .wc.today{border:2px solid var(--ox)}
-  .wd .wc.today.hit{border-color:var(--green-d)}
   .stats{display:flex; margin:14px 22px 0; border:1px solid var(--line); background:var(--card)}
   .stat{flex:1; padding:13px 8px; text-align:center; border-right:1px solid var(--line)}
   .stat:last-child{border-right:0}
@@ -602,16 +588,7 @@ function rankOf(name,p){
   sorted.forEach(f=>{shown++;if(val(f,p)!==prev){rank=shown;prev=val(f,p)}if(f.name===name)res=rank});
   return res;
 }
-function renderTileWeek(){
-  const wl=['M','T','W','T','F','S','S'];
-  let html='';
-  for(let i=6;i>=0;i--){
-    const doy=TODAY_DOY-i, dowIdx=(doy+2)%7, hit=doneDoy.has(doy);
-    html+=`<div class="twd"><div class="twl">${wl[dowIdx]}</div>
-      <div class="twc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':''}</div></div>`;
-  }
-  document.getElementById('tileWeek').innerHTML=html;
-}
+function renderTileWeek(){ document.getElementById('tileWeek').innerHTML=weekStripHTML(); }
 function syncTile(roll=false){
   if(roll)rollFlaps(tileFlaps,ME.q3); else setFlaps(tileFlaps,ME.q3);
   const s=streakNow();
@@ -792,20 +769,19 @@ bindLikes();
 function prependCard(f){feedEl.insertAdjacentHTML('afterbegin',cardHTML(f,true));bindLikes()}
 
 /* ---------- you: hero + week + calendar ---------- */
-function renderWeek(){
-  // last 7 days ending today: Jul 9(Thu)..Jul 15(Wed) -> show Mon-start labels of actual days
+function weekStripHTML(){
   const wl=['M','T','W','T','F','S','S'];
-  const el=document.getElementById('week');
   let html='';
   for(let i=6;i>=0;i--){
     const doy=TODAY_DOY-i;
-    const dowIdx=(doy+2)%7; // Jan1(doy1)=Thu -> Mon-start index 3 ; (1+2)%7=3 ✓
+    const dowIdx=(doy+2)%7; // Jan1(doy1)=Thu -> Mon-start index 3
     const hit=doneDoy.has(doy);
-    html+=`<div class="wd"><div class="wl">${wl[dowIdx]}</div>
-      <div class="wc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':''}</div></div>`;
+    html+=`<div class="twd"><div class="twl">${wl[dowIdx]}</div>
+      <div class="twc ${hit?'hit':''} ${doy===TODAY_DOY?'today':''}">${hit?'✓':''}</div></div>`;
   }
-  el.innerHTML=html;
+  return html;
 }
+function renderWeek(){ document.getElementById('week').innerHTML=weekStripHTML(); }
 function syncYou(){
   const s=streakNow();
   document.getElementById('heroNum').textContent=s;
