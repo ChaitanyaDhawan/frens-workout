@@ -143,28 +143,42 @@
   .prog .lbl{display:flex; justify-content:space-between; margin-top:7px;
     font-family:'IBM Plex Mono'; font-size:9.5px; letter-spacing:.18em; color:var(--mut); text-transform:uppercase}
 
-  .podium{display:flex; align-items:flex-end; gap:6px; margin:26px 22px 0}
-  .plq{flex:1; text-align:center; padding:0 4px}
-  .plq .pava{
-    width:34px; height:34px; border-radius:50%; margin:0 auto 9px;
-    border:1.5px solid var(--ink); background:var(--card);
-    display:grid; place-items:center; font-weight:700; font-size:13px; position:relative;
+  .podium-wrap{margin:26px 20px 0}
+  .podium-cap{display:flex; justify-content:space-between; align-items:baseline; margin:0 4px 16px}
+  .podium-cap .pc-l{font-family:'IBM Plex Mono'; font-size:9px; font-weight:600; letter-spacing:.24em; color:var(--ink); text-transform:uppercase}
+  .podium-cap .pc-r{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
+  .podium{display:flex; align-items:flex-end; gap:10px; border-bottom:2px solid var(--ink)}
+  .plq{flex:1; display:flex; flex-direction:column; align-items:center; min-width:0}
+  .plq .medal{
+    width:46px; height:46px; border-radius:50%; position:relative; display:grid; place-items:center;
+    box-shadow:0 3px 9px -3px rgba(0,0,0,.4), inset 0 2px 3px rgba(255,255,255,.55), inset 0 -3px 5px rgba(0,0,0,.28);
   }
-  .plq.p1 .pava{width:46px; height:46px; font-size:17px; border:2px solid var(--gold);
-    box-shadow:0 0 0 3px var(--paper), 0 0 0 4.5px var(--gold), 0 4px 12px -5px rgba(192,160,80,.7)}
-  .plq.p1 .pava::before{content:"♛"; position:absolute; top:-17px; left:50%; transform:translateX(-50%); font-size:14px; color:var(--gold)}
-  .plq.p2 .pava{border-color:var(--silver)}
-  .plq.p3 .pava{border-color:var(--bronze)}
-  .plq .cnt{font-weight:800; letter-spacing:-.02em; line-height:1}
-  .plq.p1 .cnt{font-size:52px}
-  .plq.p2 .cnt,.plq.p3 .cnt{font-size:32px; color:#3E3A31}
-  .plq .metal{height:4px; border-radius:2px; margin:9px 10px 8px}
-  .plq.p1 .metal{background:linear-gradient(90deg,#D9BE6E,var(--gold))}
-  .plq.p2 .metal{background:var(--silver)}
-  .plq.p3 .metal{background:var(--bronze)}
-  .plq .pn{font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .plq .pr{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.2em; color:var(--mut); margin-top:3px}
-  .plq.p1 .pr{color:var(--gold)}
+  .plq .medal .mc{font-family:Archivo; font-weight:900; font-size:18px; color:#fff; text-shadow:0 1px 1.5px rgba(0,0,0,.4); position:relative; z-index:1}
+  .plq .medal::after{
+    content:""; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+    background:linear-gradient(115deg, transparent 42%, rgba(255,255,255,.65) 50%, transparent 58%);
+    background-size:260% 100%; background-position:160% 0;
+  }
+  .plq.p1 .medal{width:62px; height:62px; background:radial-gradient(circle at 38% 30%, #FBEAA2, #E6C24D 46%, #B8901F 78%, #8A6D12)}
+  .plq.p1 .medal .mc{font-size:26px}
+  .plq.p1 .medal::before{content:"♛"; position:absolute; top:-21px; left:50%; transform:translateX(-50%); font-size:17px; color:var(--gold); text-shadow:0 1px 1px rgba(138,109,18,.6); animation:crownfloat 2.8s ease-in-out infinite}
+  @keyframes crownfloat{50%{transform:translateX(-50%) translateY(-3px)}}
+  .plq.p1 .medal::after{animation:shine 3.4s ease-in-out infinite}
+  @keyframes shine{0%,100%{background-position:160% 0}55%{background-position:-60% 0}}
+  .plq.p2 .medal{background:radial-gradient(circle at 38% 30%, #FBFBFB, #CDD1D5 48%, #9AA0A6 80%, #767C82)}
+  .plq.p3 .medal{background:radial-gradient(circle at 38% 30%, #F3C89A, #CD8B4E 48%, #9E5F28 82%, #703F16)}
+  .plq .mdays{font-family:'IBM Plex Mono'; font-size:7.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase; margin:7px 0 10px}
+  .plq .riser{
+    width:100%; border-radius:7px 7px 0 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    background:linear-gradient(180deg,#2C2822,#191510); padding:9px 4px;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.08), inset 0 -12px 18px -12px rgba(0,0,0,.65);
+  }
+  .plq .riser .rno{font-family:Archivo; font-weight:900; line-height:1}
+  .plq .riser .rn-name{font-family:'IBM Plex Mono'; font-size:9px; font-weight:600; letter-spacing:.08em; color:rgba(242,237,224,.9); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:94%}
+  .plq.p1 .riser{height:84px} .plq.p1 .riser .rno{font-size:36px; color:var(--gold); text-shadow:0 0 16px rgba(230,194,77,.45)}
+  .plq.p1 .riser .rn-name{color:#F6E9C8}
+  .plq.p2 .riser{height:64px} .plq.p2 .riser .rno{font-size:28px; color:var(--silver)}
+  .plq.p3 .riser{height:50px} .plq.p3 .riser .rno{font-size:24px; color:var(--bronze)}
 
   .list{margin:20px 22px 0; border-top:1px solid var(--line)}
   .row{display:flex; align-items:center; gap:12px; padding:11px 2px; border-bottom:1px solid var(--line)}
@@ -250,7 +264,7 @@
   .cal .mbtn:disabled{opacity:.3; cursor:default}
   .dow{display:grid; grid-template-columns:repeat(7,1fr); margin-top:12px}
   .dow span{font-family:'IBM Plex Mono'; font-size:8px; letter-spacing:.1em; color:var(--mut); text-align:center; text-transform:uppercase}
-  .days{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px}
+  .days{display:grid; grid-template-columns:repeat(7,1fr); gap:7px; margin-top:10px}
   .day{
     aspect-ratio:1; display:grid; place-items:center; cursor:pointer; position:relative;
     font-family:'IBM Plex Mono'; font-size:11px;
@@ -260,7 +274,7 @@
   .day .dnum{position:relative; z-index:2; color:var(--ink); transition:color .15s}
   .day.fut .dnum{color:#C9C2B2}
   .day .badge{
-    position:absolute; inset:0; margin:auto; width:34px; height:34px; border-radius:50%;
+    position:absolute; inset:0; margin:auto; width:32px; height:32px; border-radius:50%;
     z-index:1; pointer-events:none; border:1.5px solid transparent;
   }
   .day.today .badge{border:2px solid var(--ox)}
@@ -272,8 +286,8 @@
     box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
     animation:tickin .4s cubic-bezier(.2,1.8,.4,1);
   }
-  .day.done:hover .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ox)}
-  .day.done.today .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ox)}
+  .day.done:hover .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ox)}
+  .day.done.today .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ox)}
   @keyframes tickin{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(6deg)}}
   .cal .hint{margin-top:12px; font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
 
@@ -394,6 +408,19 @@
     font-family:'IBM Plex Mono'; font-weight:600; font-size:11px; letter-spacing:.14em;
     cursor:pointer; text-transform:uppercase;
   }
+  .delbtn{
+    flex:1; border:1.5px solid var(--ox); background:var(--ox); color:#fff; padding:14px 0;
+    font-family:'IBM Plex Mono'; font-weight:600; font-size:11px; letter-spacing:.14em;
+    cursor:pointer; text-transform:uppercase;
+  }
+  .daytags{display:flex; gap:7px; flex-wrap:wrap; margin-top:16px}
+  .daytag{font-family:'IBM Plex Mono'; font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+    border:1px solid var(--ink); background:var(--card); padding:7px 11px}
+  .daytag.alt{border-style:dashed; color:var(--mut)}
+  .daynote{margin-top:12px; font-size:13.5px; line-height:1.5; color:#453F33; padding-left:10px; border-left:2px solid var(--brass)}
+  .daynone{margin-top:16px; font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.06em; color:var(--mut); text-transform:uppercase}
+  .dsphoto{margin-top:12px; height:120px; background:linear-gradient(135deg,#E4DDCB,#D5CBB4); border:1px solid var(--line);
+    display:grid; place-items:center; font-family:'IBM Plex Mono'; font-size:9px; letter-spacing:.2em; color:var(--mut)}
   canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -443,7 +470,10 @@
       <div class="rule"><div class="fill"></div><div class="cap"></div></div>
       <div class="lbl"><span>Q3 · Day 15 of 92</span><span>77 days remain</span></div>
     </div>
-    <div class="podium" id="podium"></div>
+    <div class="podium-wrap">
+      <div class="podium-cap"><span class="pc-l">The Podium</span><span class="pc-r" id="podiumCap">Q3 ’26 · workout days</span></div>
+      <div class="podium" id="podium"></div>
+    </div>
     <div class="list" id="board"></div>
   </section>
 
@@ -511,6 +541,15 @@
   <button class="photozone" id="photozone">＋ &nbsp;Add proof photo</button>
   <div class="btnrow">
     <button class="savebtn" id="saveBtn">Save details</button>
+  </div>
+</div>
+<div class="sheet" id="daySheet">
+  <div class="shead"><h2 id="daySheetTitle">Entry</h2></div>
+  <div class="sub2">Your workout entry</div>
+  <div id="dayBody"></div>
+  <div class="btnrow">
+    <button class="skipbtn" id="dayEditBtn">Edit details</button>
+    <button class="delbtn" id="dayDelBtn">Delete entry</button>
   </div>
 </div>
 <canvas class="fx" id="fx"></canvas>
@@ -652,14 +691,13 @@ function renderBoard(animate=true){
   const first=animate?Object.fromEntries([...board.children].map(el=>[el.dataset.n,{top:el.getBoundingClientRect().top,val:el.dataset.v}])):{};
   const sorted=[...FRENS].sort((a,b)=>val(b,period)-val(a,period)||a.name.localeCompare(b.name));
   const meds=sorted.slice(0,3);
+  document.getElementById('podiumCap').textContent=`${p.lbl} · workout days`;
   podium.innerHTML=[1,0,2].map(i=>{
     const f=meds[i]; if(!f)return'';
     return `<div class="plq p${i+1}">
-      <div class="pava">${initials(f.name)}</div>
-      <div class="cnt">${val(f,period)}</div>
-      <div class="metal"></div>
-      <div class="pn">${f.name}</div>
-      <div class="pr">${['FIRST','SECOND','THIRD'][i]}</div>
+      <div class="medal"><span class="mc">${val(f,period)}</span></div>
+      <div class="mdays">days</div>
+      <div class="riser"><span class="rno">${i+1}</span><span class="rn-name">${f.name}</span></div>
     </div>`;
   }).join('');
   let rank=0,prev=null,shown=0;
@@ -841,7 +879,7 @@ function renderCal(){
   days.querySelectorAll('.day:not(.pad)').forEach((el,i)=>el.style.animation=`dayin .25s ${Math.min(i*9,280)}ms both`);
   days.querySelectorAll('.day:not(.pad):not(.fut)').forEach(el=>el.addEventListener('click',()=>{
     const doy=+el.dataset.doy, mon=MONTHS[calM].n.slice(0,3), d=el.dataset.d;
-    if(doneDoy.has(doy)) removeDay(doy, `${mon} ${d}`);
+    if(doneDoy.has(doy)) openDaySheet(doy);
     else backfillDay(doy, `${mon} ${d}`);
   }));
 }
@@ -919,17 +957,19 @@ function complete(){
   syncYou(); renderCal(); bounceFlames();
   if(period==='q3'||period==='yr'||period==='all')renderBoard();
   prependCard({n:'Chaitanya',tm:'Just now',act:'Workout',brag:bragFor(ME)+' · off the mark!',note:'',likes:0,c:0});
-  scraps(); openSheet();
+  scraps(); openSheet('log',TODAY_DOY);
 }
 
 /* ---------- sheet ---------- */
 const RECENTS=['Gym','Run'];
 const DEFAULTS=['Lift','Yoga','Football','Swim','Badminton'];
-function renderChips(){
+function renderChips(selTypes){
+  selTypes=selTypes||[];
   const el=document.getElementById('typechips');
+  const mk=(t,star)=>`<button class="chip${selTypes.includes(t)?' on':''}" data-t="${t}">${star?'<span class="star">★</span>':''}${t}</button>`;
   el.innerHTML=[
-    ...RECENTS.map(t=>`<button class="chip" data-t="${t}"><span class="star">★</span>${t}</button>`),
-    ...DEFAULTS.filter(t=>!RECENTS.includes(t)).map(t=>`<button class="chip" data-t="${t}">${t}</button>`),
+    ...RECENTS.map(t=>mk(t,true)),
+    ...DEFAULTS.filter(t=>!RECENTS.includes(t)).map(t=>mk(t,false)),
     `<button class="chip addchip" id="addChip">＋ Add your own</button>`,
     `<input class="custom-in" id="customIn" placeholder="NAME IT…" maxlength="18">`
   ].join('');
@@ -940,24 +980,83 @@ function renderChips(){
     if(e.key==='Enter'&&inp.value.trim()){
       const t=inp.value.trim();
       if(!RECENTS.includes(t))RECENTS.unshift(t);
-      inp.value=''; inp.classList.remove('show');
-      renderChips();
-      const nc=el.querySelector(`.chip[data-t="${t}"]`); if(nc)nc.classList.add('on');
+      const cur=[...el.querySelectorAll('.chip.on[data-t]')].map(c=>c.dataset.t); cur.push(t);
+      renderChips(cur);
       showToast(`“${t.toUpperCase()}” saved — appears first next time`);
     }
   });
 }
-const sheet=document.getElementById('sheet'),scrim=document.getElementById('scrim');
-function openSheet(){renderChips();sheet.classList.add('show');scrim.classList.add('show')}
-function closeSheet(){sheet.classList.remove('show');scrim.classList.remove('show')}
-scrim.addEventListener('click',closeSheet);
-document.getElementById('saveBtn').addEventListener('click',()=>{closeSheet();showToast('Details filed.')});
+const sheet=document.getElementById('sheet'),scrim=document.getElementById('scrim'),daySheet=document.getElementById('daySheet');
+const dayData={}; let sheetMode='log', sheetDoy=TODAY_DOY;
+function syncScrim(){scrim.classList.toggle('show', sheet.classList.contains('show')||daySheet.classList.contains('show'))}
+function openSheet(mode,doy){
+  sheetMode=mode; sheetDoy=doy; const dd=dayData[doy]||{};
+  const head=sheet.querySelector('.shead h2'), stamp=sheet.querySelector('.cheat'), sub=sheet.querySelector('.sub2');
+  if(mode==='log'){head.innerHTML='Entry recorded<i>. +1</i>'; stamp.style.display=''; sub.textContent='The count stands — details are optional'; document.getElementById('saveBtn').textContent='Save details';}
+  else{head.textContent='Edit entry'; stamp.style.display='none'; sub.textContent=fmtDate(doy); document.getElementById('saveBtn').textContent='Update entry';}
+  renderChips(dd.types||[]);
+  document.querySelectorAll('#durchips .chip').forEach(c=>c.classList.toggle('on', !!dd.dur && c.textContent.trim()===dd.dur));
+  sheet.querySelector('.note-in').value=dd.note||'';
+  const pz=document.getElementById('photozone');
+  if(dd.photo){pz.classList.add('got'); pz.textContent='✓  PROOF ATTACHED — IMG_2026.JPG';}
+  else{pz.classList.remove('got'); pz.innerHTML='＋ &nbsp;Add proof photo';}
+  sheet.classList.add('show'); syncScrim();
+}
+function closeSheet(){sheet.classList.remove('show'); syncScrim();}
+function collectDetails(){
+  const types=[...document.querySelectorAll('#typechips .chip.on[data-t]')].map(c=>c.dataset.t);
+  const durEl=document.querySelector('#durchips .chip.on');
+  return {types, dur:durEl?durEl.textContent.trim():null,
+    note:sheet.querySelector('.note-in').value.trim(),
+    photo:document.getElementById('photozone').classList.contains('got')};
+}
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  dayData[sheetDoy]=collectDetails();
+  closeSheet(); showToast(sheetMode==='log'?'Details filed.':'Entry updated.');
+});
 document.querySelectorAll('#durchips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#durchips .chip').forEach(x=>{if(x!==c)x.classList.remove('on')}); c.classList.toggle('on');
 }));
 document.getElementById('photozone').addEventListener('click',function(){
   this.classList.add('got'); this.textContent='✓  PROOF ATTACHED — IMG_2026.JPG';
 });
+/* ---- day detail sheet (Edit / Delete) ---- */
+function fmtDate(doy){
+  const dow=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][(doy+2)%7];
+  let m=MONTHS[0]; for(const mm of MONTHS){if(doy>mm.off&&doy<=mm.off+mm.days){m=mm;break}}
+  return `${dow}, ${m.n.slice(0,3)} ${doy-m.off}`;
+}
+function dayBodyHTML(dd){
+  if(!dd||(!(dd.types&&dd.types.length)&&!dd.dur&&!dd.note&&!dd.photo))
+    return `<div class="daynone">No details on this one — just the ✓.</div>`;
+  let h='';
+  if((dd.types&&dd.types.length)||dd.dur){
+    h+='<div class="daytags">';
+    (dd.types||[]).forEach(t=>h+=`<span class="daytag">${t}</span>`);
+    if(dd.dur)h+=`<span class="daytag alt">${dd.dur}</span>`;
+    h+='</div>';
+  }
+  if(dd.note)h+=`<div class="daynote">${dd.note}</div>`;
+  if(dd.photo)h+='<div class="dsphoto">PROOF ATTACHED</div>';
+  return h;
+}
+function openDaySheet(doy){
+  daySheet.dataset.doy=doy;
+  document.getElementById('daySheetTitle').textContent=fmtDate(doy);
+  document.getElementById('dayBody').innerHTML=dayBodyHTML(dayData[doy]);
+  daySheet.classList.add('show'); syncScrim();
+}
+function closeDaySheet(){daySheet.classList.remove('show'); syncScrim();}
+document.getElementById('dayEditBtn').addEventListener('click',()=>{
+  const doy=+daySheet.dataset.doy; closeDaySheet(); openSheet('edit',doy);
+});
+document.getElementById('dayDelBtn').addEventListener('click',()=>{
+  const doy=+daySheet.dataset.doy; closeDaySheet();
+  let m=MONTHS[0]; for(const mm of MONTHS)if(doy>mm.off&&doy<=mm.off+mm.days){m=mm;break}
+  delete dayData[doy];
+  removeDay(doy, `${m.n.slice(0,3)} ${doy-m.off}`);
+});
+scrim.addEventListener('click',()=>{closeSheet();closeDaySheet()});
 
 /* ---------- paper scraps ---------- */
 const cv=document.getElementById('fx'),ctx=cv.getContext('2d');
