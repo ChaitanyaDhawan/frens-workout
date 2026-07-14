@@ -143,17 +143,28 @@
   .prog .lbl{display:flex; justify-content:space-between; margin-top:7px;
     font-family:'IBM Plex Mono'; font-size:9.5px; letter-spacing:.18em; color:var(--mut); text-transform:uppercase}
 
-  .podium{display:flex; align-items:flex-end; gap:1px; margin:24px 22px 0}
-  .plq{flex:1; text-align:center; padding:0 6px}
+  .podium{display:flex; align-items:flex-end; gap:6px; margin:26px 22px 0}
+  .plq{flex:1; text-align:center; padding:0 4px}
+  .plq .pava{
+    width:34px; height:34px; border-radius:50%; margin:0 auto 9px;
+    border:1.5px solid var(--ink); background:var(--card);
+    display:grid; place-items:center; font-weight:700; font-size:13px; position:relative;
+  }
+  .plq.p1 .pava{width:46px; height:46px; font-size:17px; border:2px solid var(--gold);
+    box-shadow:0 0 0 3px var(--paper), 0 0 0 4.5px var(--gold), 0 4px 12px -5px rgba(192,160,80,.7)}
+  .plq.p1 .pava::before{content:"♛"; position:absolute; top:-17px; left:50%; transform:translateX(-50%); font-size:14px; color:var(--gold)}
+  .plq.p2 .pava{border-color:var(--silver)}
+  .plq.p3 .pava{border-color:var(--bronze)}
   .plq .cnt{font-weight:800; letter-spacing:-.02em; line-height:1}
-  .plq.p1 .cnt{font-size:54px}
-  .plq.p2 .cnt,.plq.p3 .cnt{font-size:33px; color:#3E3A31}
-  .plq .metal{height:3px; margin:10px 8px 8px}
-  .plq.p1 .metal{background:var(--gold)}
+  .plq.p1 .cnt{font-size:52px}
+  .plq.p2 .cnt,.plq.p3 .cnt{font-size:32px; color:#3E3A31}
+  .plq .metal{height:4px; border-radius:2px; margin:9px 10px 8px}
+  .plq.p1 .metal{background:linear-gradient(90deg,#D9BE6E,var(--gold))}
   .plq.p2 .metal{background:var(--silver)}
   .plq.p3 .metal{background:var(--bronze)}
-  .plq .pn{font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600}
+  .plq .pn{font-family:'IBM Plex Mono'; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .plq .pr{font-family:'IBM Plex Mono'; font-size:8.5px; letter-spacing:.2em; color:var(--mut); margin-top:3px}
+  .plq.p1 .pr{color:var(--gold)}
 
   .list{margin:20px 22px 0; border-top:1px solid var(--line)}
   .row{display:flex; align-items:center; gap:12px; padding:11px 2px; border-bottom:1px solid var(--line)}
@@ -644,6 +655,7 @@ function renderBoard(animate=true){
   podium.innerHTML=[1,0,2].map(i=>{
     const f=meds[i]; if(!f)return'';
     return `<div class="plq p${i+1}">
+      <div class="pava">${initials(f.name)}</div>
       <div class="cnt">${val(f,period)}</div>
       <div class="metal"></div>
       <div class="pn">${f.name}</div>
