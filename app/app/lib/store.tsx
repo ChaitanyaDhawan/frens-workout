@@ -26,6 +26,7 @@ import {
 import { monthOf } from "./helpers";
 import { useAuth } from "./auth";
 import { aggregate, fetchRaw, labelToMinutes, type DbWorkout, type RawData } from "./db";
+import { maybeSubscribeAfterLog } from "./push";
 
 export type TabId = "home" | "board" | "you";
 export type SheetMode = "log" | "edit";
@@ -333,7 +334,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const res = await insertWorkout(TODAY_ISO);
     if (res.duplicate) showToast("Already on the record for today");
     else if (!res.ok) showToast("Couldn't log — try again");
-  }, [myId, insertWorkout, showToast]);
+    // First successful log = the happy moment to ask for push permission.
+    else void maybeSubscribeAfterLog(supabase, myId);
+  }, [myId, supabase, insertWorkout, showToast]);
 
   const backfillDay = useCallback(
     async (doy: number) => {
@@ -450,6 +453,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (photoPath) update.photo_path = photoPath;
       const { error } = await supabase.from("workouts").update(update).eq("id", id);
       if (error) showToast("Couldn't save details");
+      // The "Save details" tap is a clean user gesture — a reliable place to
+      // ask for push permission (idempotent, so it won't double-prompt).
+      void maybeSubscribeAfterLog(supabase, myId);
       scheduleRefetch();
     },
     [sheet, myId, uid, supabase, patchRaw, showToast, scheduleRefetch],

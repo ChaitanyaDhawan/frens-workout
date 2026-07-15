@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import PwaBootstrap from "@/app/components/PwaBootstrap";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -19,12 +20,24 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "FRENS Workout",
   description: "Friend-group workout tracker",
+  applicationName: "FRENS",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "FRENS",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/icon-180.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#F3EFE6",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: "cover",
 };
 
@@ -35,7 +48,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${archivo.variable} ${plexMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PwaBootstrap />
+      </body>
     </html>
   );
 }

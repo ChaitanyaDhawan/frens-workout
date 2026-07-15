@@ -16,6 +16,7 @@ import Toast from "@/app/components/Toast";
 import DetailSheet from "@/app/components/DetailSheet";
 import DayDetailSheet from "@/app/components/DayDetailSheet";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
+import InstallGuide from "@/app/components/InstallGuide";
 
 function Home() {
   return (
@@ -55,6 +56,8 @@ function Shell() {
       </div>
 
       <Toast />
+
+      <InstallGuide />
 
       <AnimatePresence>
         {overlayOpen && (
