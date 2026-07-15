@@ -53,7 +53,12 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
         <span className="bstat">{item.brag || ""}</span>
       </div>
       {item.note ? <div className="note">{item.note}</div> : null}
-      {item.pic ? <div className="pic">PROOF ATTACHED</div> : null}
+      {item.picUrl ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img className="pic-img" src={item.picUrl} alt="Proof" loading="lazy" />
+      ) : item.pic ? (
+        <div className="pic">PROOF ATTACHED</div>
+      ) : null}
       <div className="acts">
         <button ref={btnRef} className={`act kudos-btn${liked ? " liked" : ""}`} onClick={onLike}>
           <span className="ico">🔥</span> <span className="lc">{kudos} kudos</span>

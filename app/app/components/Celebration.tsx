@@ -35,6 +35,7 @@ export default function Celebration() {
       activity: c.activity,
       dateLabel: fmtDate(c.doy),
       stats: c.stats,
+      photoUrl: c.photoUrl,
     });
 
   return (
@@ -57,6 +58,11 @@ export default function Celebration() {
         <h1 className="cel-headline">{c.headline}</h1>
         <div className="cel-sub">{c.sub}</div>
         <div className="cel-act">{c.activity}</div>
+
+        {c.photoUrl && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img className="cel-photo" src={c.photoUrl} alt="Your proof" />
+        )}
 
         <div className="cel-stats">
           {c.stats.map((s) => (

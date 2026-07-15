@@ -157,7 +157,7 @@ export default function InstallGuide() {
       >
         <div className="ig-eyebrow">Add to home screen</div>
         <div className="ig-title">
-          Install FRENS<i>.</i>
+          Install FRENS
         </div>
         <div className="ig-sub">
           Faster, full-screen, and the only way to get streak nudges from your frens.

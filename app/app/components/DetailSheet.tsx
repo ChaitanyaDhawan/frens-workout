@@ -70,7 +70,7 @@ export default function DetailSheet() {
       <div className="shead">
         {mode === "log" ? (
           <h2>
-            Log your workout<i>.</i>
+            Log your workout
           </h2>
         ) : (
           <h2>Edit entry</h2>

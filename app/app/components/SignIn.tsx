@@ -22,7 +22,7 @@ export default function SignIn() {
       <div className="auth-card">
         <div className="auth-eyebrow">Est. 2026 · 13 athletes</div>
         <div className="auth-mark">
-          FRENS WORKOUT<i>.</i>
+          FRENS WORKOUT
         </div>
         <div className="auth-rule" />
         <p className="auth-sub">

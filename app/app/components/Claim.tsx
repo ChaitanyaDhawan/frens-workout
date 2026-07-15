@@ -58,7 +58,7 @@ export default function Claim() {
       <div className="auth-card">
         <div className="auth-eyebrow">One last step</div>
         <div className="auth-mark">
-          CLAIM YOUR NAME<i>.</i>
+          CLAIM YOUR NAME
         </div>
         <div className="auth-rule" />
         <p className="auth-sub">Tap your name to link this account. Pick yours.</p>

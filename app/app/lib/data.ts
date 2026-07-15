@@ -40,6 +40,8 @@ export interface FeedItem {
   likes: number;
   c: number;
   pic?: boolean;
+  /** signed URL for the proof photo, when available. */
+  picUrl?: string;
   /** Play the card-in animation once, for just-logged entries. */
   fresh?: boolean;
   /** Whether the signed-in member has reacted (🔥) to this workout. */

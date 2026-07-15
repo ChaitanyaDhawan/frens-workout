@@ -27,6 +27,7 @@ import { monthOf } from "./helpers";
 import { useAuth } from "./auth";
 import { aggregate, fetchRaw, labelToMinutes, type DbWorkout, type RawData } from "./db";
 import { maybeSubscribeAfterLog } from "./push";
+import { compressImage } from "./compressImage";
 
 export type TabId = "home" | "board" | "you";
 export type SheetMode = "log" | "edit";
@@ -86,7 +87,7 @@ interface Store {
 
 const StoreContext = createContext<Store | null>(null);
 
-const EMPTY_RAW: RawData = { members: [], workouts: [], reactions: [], comments: [] };
+const EMPTY_RAW: RawData = { members: [], workouts: [], reactions: [], comments: [], photoUrls: {} };
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const tmpId = () => "tmp-" + Math.random().toString(36).slice(2);
 
@@ -134,6 +135,8 @@ export interface CelebrationData {
   sub: string;
   activity: string;
   stats: { label: string; value: string }[];
+  /** local object URL of the just-added proof photo, for immediate display. */
+  photoUrl?: string;
   key: number;
 }
 
@@ -370,7 +373,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [myId, showToast]);
 
   const computeCelebration = useCallback(
-    (doy: number, activity: string): CelebrationData => {
+    (doy: number, activity: string, photoUrl?: string): CelebrationData => {
       const mine = rawRef.current.workouts.filter((w) => w.member_id === myId);
       const doys = new Set(mine.map((w) => isoToDoy(w.workout_date)));
       doys.add(doy); // count the just-logged day even if the optimistic patch hasn't flushed yet
@@ -404,7 +407,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         headline = `${monthTotal} this month 💪`;
         sub = `${nth(yearTotal)} of 2026`;
       } else {
-        const nices = ["Nice work.", "Logged it.", "On the board.", "Good one.", "That counts."];
+        const nices = ["Nice work", "Logged it", "On the board", "Good one", "That counts"];
         headline = nices[yearTotal % nices.length];
         sub = `${nth(yearTotal)} this year · ${monthTotal} this month`;
       }
@@ -416,12 +419,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         { label: "2026", value: String(yearTotal) },
       ];
       celKey.current += 1;
-      return { doy, headline, sub, activity, stats, key: celKey.current };
+      return { doy, headline, sub, activity, stats, photoUrl, key: celKey.current };
     },
     [myId],
   );
 
-  const closeCelebration = useCallback(() => setCelebration(null), []);
+  const closeCelebration = useCallback(() => {
+    setCelebration((c) => {
+      // Land on Home and re-pop the just-logged card (its fresh window elapsed
+      // behind the celebration overlay).
+      if (c && myId) {
+        const iso = doyToIso(c.doy);
+        const w = rawRef.current.workouts.find((x) => x.member_id === myId && x.workout_date === iso);
+        if (w) {
+          setTab("home");
+          setTimeout(() => markFresh(w.id), 60);
+        }
+      }
+      return null;
+    });
+  }, [myId, markFresh]);
   const editCelebration = useCallback(() => {
     setCelebration((c) => {
       if (c) setSheet({ mode: "edit", doy: c.doy });
@@ -498,6 +515,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const isEdit = cur.mode === "edit";
       const already = rawRef.current.workouts.some((w) => w.member_id === myId && w.workout_date === iso);
       const activity = detail.types[0] || "Workout";
+      const photoUrl = file ? URL.createObjectURL(file) : undefined;
       setSheet(null);
 
       if (!already) {
@@ -513,7 +531,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         markFresh(optimistic.id);
         setLogTick((t) => t + 1);
         setBounceTick((t) => t + 1);
-        setCelebration(computeCelebration(doy, activity)); // rawRef already has the new row
+        setCelebration(computeCelebration(doy, activity, photoUrl)); // rawRef already has the new row
       } else if (isEdit) {
         patchRaw((r) => ({
           ...r,
@@ -569,11 +587,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       let photoPath: string | null = null;
       if (file && uid) {
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const compressed = await compressImage(file); // WebP/JPEG shrink to spare the storage tier
+        const ext = compressed.type === "image/webp" ? "webp" : "jpg";
         const path = `${uid}/${id}-${Date.now()}.${ext}`;
-        const up = await supabase.storage.from("proof").upload(path, file, {
+        const up = await supabase.storage.from("proof").upload(path, compressed, {
           upsert: true,
-          contentType: file.type || "image/jpeg",
+          contentType: compressed.type,
         });
         if (!up.error) photoPath = path;
       }

@@ -44,6 +44,8 @@ export interface RawData {
   workouts: DbWorkout[];
   reactions: DbReaction[];
   comments: DbComment[];
+  /** signed URLs for proof photos, keyed by storage path. */
+  photoUrls: Record<string, string>;
 }
 
 // ---- Date helpers (IST) ----
@@ -267,6 +269,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
         likes: likeCount.get(w.id) ?? 0,
         c: commentCount.get(w.id) ?? 0,
         pic: !!w.photo_path,
+        picUrl: w.photo_path ? raw.photoUrls[w.photo_path] : undefined,
         liked: myLiked.has(w.id),
       };
     });
@@ -292,10 +295,24 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
   if (w.error) throw w.error;
   if (r.error) throw r.error;
   if (c.error) throw c.error;
+
+  // Signed URLs for proof photos (private bucket).
+  const photoUrls: Record<string, string> = {};
+  const paths = (w.data ?? [])
+    .map((row) => (row as DbWorkout).photo_path)
+    .filter((p): p is string => !!p && p !== "pending");
+  if (paths.length) {
+    const { data: signed } = await supabase.storage.from("proof").createSignedUrls(paths, 3600);
+    for (const s of signed ?? []) {
+      if (s.signedUrl && s.path) photoUrls[s.path] = s.signedUrl;
+    }
+  }
+
   return {
     members: (m.data ?? []) as DbMember[],
     workouts: (w.data ?? []) as DbWorkout[],
     reactions: (r.data ?? []) as DbReaction[],
     comments: (c.data ?? []) as DbComment[],
+    photoUrls,
   };
 }

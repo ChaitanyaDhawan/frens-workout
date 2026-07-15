@@ -8,7 +8,7 @@ export default function Header() {
     <header>
       <div className="eyebrow">Est. 2026 · 13 athletes</div>
       <div className="wordmark">
-        FRENS WORKOUT<i>.</i>
+        FRENS WORKOUT
       </div>
       <div className="owner">{me.name}&rsquo;s records</div>
     </header>

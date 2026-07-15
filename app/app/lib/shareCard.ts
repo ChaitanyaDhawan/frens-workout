@@ -9,6 +9,7 @@ export interface ShareCardInput {
   activity: string;
   dateLabel: string;
   stats: { label: string; value: string }[];
+  photoUrl?: string;
 }
 
 const PAPER = "#F3EFE6";
@@ -30,7 +31,7 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
 
 export async function makeShareCard(input: ShareCardInput): Promise<void> {
   const W = 1080;
-  const H = 1350;
+  const H = input.photoUrl ? 1660 : 1350;
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -81,38 +82,61 @@ export async function makeShareCard(input: ShareCardInput): Promise<void> {
   ctx.font = `900 84px ${SANS}`;
   wrap(ctx, input.headline, 96, 680, W - 200, 92);
 
+  // optional proof photo (prominent, cover-fit into a framed band)
+  let baseY = 900;
+  if (input.photoUrl) {
+    const img = await loadImage(input.photoUrl);
+    if (img) {
+      const px = 96, py = 730, pw = W - 192, ph = 470;
+      const far = pw / ph, ar = img.width / img.height;
+      let sw: number, sh: number, sx: number, sy: number;
+      if (ar > far) { sh = img.height; sw = sh * far; sx = (img.width - sw) / 2; sy = 0; }
+      else { sw = img.width; sh = sw / far; sx = 0; sy = (img.height - sh) / 2; }
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(px, py, pw, ph);
+      ctx.clip();
+      ctx.drawImage(img, sx, sy, sw, sh, px, py, pw, ph);
+      ctx.restore();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(px, py, pw, ph);
+      baseY = py + ph + 64;
+    }
+  }
+
   // date
   ctx.fillStyle = MUT;
-  ctx.font = `600 30px ${SANS}`;
-  ctx.fillText(input.dateLabel.toUpperCase(), 96, 900);
+  ctx.font = `600 28px ${SANS}`;
+  ctx.fillText(input.dateLabel.toUpperCase(), 96, baseY);
 
   // stats row
   const stats = input.stats.slice(0, 4);
-  const gap = 30;
+  const gap = 28;
   const boxW = (W - 192 - gap * (stats.length - 1)) / stats.length;
+  const statsY = baseY + 28;
   stats.forEach((s, i) => {
     const x = 96 + i * (boxW + gap);
-    const y = 960;
     ctx.strokeStyle = INK;
     ctx.lineWidth = 3;
-    ctx.strokeRect(x, y, boxW, 200);
+    ctx.strokeRect(x, statsY, boxW, 190);
     ctx.fillStyle = INK;
-    ctx.font = `900 68px ${SANS}`;
+    ctx.font = `900 62px ${SANS}`;
     ctx.textAlign = "center";
-    ctx.fillText(s.value, x + boxW / 2, y + 110);
+    ctx.fillText(s.value, x + boxW / 2, statsY + 105);
     ctx.fillStyle = MUT;
-    ctx.font = `600 22px ${SANS}`;
-    ctx.fillText(s.label.toUpperCase(), x + boxW / 2, y + 160);
+    ctx.font = `600 21px ${SANS}`;
+    ctx.fillText(s.label.toUpperCase(), x + boxW / 2, statsY + 152);
     ctx.textAlign = "left";
   });
 
   // footer
   ctx.fillStyle = GOLD;
-  ctx.fillRect(96, H - 150, W - 192, 5);
+  ctx.fillRect(96, H - 96, W - 192, 5);
   ctx.fillStyle = MUT;
   ctx.font = `600 26px ${SANS}`;
   ctx.textAlign = "center";
-  ctx.fillText("EST. 2026  ·  FRENS ATHLETIC CLUB", W / 2, H - 100);
+  ctx.fillText("EST. 2026  ·  FRENS ATHLETIC CLUB", W / 2, H - 54);
   ctx.textAlign = "left";
 
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob((b) => res(b), "image/png"));

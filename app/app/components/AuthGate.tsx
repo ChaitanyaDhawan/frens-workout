@@ -11,7 +11,7 @@ function AuthSplash() {
       <div className="auth-card">
         <div className="auth-eyebrow">Est. 2026</div>
         <div className="auth-mark">
-          FRENS WORKOUT<i>.</i>
+          FRENS WORKOUT
         </div>
         <div className="auth-loading">Loading…</div>
       </div>
