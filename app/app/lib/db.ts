@@ -305,9 +305,17 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     const memAgg = frensById.get(w.member_id);
     const mt = meta.get(w.id) ?? { qCount: 0, yrCount: 0, isLatest: false };
     const act = w.types && w.types.length ? w.types.join(" · ") : "Workout";
-    const tm = w.source === "app"
-      ? feedTime(w.logged_at)
-      : `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
+    const wLabel = `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
+    // App entries show when they were logged; a backfill (workout day ≠ the day
+    // it was entered) shows the workout day AND when it was logged.
+    const lp = istParts(new Date(w.logged_at));
+    const loggedIso = `${lp.y}-${String(lp.m + 1).padStart(2, "0")}-${String(lp.d).padStart(2, "0")}`;
+    const tm =
+      w.source === "app"
+        ? w.workout_date === loggedIso
+          ? feedTime(w.logged_at)
+          : `${wLabel} · logged ${feedTime(w.logged_at)}`
+        : wLabel;
     return {
       id: w.id,
       n: mem?.display_name ?? "—",
@@ -327,8 +335,10 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     };
   };
 
+  // Activity stream — newest-LOGGED first, so a backfilled old day surfaces at
+  // the top the moment it's entered (workout_date only as a tiebreak).
   const sorted = [...workouts].sort(
-    (a, b) => b.workout_date.localeCompare(a.workout_date) || b.logged_at.localeCompare(a.logged_at),
+    (a, b) => b.logged_at.localeCompare(a.logged_at) || b.workout_date.localeCompare(a.workout_date),
   );
   const feed: FeedItem[] = sorted.slice(0, 24).map(toFeedItem);
   // Every one of my own app-entered workouts, newest first — the You tab paginates this.

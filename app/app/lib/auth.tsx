@@ -108,11 +108,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
+    // A cold launch — notably an iOS PWA relaunched by tapping a push
+    // notification — can read a null session before the stored token / refresh
+    // settles. Retry a few times before concluding "signed out", so a genuinely
+    // signed-in fren isn't bounced to the login screen on a notification tap.
+    (async () => {
+      let { data } = await supabase.auth.getSession();
+      for (let i = 0; i < 3 && !data.session; i++) {
+        await new Promise((r) => setTimeout(r, 500));
+        if (!active) return;
+        data = (await supabase.auth.getSession()).data;
+      }
       if (!active) return;
       setSession(data.session);
       loadMember(data.session);
-    });
+    })();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!active) return;
       setSession(s);
