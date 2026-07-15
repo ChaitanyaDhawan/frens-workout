@@ -276,6 +276,10 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   font-size:52px; color:#fff; background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
   border:2px solid var(--green-d); box-shadow:0 6px 0 var(--green-d), 0 0 30px -6px rgba(39,174,82,.6);
 }
+.cel-badge.fire{
+  background:radial-gradient(circle at 32% 26%, #FFC48A, #E8590C 60%, #B23A1A);
+  border-color:#8C2E12; box-shadow:0 6px 0 #8C2E12, 0 0 34px -6px rgba(232,89,12,.7);
+}
 .cel-headline{font-family:var(--font-archivo); font-weight:900; font-size:34px; line-height:1.05; letter-spacing:-.02em; color:var(--ink); padding:0 10px}
 .cel-sub{font-size:15px; color:#5A5346; margin-top:12px; line-height:1.4; padding:0 20px}
 .cel-act{margin-top:18px; font-family:var(--font-ibm-mono),monospace; font-weight:700; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--paper); background:var(--ink); padding:6px 12px}

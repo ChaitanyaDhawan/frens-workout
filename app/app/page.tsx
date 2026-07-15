@@ -16,6 +16,7 @@ import Toast from "@/app/components/Toast";
 import DetailSheet from "@/app/components/DetailSheet";
 import DayDetailSheet from "@/app/components/DayDetailSheet";
 import Celebration from "@/app/components/Celebration";
+import KudosReceived from "@/app/components/KudosReceived";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
 import InstallGuide from "@/app/components/InstallGuide";
 
@@ -81,6 +82,7 @@ function Shell() {
       <AnimatePresence>{daySheet && <DayDetailSheet key="day-sheet" />}</AnimatePresence>
 
       <Celebration />
+      <KudosReceived />
 
       <ParticleCanvas />
     </>
