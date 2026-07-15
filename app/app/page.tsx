@@ -15,6 +15,7 @@ import TabBar from "@/app/components/TabBar";
 import Toast from "@/app/components/Toast";
 import DetailSheet from "@/app/components/DetailSheet";
 import DayDetailSheet from "@/app/components/DayDetailSheet";
+import Celebration from "@/app/components/Celebration";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
 import InstallGuide from "@/app/components/InstallGuide";
 
@@ -78,6 +79,8 @@ function Shell() {
 
       <AnimatePresence>{sheet && <DetailSheet key="detail-sheet" />}</AnimatePresence>
       <AnimatePresence>{daySheet && <DayDetailSheet key="day-sheet" />}</AnimatePresence>
+
+      <Celebration />
 
       <ParticleCanvas />
     </>

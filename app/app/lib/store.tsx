@@ -57,6 +57,7 @@ interface Store {
   toast: ToastState | null;
   sheet: { mode: SheetMode; doy: number } | null;
   daySheet: { doy: number } | null;
+  celebration: CelebrationData | null;
 
   // ---- actions ----
   setTab: (v: TabId) => void;
@@ -71,6 +72,8 @@ interface Store {
   closeSheet: () => void;
   openDaySheet: (doy: number) => void;
   closeDaySheet: () => void;
+  closeCelebration: () => void;
+  editCelebration: () => void;
   demoLog: () => void;
   addRecent: (t: string) => void;
   showToast: (message: string) => void;
@@ -104,6 +107,35 @@ function blankWorkout(memberId: string, iso: string): DbWorkout {
     logged_at: new Date().toISOString(),
   };
 }
+function isoToDoy(iso: string): number {
+  return Math.floor((Date.parse(iso + "T00:00:00Z") - Date.UTC(IST_YEAR, 0, 1)) / 86400000) + 1;
+}
+function streakOf(doys: Set<number>, today: number): number {
+  let s = 0;
+  let d = doys.has(today) ? today : today - 1;
+  while (doys.has(d)) {
+    s++;
+    d--;
+  }
+  return s;
+}
+function quarterOfDoy(doy: number): 1 | 2 | 3 | 4 {
+  return doy <= 90 ? 1 : doy <= 181 ? 2 : doy <= 273 ? 3 : 4;
+}
+const nth = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+export interface CelebrationData {
+  doy: number;
+  headline: string;
+  sub: string;
+  activity: string;
+  stats: { label: string; value: string }[];
+  key: number;
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { supabase, member, session } = useAuth();
@@ -131,6 +163,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const toastKey = useRef(0);
   const [sheet, setSheet] = useState<{ mode: SheetMode; doy: number } | null>(null);
   const [daySheet, setDaySheet] = useState<{ doy: number } | null>(null);
+  const [celebration, setCelebration] = useState<CelebrationData | null>(null);
+  const celKey = useRef(0);
 
   const [freshIds, setFreshIds] = useState<Set<string>>(() => new Set());
 
@@ -324,19 +358,76 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [myId, supabase, patchRaw, markFresh, scheduleRefetch],
   );
 
-  const logToday = useCallback(async () => {
+  // Hold-to-log opens the detail sheet; the entry is only created on submit.
+  const logToday = useCallback(() => {
     if (!myId) return;
     const already = rawRef.current.workouts.some((w) => w.member_id === myId && w.workout_date === TODAY_ISO);
+    if (already) {
+      showToast("Already on the record for today");
+      return;
+    }
     setSheet({ mode: "log", doy: TODAY_DOY });
-    if (already) return;
-    setLogTick((t) => t + 1);
-    setBounceTick((t) => t + 1);
-    const res = await insertWorkout(TODAY_ISO);
-    if (res.duplicate) showToast("Already on the record for today");
-    else if (!res.ok) showToast("Couldn't log — try again");
-    // First successful log = the happy moment to ask for push permission.
-    else void maybeSubscribeAfterLog(supabase, myId);
-  }, [myId, supabase, insertWorkout, showToast]);
+  }, [myId, showToast]);
+
+  const computeCelebration = useCallback(
+    (doy: number, activity: string): CelebrationData => {
+      const mine = rawRef.current.workouts.filter((w) => w.member_id === myId);
+      const doys = new Set(mine.map((w) => isoToDoy(w.workout_date)));
+      doys.add(doy); // count the just-logged day even if the optimistic patch hasn't flushed yet
+      const all = [...doys];
+      const yearTotal = doys.size;
+      const m = monthOf(doy);
+      const monthTotal = all.filter((d) => d > m.off && d <= m.off + m.days).length;
+      const q = quarterOfDoy(doy);
+      const quarterTotal = all.filter((d) => quarterOfDoy(d) === q).length;
+      const streak = streakOf(doys, TODAY_DOY);
+      const sorted = [...doys].sort((a, b) => a - b);
+      const idx = sorted.indexOf(doy);
+      const gap = idx > 0 ? doy - sorted[idx - 1] : null;
+
+      const MILESTONES = [10, 25, 50, 75, 100, 150, 200, 250, 300];
+      let headline: string;
+      let sub: string;
+      if (yearTotal === 1) {
+        headline = "First one on the record!";
+        sub = "The FRENS grind starts now 🎉";
+      } else if (MILESTONES.includes(yearTotal)) {
+        headline = `${nth(yearTotal)} workout of 2026!`;
+        sub = "That's a milestone 🏆";
+      } else if (gap != null && gap > 10) {
+        headline = "Welcome back!";
+        sub = `${gap} days off — back on the board 👊`;
+      } else if (streak >= 3) {
+        headline = `${streak}-day streak!`;
+        sub = "Don't break the chain 🔥";
+      } else if (monthTotal % 5 === 0) {
+        headline = `${monthTotal} this month 💪`;
+        sub = `${nth(yearTotal)} of 2026`;
+      } else {
+        const nices = ["Nice work.", "Logged it.", "On the board.", "Good one.", "That counts."];
+        headline = nices[yearTotal % nices.length];
+        sub = `${nth(yearTotal)} this year · ${monthTotal} this month`;
+      }
+
+      const stats = [
+        { label: "Streak", value: streak > 0 ? `${streak}🔥` : "—" },
+        { label: "This month", value: String(monthTotal) },
+        { label: "This quarter", value: String(quarterTotal) },
+        { label: "2026", value: String(yearTotal) },
+      ];
+      celKey.current += 1;
+      return { doy, headline, sub, activity, stats, key: celKey.current };
+    },
+    [myId],
+  );
+
+  const closeCelebration = useCallback(() => setCelebration(null), []);
+  const editCelebration = useCallback(() => {
+    setCelebration((c) => {
+      if (c) setSheet({ mode: "edit", doy: c.doy });
+      return null;
+    });
+  }, []);
 
   const backfillDay = useCallback(
     async (doy: number) => {
@@ -404,29 +495,71 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const doy = cur.doy;
       const iso = doyToIso(doy);
       const minutes = labelToMinutes(detail.dur);
-      showToast(cur.mode === "log" ? "Details filed." : "Entry updated.");
+      const isEdit = cur.mode === "edit";
+      const already = rawRef.current.workouts.some((w) => w.member_id === myId && w.workout_date === iso);
+      const activity = detail.types[0] || "Workout";
       setSheet(null);
 
-      // optimistic local patch
-      patchRaw((r) => ({
-        ...r,
-        workouts: r.workouts.map((w) =>
-          w.member_id === myId && w.workout_date === iso
-            ? { ...w, types: detail.types, duration_min: minutes, note: detail.note || null, photo_path: detail.photo ? w.photo_path ?? "pending" : w.photo_path }
-            : w,
-        ),
-      }));
+      if (!already) {
+        // Create-on-submit: optimistic row carries the details, tile/board flip, celebrate.
+        const optimistic: DbWorkout = {
+          ...blankWorkout(myId, iso),
+          types: detail.types,
+          duration_min: minutes,
+          note: detail.note || null,
+          photo_path: detail.photo ? "pending" : null,
+        };
+        patchRaw((r) => ({ ...r, workouts: [...r.workouts, optimistic] }));
+        markFresh(optimistic.id);
+        setLogTick((t) => t + 1);
+        setBounceTick((t) => t + 1);
+        setCelebration(computeCelebration(doy, activity)); // rawRef already has the new row
+      } else if (isEdit) {
+        patchRaw((r) => ({
+          ...r,
+          workouts: r.workouts.map((w) =>
+            w.member_id === myId && w.workout_date === iso
+              ? { ...w, types: detail.types, duration_min: minutes, note: detail.note || null }
+              : w,
+          ),
+        }));
+        showToast("Entry updated.");
+      }
 
-      // resolve the real row id (a just-logged insert may still be in flight)
+      // Resolve / create the real row.
+      let id: string | null = null;
       const local = rawRef.current.workouts.find((w) => w.member_id === myId && w.workout_date === iso);
-      let id = local && !local.id.startsWith("tmp-") ? local.id : null;
-      if (!id) {
-        const { data } = await supabase
+      if (local && !local.id.startsWith("tmp-")) id = local.id;
+
+      if (!already) {
+        const { data, error } = await supabase
           .from("workouts")
+          .insert({ member_id: myId, workout_date: iso, types: detail.types, duration_min: minutes, note: detail.note || null, source: "app" })
           .select("id")
-          .eq("member_id", myId)
-          .eq("workout_date", iso)
-          .maybeSingle();
+          .single();
+        if (error) {
+          if ((error as { code?: string }).code === "23505") {
+            scheduleRefetch();
+          } else {
+            patchRaw((r) => ({
+              ...r,
+              workouts: r.workouts.filter((w) => !(w.member_id === myId && w.workout_date === iso && w.id.startsWith("tmp-"))),
+            }));
+            showToast("Couldn't log — try again");
+            return;
+          }
+        } else if (data?.id) {
+          id = data.id as string;
+          patchRaw((r) => ({
+            ...r,
+            workouts: r.workouts.map((w) =>
+              w.member_id === myId && w.workout_date === iso && w.id.startsWith("tmp-") ? { ...w, id: id! } : w,
+            ),
+          }));
+        }
+      }
+      if (!id) {
+        const { data } = await supabase.from("workouts").select("id").eq("member_id", myId).eq("workout_date", iso).maybeSingle();
         id = (data?.id as string | undefined) ?? null;
       }
       if (!id) {
@@ -445,20 +578,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (!up.error) photoPath = path;
       }
 
-      const update: Record<string, unknown> = {
-        types: detail.types,
-        duration_min: minutes,
-        note: detail.note || null,
-      };
-      if (photoPath) update.photo_path = photoPath;
-      const { error } = await supabase.from("workouts").update(update).eq("id", id);
-      if (error) showToast("Couldn't save details");
-      // The "Save details" tap is a clean user gesture — a reliable place to
-      // ask for push permission (idempotent, so it won't double-prompt).
+      // New logs already carry details in the insert; only edits or a photo need an update.
+      if (isEdit || photoPath) {
+        const update: Record<string, unknown> = { types: detail.types, duration_min: minutes, note: detail.note || null };
+        if (photoPath) update.photo_path = photoPath;
+        const { error } = await supabase.from("workouts").update(update).eq("id", id);
+        if (error) showToast("Couldn't save details");
+      }
       void maybeSubscribeAfterLog(supabase, myId);
       scheduleRefetch();
     },
-    [sheet, myId, uid, supabase, patchRaw, showToast, scheduleRefetch],
+    [sheet, myId, uid, supabase, patchRaw, markFresh, showToast, scheduleRefetch, computeCelebration],
   );
 
   const toggleLike = useCallback(
@@ -538,6 +668,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toast,
       sheet,
       daySheet,
+      celebration,
       setTab,
       setPeriod,
       prevMonth,
@@ -550,6 +681,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       closeSheet,
       openDaySheet,
       closeDaySheet,
+      closeCelebration,
+      editCelebration,
       demoLog,
       addRecent,
       showToast,
@@ -559,9 +692,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       tab, frens, me, period, calM, doneDoy, dayData, feed, recents, logged, bounceTick,
-      logTick, otherTick, periodTick, toast, sheet, daySheet, setPeriod, prevMonth, nextMonth,
+      logTick, otherTick, periodTick, toast, sheet, daySheet, celebration, setPeriod, prevMonth, nextMonth,
       logToday, backfillDay, removeDay, saveDetails, openSheet, closeSheet, openDaySheet,
-      closeDaySheet, demoLog, addRecent, showToast, clearToast, toggleLike, addComment,
+      closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment,
     ],
   );
 

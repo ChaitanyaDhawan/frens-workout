@@ -263,6 +263,31 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 }
 @media (prefers-reduced-motion:reduce){.kudos-pop{animation:none; opacity:0}}
 
+/* ================= CELEBRATION ================= */
+.cel-scrim{
+  position:fixed; inset:0; z-index:80; background:var(--paper);
+  display:flex; align-items:center; justify-content:center; padding:28px;
+  padding-top:max(28px,env(safe-area-inset-top)); padding-bottom:max(28px,env(safe-area-inset-bottom));
+}
+.cel{width:100%; max-width:420px; text-align:center; display:flex; flex-direction:column; align-items:center}
+.cel-eyebrow{font-family:var(--font-ibm-mono),monospace; font-size:11px; font-weight:600; letter-spacing:.3em; color:var(--mut); text-transform:uppercase}
+.cel-badge{
+  width:96px; height:96px; border-radius:50%; margin:22px 0 20px; display:grid; place-items:center;
+  font-size:52px; color:#fff; background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
+  border:2px solid var(--green-d); box-shadow:0 6px 0 var(--green-d), 0 0 30px -6px rgba(39,174,82,.6);
+}
+.cel-headline{font-family:var(--font-archivo); font-weight:900; font-size:34px; line-height:1.05; letter-spacing:-.02em; color:var(--ink); padding:0 10px}
+.cel-sub{font-size:15px; color:#5A5346; margin-top:12px; line-height:1.4; padding:0 20px}
+.cel-act{margin-top:18px; font-family:var(--font-ibm-mono),monospace; font-weight:700; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--paper); background:var(--ink); padding:6px 12px}
+.cel-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:26px 0 6px; width:100%}
+.cel-stat{border:1px solid var(--line); background:var(--card); padding:14px 4px}
+.cel-stat-v{font-family:var(--font-archivo); font-weight:900; font-size:22px; color:var(--ink)}
+.cel-stat-k{font-family:var(--font-ibm-mono),monospace; font-size:8px; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; margin-top:5px}
+.cel-btns{display:flex; gap:10px; width:100%; margin-top:26px}
+.cel-share{flex:2; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); padding:15px 0; font-family:var(--font-ibm-mono),monospace; font-weight:700; font-size:12px; letter-spacing:.12em; cursor:pointer; text-transform:uppercase}
+.cel-edit{flex:1; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); padding:15px 0; font-family:var(--font-ibm-mono),monospace; font-weight:700; font-size:12px; letter-spacing:.12em; cursor:pointer; text-transform:uppercase}
+.cel-done{margin-top:14px; background:none; border:0; color:var(--mut); cursor:pointer; font-family:var(--font-ibm-mono),monospace; font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase}
+
 /* ================= YOU ================= */
 .hero{
   margin:18px 22px 0; border:1.5px solid var(--ink); background:var(--card);

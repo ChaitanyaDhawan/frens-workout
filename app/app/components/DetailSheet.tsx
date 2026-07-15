@@ -70,14 +70,14 @@ export default function DetailSheet() {
       <div className="shead">
         {mode === "log" ? (
           <h2>
-            Entry recorded<i>. +1</i>
+            Log your workout<i>.</i>
           </h2>
         ) : (
           <h2>Edit entry</h2>
         )}
         {mode === "log" && <div className="cheat">Do not cheat</div>}
       </div>
-      <div className="sub2">{mode === "log" ? "The count stands — details are optional" : fmtDate(doy)}</div>
+      <div className="sub2">{mode === "log" ? "Add details, or just hit log — your call" : fmtDate(doy)}</div>
 
       <div className="sec">Activity</div>
       <div className="chips">
@@ -159,7 +159,7 @@ export default function DetailSheet() {
 
       <div className="btnrow">
         <button className="savebtn" onClick={onSave}>
-          {mode === "log" ? "Save details" : "Update entry"}
+          {mode === "log" ? "Log it 💪" : "Update entry"}
         </button>
       </div>
     </motion.div>

@@ -100,7 +100,7 @@ function DayCell({ c, onClick }: { c: Cell; onClick?: () => void }) {
 }
 
 function Calendar() {
-  const { calM, doneDoy, prevMonth, nextMonth, openDaySheet, backfillDay } = useStore();
+  const { calM, doneDoy, prevMonth, nextMonth, openDaySheet, openSheet } = useStore();
   const m = MONTHS[calM];
   let sum = 0;
   doneDoy.forEach((d) => {
@@ -174,7 +174,7 @@ function Calendar() {
               c={c}
               onClick={() => {
                 if (c.done) openDaySheet(c.doy!);
-                else backfillDay(c.doy!);
+                else openSheet("log", c.doy!);
               }}
             />
           ),
