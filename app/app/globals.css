@@ -180,10 +180,21 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .plq.p3 .medal{background:radial-gradient(circle at 38% 30%, #F3C89A, #CD8B4E 48%, #9E5F28 82%, #703F16)}
 .plq .mdays{font-family:var(--font-ibm-mono),monospace; font-size:7.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase; margin:7px 0 10px}
 .plq .riser{
-  width:100%; border-radius:7px 7px 0 0; overflow:hidden;
+  position:relative; width:100%; border-radius:8px 8px 0 0;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-  background:linear-gradient(180deg,#2C2822,#191510); padding:10px 5px 12px;
-  box-shadow:inset 0 2px 0 rgba(255,255,255,.08), inset 0 -12px 18px -12px rgba(0,0,0,.65);
+  background:linear-gradient(180deg,#8A7C68 0%,#6E6151 52%,#554A3C 100%); padding:14px 5px 12px;
+  box-shadow:
+    inset 0 3px 0 rgba(255,255,255,.28),
+    inset 3px 0 0 rgba(255,255,255,.10),
+    inset -3px 0 0 rgba(0,0,0,.22),
+    inset 0 -16px 22px -12px rgba(0,0,0,.5),
+    0 7px 14px -6px rgba(43,38,26,.45);
+}
+/* 3D top face of the pedestal block */
+.plq .riser::before{
+  content:""; position:absolute; top:-6px; left:4px; right:4px; height:9px; border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,#A2937C,#8A7C68);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4);
 }
 .plq .riser .rno{font-family:var(--font-archivo); font-weight:900; line-height:1}
 .plq .riser .rn-name{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.06em; color:rgba(242,237,224,.9); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
@@ -238,6 +249,19 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .act.liked{background:var(--ink); color:var(--paper); border-color:var(--ink)}
 .act.liked .ico{display:inline-block; animation:pop .35s cubic-bezier(.2,2.2,.4,1)}
 @keyframes pop{40%{transform:scale(1.5)}}
+.kudos-btn{position:relative; overflow:visible}
+.kudos-pop{
+  position:absolute; left:50%; bottom:100%; pointer-events:none; z-index:6;
+  font-family:var(--font-archivo); font-weight:900; font-size:15px; letter-spacing:.02em;
+  color:#E8590C; text-shadow:0 1px 0 rgba(158,43,37,.35); white-space:nowrap;
+  animation:kudospop 1.05s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes kudospop{
+  0%{opacity:0; transform:translate(-50%,4px) scale(.6)}
+  22%{opacity:1; transform:translate(-50%,-8px) scale(1.15)}
+  100%{opacity:0; transform:translate(-50%,-34px) scale(1)}
+}
+@media (prefers-reduced-motion:reduce){.kudos-pop{animation:none; opacity:0}}
 
 /* ================= YOU ================= */
 .hero{

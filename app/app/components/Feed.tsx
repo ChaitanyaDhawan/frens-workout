@@ -9,6 +9,7 @@ import type { FeedItem } from "@/app/lib/data";
 function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | null }) {
   const { toggleLike, addComment } = useStore();
   const [liked, setLiked] = useState(item.liked ?? false);
+  const [popKey, setPopKey] = useState(0);
   const btnRef = useRef<HTMLButtonElement>(null);
 
   // Keep in sync if the reaction state changes underneath us (e.g. realtime).
@@ -22,10 +23,13 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
     if (becoming && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       fx.fire(r.left + r.width / 2, r.top + 4);
+      setPopKey((k) => k + 1); // restart the "KUDOS!" pop
       navigator.vibrate?.(10);
     }
     toggleLike(item.id, becoming);
   };
+
+  const kudos = item.likes + (liked ? 1 : 0);
 
   const onComment = () => {
     const body = typeof window !== "undefined" ? window.prompt("Add a comment") : null;
@@ -51,8 +55,11 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
       {item.note ? <div className="note">{item.note}</div> : null}
       {item.pic ? <div className="pic">PROOF ATTACHED</div> : null}
       <div className="acts">
-        <button ref={btnRef} className={`act${liked ? " liked" : ""}`} onClick={onLike}>
-          <span className="ico">🔥</span> <span className="lc">{item.likes + (liked ? 1 : 0)}</span>
+        <button ref={btnRef} className={`act kudos-btn${liked ? " liked" : ""}`} onClick={onLike}>
+          <span className="ico">🔥</span> <span className="lc">{kudos} kudos</span>
+          {popKey > 0 && (
+            <span key={popKey} className="kudos-pop">KUDOS!</span>
+          )}
         </button>
         <button className="act" onClick={onComment}>✎ {item.c} comments</button>
       </div>

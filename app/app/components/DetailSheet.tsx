@@ -79,7 +79,7 @@ export default function DetailSheet() {
       </div>
       <div className="sub2">{mode === "log" ? "The count stands — details are optional" : fmtDate(doy)}</div>
 
-      <div className="sec">Activity · yours first</div>
+      <div className="sec">Activity</div>
       <div className="chips">
         {chipList.map(({ t, star }) => (
           <button
@@ -146,8 +146,8 @@ export default function DetailSheet() {
       </div>
       <button className={`photozone${photo ? " got" : ""}`} onClick={() => photoRef.current?.click()}>
         {photo
-          ? `✓  ${file ? file.name.toUpperCase() : "PROOF ATTACHED"}`
-          : "＋  Add proof photo"}
+          ? `✓  ${file ? file.name.toUpperCase() : "SHOWING OFF"}`
+          : "＋  Add proof — or show off 💪"}
       </button>
       <input
         ref={photoRef}

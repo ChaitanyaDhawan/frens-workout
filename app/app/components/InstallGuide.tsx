@@ -179,7 +179,7 @@ export default function InstallGuide() {
         )}
 
         <button className="ig-dismiss" onClick={close}>
-          Continue in browser
+          Continue in browser anyway
         </button>
       </div>
     </>
