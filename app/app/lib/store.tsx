@@ -411,8 +411,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       const stats = [
         { label: "Streak", value: streak > 0 ? `${streak}🔥` : "—" },
-        { label: "This month", value: String(monthTotal) },
-        { label: "This quarter", value: String(quarterTotal) },
+        { label: "Month", value: String(monthTotal) },
+        { label: "Quarter", value: String(quarterTotal) },
         { label: "2026", value: String(yearTotal) },
       ];
       celKey.current += 1;

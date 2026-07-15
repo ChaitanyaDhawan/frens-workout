@@ -82,11 +82,11 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.2), 0 2.5px 0 #176B31;
 }
 .tile-you .tile::after{background:rgba(9,58,26,.5)}
-.tile-you .t-cap{font-family:var(--font-ibm-mono),monospace; font-size:8px; font-weight:600; letter-spacing:.2em; color:var(--green-d); text-transform:uppercase; margin-top:7px; text-align:center}
+.tile-you .t-cap{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; font-weight:600; letter-spacing:.2em; color:var(--green-d); text-transform:uppercase; margin-top:7px; text-align:center}
 .t-div{width:1px; align-self:stretch; background:var(--line)}
 .t-stat{text-align:center; flex:1}
 .t-stat .v{font-weight:800; font-size:24px; letter-spacing:-.02em; line-height:1.1; display:flex; align-items:center; justify-content:center; gap:5px}
-.t-stat .k{font-family:var(--font-ibm-mono),monospace; font-size:8px; letter-spacing:.2em; color:var(--mut); margin-top:5px; text-transform:uppercase}
+.t-stat .k{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.2em; color:var(--mut); margin-top:5px; text-transform:uppercase}
 .flame{display:inline-block; font-size:21px; filter:grayscale(1) opacity(.4); transform-origin:50% 85%}
 .flame.lit{filter:none; animation:flick 1.8s ease-in-out infinite}
 @keyframes flick{
@@ -99,7 +99,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 /* ---- ONE shared tick style: home tile, You strip, calendar ---- */
 .t-week{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:13px; padding-top:12px; border-top:1px solid var(--line)}
 .twd{text-align:center}
-.twl{font-family:var(--font-ibm-mono),monospace; font-size:8px; font-weight:600; color:var(--mut); text-transform:uppercase}
+.twl{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; font-weight:600; color:var(--mut); text-transform:uppercase}
 .twc{
   margin:5px auto 0; width:34px; height:34px; border-radius:50%;
   border:1.5px solid var(--line); background:var(--paper);
@@ -157,7 +157,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .podium-wrap{margin:26px 20px 0}
 .podium-cap{display:flex; justify-content:space-between; align-items:baseline; margin:0 4px 16px}
 .podium-cap .pc-l{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.24em; color:var(--ink); text-transform:uppercase}
-.podium-cap .pc-r{font-family:var(--font-ibm-mono),monospace; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
+.podium-cap .pc-r{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
 .podium{display:flex; align-items:flex-end; gap:10px; border-bottom:2px solid var(--ink)}
 .plq{flex:1; display:flex; flex-direction:column; align-items:center; min-width:0}
 .plq .medal{
@@ -178,7 +178,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 @keyframes shine{0%,100%{background-position:160% 0}55%{background-position:-60% 0}}
 .plq.p2 .medal{background:radial-gradient(circle at 38% 30%, #FBFBFB, #CDD1D5 48%, #9AA0A6 80%, #767C82)}
 .plq.p3 .medal{background:radial-gradient(circle at 38% 30%, #F3C89A, #CD8B4E 48%, #9E5F28 82%, #703F16)}
-.plq .mdays{font-family:var(--font-ibm-mono),monospace; font-size:7.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase; margin:7px 0 10px}
+.plq .mdays{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.14em; color:var(--mut); text-transform:uppercase; margin:7px 0 10px}
 .plq .riser{
   position:relative; width:100%; border-radius:8px 8px 0 0;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
@@ -216,7 +216,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .nm{font-weight:700; font-size:14.5px; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .sub{font-family:var(--font-ibm-mono),monospace; font-size:9px; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
 .sub .st{color:var(--brass); font-weight:600}
-.youtag{font-family:var(--font-ibm-mono),monospace; font-size:8px; font-weight:600; letter-spacing:.12em; color:var(--paper); background:var(--ink); padding:2px 5px; margin-left:7px; vertical-align:2px}
+.youtag{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; font-weight:600; letter-spacing:.12em; color:var(--paper); background:var(--ink); padding:2px 5px; margin-left:7px; vertical-align:2px}
 .flaps{display:flex; gap:2.5px; perspective:280px}
 
 /* ================= FEED ================= */
@@ -233,7 +233,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .card .ava{width:30px;height:30px;font-size:11.5px}
 .card .meta{flex:1}
 .card .cnm{font-weight:700; font-size:13.5px}
-.card .tm{font-family:var(--font-ibm-mono),monospace; font-size:8.5px; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
+.card .tm{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
 .card .brag{display:flex; align-items:center; gap:9px; margin-top:12px; flex-wrap:wrap}
 .card .bact{font-weight:800; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:3px 7px}
 .card .bstat{font-family:var(--font-ibm-mono),monospace; font-size:9.5px; font-weight:600; letter-spacing:.16em; color:var(--green-d); text-transform:uppercase}
@@ -286,7 +286,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .cel-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:26px 0 6px; width:100%}
 .cel-stat{border:1px solid var(--line); background:var(--card); padding:14px 4px}
 .cel-stat-v{font-family:var(--font-archivo); font-weight:900; font-size:22px; color:var(--ink)}
-.cel-stat-k{font-family:var(--font-ibm-mono),monospace; font-size:8px; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; margin-top:5px}
+.cel-stat-k{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; margin-top:5px}
 .cel-btns{display:flex; gap:10px; width:100%; margin-top:26px}
 .cel-share{flex:2; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); padding:15px 0; font-family:var(--font-ibm-mono),monospace; font-weight:700; font-size:12px; letter-spacing:.12em; cursor:pointer; text-transform:uppercase}
 .cel-edit{flex:1; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); padding:15px 0; font-family:var(--font-ibm-mono),monospace; font-weight:700; font-size:12px; letter-spacing:.12em; cursor:pointer; text-transform:uppercase}
@@ -305,7 +305,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .stat{flex:1; padding:13px 8px; text-align:center; border-right:1px solid var(--line)}
 .stat:last-child{border-right:0}
 .stat .v{font-weight:800; font-size:24px; letter-spacing:-.02em}
-.stat .k{font-family:var(--font-ibm-mono),monospace; font-size:8px; letter-spacing:.2em; color:var(--mut); margin-top:4px; text-transform:uppercase}
+.stat .k{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.2em; color:var(--mut); margin-top:4px; text-transform:uppercase}
 .cal{margin:14px 22px 0; border:1px solid var(--line); background:var(--card); padding:16px}
 .cal .mh{display:flex; justify-content:space-between; align-items:center}
 .cal .mn{font-weight:800; font-size:16px; letter-spacing:-.01em}
@@ -328,7 +328,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 }
 .cal .mbtn:disabled{opacity:.3; cursor:default}
 .dow{display:grid; grid-template-columns:repeat(7,1fr); margin-top:12px}
-.dow span{font-family:var(--font-ibm-mono),monospace; font-size:8px; letter-spacing:.1em; color:var(--mut); text-align:center; text-transform:uppercase}
+.dow span{font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.1em; color:var(--mut); text-align:center; text-transform:uppercase}
 .days{display:grid; grid-template-columns:repeat(7,1fr); gap:7px; margin-top:10px}
 .day{
   aspect-ratio:1; display:grid; place-items:center; cursor:pointer; position:relative;
@@ -354,7 +354,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .day.done:hover .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ox)}
 .day.done.today .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ox)}
 @keyframes tickin{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(6deg)}}
-.cal .hint{margin-top:12px; font-family:var(--font-ibm-mono),monospace; font-size:8.5px; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
+.cal .hint{margin-top:12px; font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
 
 /* ================= hold plate ================= */
 .dock{
@@ -407,7 +407,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .demo{
   position:fixed; left:16px; bottom:calc(128px + env(safe-area-inset-bottom)); z-index:31;
   background:var(--card); border:1px solid var(--ink); color:var(--ink);
-  font-family:var(--font-ibm-mono),monospace; font-size:8.5px; font-weight:600; letter-spacing:.1em;
+  font-family:var(--font-ibm-mono),monospace; font-size:9px; font-weight:600; font-weight:600; letter-spacing:.1em;
   padding:7px 10px; cursor:pointer; text-transform:uppercase;
 }
 .scrim{position:fixed; inset:0; background:rgba(27,24,18,.45); z-index:40}
@@ -423,7 +423,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .sheet .cheat{
   position:absolute; right:0; top:2px; transform:rotate(-7deg);
   border:1.5px solid var(--ox); color:var(--ox); border-radius:2px;
-  font-family:var(--font-ibm-mono),monospace; font-weight:600; font-size:8px; letter-spacing:.16em;
+  font-family:var(--font-ibm-mono),monospace; font-weight:600; font-size:9px; font-weight:600; letter-spacing:.16em;
   padding:4px 7px; text-transform:uppercase; opacity:.85;
 }
 .sub2{font-family:var(--font-ibm-mono),monospace; color:var(--mut); font-size:9px; margin-top:5px; letter-spacing:.16em; text-transform:uppercase}
