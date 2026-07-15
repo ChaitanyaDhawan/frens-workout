@@ -59,13 +59,13 @@ async function recipientsAndMessage(table: string, record: any):
     const n = await quarterCount(record.member_id);
     const { data: all } = await db.from('members').select('id').not('user_id', 'is', null);
     const recipients = (all ?? []).map(m => m.id).filter(id => id !== record.member_id);
-    return { recipients, title: 'FRENS', body: `${name} just worked out 🔥 (${ordinal(n)} this quarter)`, url: '/' };
+    return { recipients, title: `${name} just worked out 🔥`, body: `${ordinal(n)} this quarter`, url: `/?w=${record.id}` };
   }
   if (table === 'reactions') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
     if (!w || w.member_id === record.member_id) return null; // no self-kudos ping
     const name = await nameOf(record.member_id);
-    return { recipients: [w.member_id], title: 'FRENS', body: `${name} gave you kudos 🔥`, url: '/' };
+    return { recipients: [w.member_id], title: `${name} gave you kudos 🔥`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` };
   }
   if (table === 'comments') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
@@ -77,10 +77,10 @@ async function recipientsAndMessage(table: string, record: any):
     const name = await nameOf(record.member_id);
     const ownerName = await nameOf(w.member_id);
     const isReply = w.member_id !== record.member_id && (prior ?? []).length > 1;
-    const body = w.member_id === record.member_id
-      ? `${name} commented`
-      : isReply ? `${name} replied on ${ownerName}'s workout` : `${name} commented on your workout`;
-    return { recipients: [...set], title: 'FRENS', body, url: '/' };
+    const title = w.member_id === record.member_id
+      ? `${name} commented 💬`
+      : isReply ? `${name} replied on ${ownerName}'s workout 💬` : `${name} commented on your workout 💬`;
+    return { recipients: [...set], title, body: String(record.body ?? '').slice(0, 140), url: `/?w=${record.workout_id}` };
   }
   return null;
 }

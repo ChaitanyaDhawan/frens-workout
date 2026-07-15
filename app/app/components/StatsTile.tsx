@@ -1,16 +1,19 @@
 "use client";
 
 import { useStore } from "@/app/lib/store";
-import { pad, rankOf, streakNow } from "@/app/lib/helpers";
+import { pad, rankOf, val } from "@/app/lib/helpers";
+import { CURRENT_Q, TODAY_DOY } from "@/app/lib/data";
 import FlapCounter from "./FlapCounter";
-import Flame from "./Flame";
-import WeekStrip from "./WeekStrip";
+import HistoryStrip from "./HistoryStrip";
 
-/** Home "Your Q3" tile — entries (solari), streak, rank, week strip. Taps to You. */
+const QL = CURRENT_Q.toUpperCase();
+
+/** Home tile — this-quarter entries (solari), last-30 count, rank, 30-day strip. Taps to You. */
 export default function StatsTile() {
-  const { me, frens, doneDoy, rollTick, bounceTick, setTab } = useStore();
-  const streak = streakNow(doneDoy);
-  const rank = rankOf(frens, me.name, "q3");
+  const { me, frens, doneDoy, rollTick, setTab } = useStore();
+  const rank = rankOf(frens, me.name, CURRENT_Q);
+  let last30 = 0;
+  for (let d = Math.max(1, TODAY_DOY - 29); d <= TODAY_DOY; d++) if (doneDoy.has(d)) last30++;
 
   return (
     <div
@@ -26,29 +29,26 @@ export default function StatsTile() {
       }}
     >
       <div className="t-top">
-        <span className="t-eyebrow">Your Q3</span>
+        <span className="t-eyebrow">Your {QL}</span>
         <span className="t-link">Your ledger →</span>
       </div>
       <div className="t-body">
         <div>
-          <FlapCounter className="t-flaps" value={me.q3} rollKey={rollTick} />
+          <FlapCounter className="t-flaps" value={val(me, CURRENT_Q)} rollKey={rollTick} />
           <div className="t-cap">Entries</div>
         </div>
         <div className="t-div" />
         <div className="t-stat">
-          <div className="v">
-            <Flame lit={streak > 0} bounceTick={bounceTick} />
-            <span>{streak}</span>
-          </div>
-          <div className="k">Day streak</div>
+          <div className="v">{last30}</div>
+          <div className="k">Last 30 days</div>
         </div>
         <div className="t-div" />
         <div className="t-stat">
           <div className="v">{"#" + pad(rank)}</div>
-          <div className="k">Rank · Q3</div>
+          <div className="k">Rank · {QL}</div>
         </div>
       </div>
-      <WeekStrip doneDoy={doneDoy} containerClass="t-week" />
+      <HistoryStrip doneDoy={doneDoy} />
     </div>
   );
 }

@@ -2,10 +2,45 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/app/lib/store";
-import { MONTHS, TODAY_DOY } from "@/app/lib/data";
-import { bestStreak, streakNow } from "@/app/lib/helpers";
+import { useAuth } from "@/app/lib/auth";
+import { CURRENT_Q, MONTHS, TODAY_DOY } from "@/app/lib/data";
+import { bestStreak, streakNow, val } from "@/app/lib/helpers";
 import Flame from "./Flame";
 import WeekStrip from "./WeekStrip";
+import { FeedCard } from "./Feed";
+
+const PAGE = 5;
+
+/** My own dispatches below the calendar — paginated in pages of 5. */
+function MyDispatches() {
+  const { mineFeed } = useStore();
+  const [limit, setLimit] = useState(PAGE);
+  const shown = mineFeed.slice(0, limit);
+  const remaining = mineFeed.length - limit;
+
+  return (
+    <div className="mine-sect">
+      <div className="mine-h">
+        <h2>My dispatches</h2>
+        <div className="ln" />
+      </div>
+      {mineFeed.length === 0 ? (
+        <div className="mine-empty">No dispatches yet — log a workout to start your ledger.</div>
+      ) : (
+        <>
+          {shown.map((f) => (
+            <FeedCard key={f.id} item={f} mountDelay={null} />
+          ))}
+          {remaining > 0 && (
+            <button className="mine-more" onClick={() => setLimit((l) => l + PAGE)}>
+              View all · {remaining} more
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Animate 0 → `to` once on mount; update instantly on later changes. */
 function useCountUp(to: number, ms = 450): number {
@@ -45,24 +80,38 @@ function StreakHero() {
 
 function Stats() {
   const { me, doneDoy } = useStore();
-  const q = useCountUp(me.q3);
-  const y = useCountUp(me.q1 + me.q2 + me.q3);
+  const q = useCountUp(val(me, CURRENT_Q));
+  const y = useCountUp(me.q1 + me.q2 + me.q3 + (me.q4 ?? 0));
   const b = useCountUp(bestStreak(doneDoy));
+  const kq = useCountUp(me.kudosQ3 ?? 0);
+  const ka = useCountUp(me.kudosAll ?? 0);
   return (
-    <div className="stats">
-      <div className="stat">
-        <div className="v">{q}</div>
-        <div className="k">This quarter</div>
+    <>
+      <div className="stats">
+        <div className="stat">
+          <div className="v">{q}</div>
+          <div className="k">This quarter</div>
+        </div>
+        <div className="stat">
+          <div className="v">{y}</div>
+          <div className="k">2026</div>
+        </div>
+        <div className="stat">
+          <div className="v">{b}</div>
+          <div className="k">Best streak</div>
+        </div>
       </div>
-      <div className="stat">
-        <div className="v">{y}</div>
-        <div className="k">2026</div>
+      <div className="stats">
+        <div className="stat">
+          <div className="v">{kq} 🔥</div>
+          <div className="k">Kudos · {CURRENT_Q.toUpperCase()}</div>
+        </div>
+        <div className="stat">
+          <div className="v">{ka} 🔥</div>
+          <div className="k">Kudos · all-time</div>
+        </div>
       </div>
-      <div className="stat">
-        <div className="v">{b}</div>
-        <div className="k">Best streak</div>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -185,12 +234,26 @@ function Calendar() {
   );
 }
 
+function SignOutRow() {
+  const { member, signOut } = useAuth();
+  return (
+    <div className="signout-row">
+      {member && <div className="signout-who">Signed in as {member.display_name}</div>}
+      <button className="signout-btn" onClick={() => signOut()}>
+        Sign out
+      </button>
+    </div>
+  );
+}
+
 export default function You() {
   return (
     <>
       <StreakHero />
       <Stats />
       <Calendar />
+      <MyDispatches />
+      <SignOutRow />
     </>
   );
 }

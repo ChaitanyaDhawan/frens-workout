@@ -6,7 +6,7 @@ export default function Header() {
   const { me } = useStore();
   return (
     <header>
-      <div className="eyebrow">Est. 2026 · 13 athletes</div>
+      <div className="eyebrow">Est. 2025 · 13 athletes</div>
       <div className="wordmark">
         FRENS WORKOUT
       </div>

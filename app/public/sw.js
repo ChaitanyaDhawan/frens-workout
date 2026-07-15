@@ -39,28 +39,27 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const data = event.notification.data || {};
-  const targetUrl = new URL(data.url || "/", self.location.origin).href;
+  const url = data.url || "/";
+  const targetUrl = new URL(url, self.location.origin).href;
 
   event.waitUntil(
-    self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        // Prefer an already-open FRENS window on the exact target.
-        for (const client of clientList) {
-          if (client.url === targetUrl && "focus" in client) return client.focus();
-        }
-        // Otherwise reuse any open window: focus it and navigate.
-        for (const client of clientList) {
-          if ("focus" in client) {
-            if ("navigate" in client) {
-              return client.focus().then(() => client.navigate(targetUrl));
-            }
-            return client.focus();
+    (async () => {
+      const clientList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      // Reuse any open FRENS window: focus it and deliver the deep-link by
+      // message (reliable even where client.navigate isn't, e.g. installed PWAs).
+      for (const client of clientList) {
+        if ("focus" in client) {
+          await client.focus();
+          try {
+            client.postMessage({ type: "FRENS_DEEPLINK", url: url });
+          } catch (e) {
+            /* ignore */
           }
+          return;
         }
-        // Nothing open — open a fresh window.
-        if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
-        return undefined;
-      }),
+      }
+      // Nothing open — open a fresh window at the target; the app reads ?w= on load.
+      if (self.clients.openWindow) await self.clients.openWindow(targetUrl);
+    })(),
   );
 });

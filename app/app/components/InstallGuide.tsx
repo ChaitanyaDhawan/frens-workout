@@ -10,18 +10,9 @@ import {
   type InstallPlatform,
 } from "@/app/lib/push";
 
-const DISMISS_KEY = "frens_install_dismissed";
-
 function ShareIcon() {
   return (
-    <svg
-      className="ig-share"
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className="ig-share" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 3v11M12 3 8.5 6.5M12 3l3.5 3.5"
         stroke="currentColor"
@@ -45,13 +36,13 @@ function stepsFor(platform: InstallPlatform): ReactNode[] {
     case "ios-safari":
       return [
         <>
-          Tap <ShareIcon /> <b>Share</b> in Safari&apos;s toolbar
+          Tap the <b>⋯</b> (three dots) in Safari&apos;s toolbar
         </>,
         <>
-          Choose <b>&ldquo;Add to Home Screen&rdquo;</b>
+          Tap <ShareIcon /> <b>Share</b> → <b>scroll down</b> → <b>Add to Home Screen</b>
         </>,
         <>
-          Tap <b>Add</b> — FRENS lands on your home screen
+          Tap <b>Add</b>
         </>,
       ];
     case "ios-other":
@@ -60,55 +51,76 @@ function stepsFor(platform: InstallPlatform): ReactNode[] {
           Open this page in <b>Safari</b>
         </>,
         <>
-          Tap <ShareIcon /> <b>Share</b> → <b>&ldquo;Add to Home Screen&rdquo;</b>
+          Tap the <b>⋯</b> (three dots) in the toolbar
         </>,
         <>
-          Tap <b>Add</b>
+          Tap <ShareIcon /> <b>Share</b> → <b>scroll down</b> → <b>Add to Home Screen</b>
         </>,
       ];
     case "android-chrome":
       return [
         <>
-          Open the browser menu <b>⋮</b> (top-right)
+          Open the <b>⋮</b> menu
         </>,
         <>
-          Tap <b>&ldquo;Install app&rdquo;</b> or <b>&ldquo;Add to Home screen&rdquo;</b>
+          Tap <b>Install app</b>
         </>,
-        <>Confirm — FRENS installs like an app</>,
+        <>Confirm</>,
+      ];
+    case "desktop":
+      return [
+        <>
+          Click the <b>install icon</b> in the address bar
+        </>,
+        <>
+          …or <b>⋮</b> menu → <b>Install</b>
+        </>,
+        <>Confirm</>,
       ];
     default:
       return [
-        <>Open the browser menu</>,
         <>
-          Tap <b>&ldquo;Add to Home screen&rdquo;</b>
+          Open the browser <b>menu</b>
         </>,
-        <>Confirm to install</>,
+        <>
+          Tap <b>Add to Home screen</b>
+        </>,
+        <>Confirm</>,
       ];
   }
 }
 
 /**
- * One-time, dismissible install helper. Renders nothing when already installed
- * (standalone) or on desktop; on a mobile browser it slides up a bottom sheet
- * with the right Add-to-Home-Screen steps, matching the app's paper/ink look.
+ * Dismissible install helper. Renders nothing only when already installed
+ * (standalone). On every other environment (mobile + desktop) it slides up a
+ * bottom sheet with the right steps. Dismissal is for the current load only —
+ * it comes back on the next open, by design (no permanent "never show again").
  */
+// Desktop never gets the install nag — just a soft "it's better on your phone"
+// note, shown at most once a week.
+const DESKTOP_NOTE_KEY = "frens_desktop_note_ts";
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
 export default function InstallGuide() {
   const [platform, setPlatform] = useState<InstallPlatform>("standalone");
   const [hasPrompt, setHasPrompt] = useState(false);
   const [open, setOpen] = useState(false);
-  const [dismissed, setDismissed] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
+  const [suppressed, setSuppressed] = useState(false);
 
   // Resolve environment on the client only (keeps SSR output = null).
   useEffect(() => {
-    setPlatform(getInstallPlatform());
-    let already = false;
-    try {
-      already = localStorage.getItem(DISMISS_KEY) === "1";
-    } catch {
-      already = false;
-    }
-    setDismissed(already);
+    const p = getInstallPlatform();
+    setPlatform(p);
     setHasPrompt(!!getDeferredPrompt());
+    if (p === "desktop") {
+      try {
+        const last = Number(localStorage.getItem(DESKTOP_NOTE_KEY) || 0);
+        if (Date.now() - last < WEEK_MS) setSuppressed(true);
+      } catch {
+        /* localStorage blocked — fall through and show once */
+      }
+    }
     const unsub = subscribeInstallState(() => {
       setHasPrompt(!!getDeferredPrompt());
       if (wasInstalled()) setOpen(false);
@@ -116,25 +128,31 @@ export default function InstallGuide() {
     return unsub;
   }, []);
 
-  const eligible = platform !== "standalone" && platform !== "desktop" && !dismissed;
+  const eligible = platform !== "standalone" && !dismissed && !suppressed;
+  const isDesktop = platform === "desktop";
 
   // Slide in after a short beat so the first paint stays clean.
   useEffect(() => {
     if (!eligible) return;
-    const t = setTimeout(() => setOpen(true), 1500);
+    const t = setTimeout(() => {
+      setOpen(true);
+      // Stamp the weekly cooldown the moment the desktop note actually shows.
+      if (isDesktop) {
+        try {
+          localStorage.setItem(DESKTOP_NOTE_KEY, String(Date.now()));
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 1500);
     return () => clearTimeout(t);
-  }, [eligible]);
+  }, [eligible, isDesktop]);
 
   if (!eligible) return null;
 
+  // Close for this load only — it returns on the next app open.
   const close = () => {
     setOpen(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    // Drop out of the tree once the slide-out finishes.
     setTimeout(() => setDismissed(true), 350);
   };
 
@@ -143,24 +161,42 @@ export default function InstallGuide() {
     if (outcome === "accepted" || outcome === "unavailable") close();
   };
 
+  // Desktop: a gentle, weekly nudge toward the phone — no install steps, no button.
+  if (isDesktop) {
+    return (
+      <>
+        <div className={`ig-scrim${open ? " show" : ""}`} onClick={close} />
+        <div
+          className={`ig-sheet${open ? " show" : ""}`}
+          role="dialog"
+          aria-modal="false"
+          aria-label="FRENS on your phone"
+        >
+          <div className="ig-eyebrow">Heads up</div>
+          <div className="ig-title">Best on your phone</div>
+          <div className="ig-sub">
+            FRENS works right here in your browser — but it really shines installed on your
+            phone: one-tap logging and a nudge the moment a fren works out.
+          </div>
+          <button className="ig-dismiss" onClick={close}>
+            Got it — keep using it here
+          </button>
+        </div>
+      </>
+    );
+  }
+
   const showNativeButton = platform === "android-chrome" && hasPrompt;
   const steps = stepsFor(platform);
 
   return (
     <>
       <div className={`ig-scrim${open ? " show" : ""}`} onClick={close} />
-      <div
-        className={`ig-sheet${open ? " show" : ""}`}
-        role="dialog"
-        aria-modal="false"
-        aria-label="Install FRENS"
-      >
+      <div className={`ig-sheet${open ? " show" : ""}`} role="dialog" aria-modal="false" aria-label="Install FRENS">
         <div className="ig-eyebrow">Add to home screen</div>
-        <div className="ig-title">
-          Install FRENS
-        </div>
+        <div className="ig-title">Install FRENS</div>
         <div className="ig-sub">
-          Faster, full-screen, and the only way to get streak nudges from your frens.
+          Faster and full-screen — and the only way to get notified the moment a fren logs a workout.
         </div>
 
         {showNativeButton ? (
@@ -179,7 +215,7 @@ export default function InstallGuide() {
         )}
 
         <button className="ig-dismiss" onClick={close}>
-          Continue in browser anyway
+          Continue in browser for now
         </button>
       </div>
     </>

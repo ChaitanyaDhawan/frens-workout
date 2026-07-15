@@ -11,7 +11,7 @@ const SHEET_EASE: [number, number, number, number] = [0.3, 1.15, 0.35, 1];
 
 /** Log / edit sheet — activity chips, duration, note, proof photo. */
 export default function DetailSheet() {
-  const { sheet, dayData, recents, addRecent, saveDetails, showToast } = useStore();
+  const { sheet, dayData, recents, addRecent, saveDetails, showToast, removeDay, closeSheet } = useStore();
   // Keep the last non-null sheet so we don't crash during AnimatePresence exit,
   // when the store's `sheet` has already gone null but this is still animating out.
   const snap = useRef(sheet);
@@ -35,7 +35,7 @@ export default function DetailSheet() {
 
   const chipList = [
     ...recents.map((t) => ({ t, star: true })),
-    ...DEFAULTS.filter((t) => !recents.includes(t)).map((t) => ({ t, star: false })),
+    ...DEFAULTS.filter((t) => !recents.some((r) => r.toLowerCase() === t.toLowerCase())).map((t) => ({ t, star: false })),
   ];
 
   const submitCustom = () => {
@@ -49,6 +49,11 @@ export default function DetailSheet() {
   };
 
   const onSave = () => saveDetails({ types, dur, note: note.trim(), photo }, file);
+
+  const onDelete = () => {
+    closeSheet();
+    removeDay(doy);
+  };
 
   const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
@@ -161,6 +166,11 @@ export default function DetailSheet() {
         <button className="savebtn" onClick={onSave}>
           {mode === "log" ? "Log it 💪" : "Update entry"}
         </button>
+        {mode === "edit" && (
+          <button className="delbtn" onClick={onDelete}>
+            Delete entry
+          </button>
+        )}
       </div>
     </motion.div>
   );

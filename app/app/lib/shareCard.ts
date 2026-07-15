@@ -12,7 +12,7 @@ export interface ShareCardInput {
   photoUrl?: string;
 }
 
-const PAPER = "#F3EFE6";
+const PAPER = "#F9F6EF";
 const INK = "#1B1812";
 const OX = "#9E2B25";
 const GOLD = "#C0A050";

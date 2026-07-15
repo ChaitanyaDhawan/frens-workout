@@ -16,14 +16,29 @@ export const initials = (n: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-/** Value for a member in a given period (quarters, year total, or all-time). */
-export const val = (f: Member, p: PeriodId): number =>
-  p === "q1" ? f.q1 : p === "q2" ? f.q2 : p === "q3" ? f.q3 : f.q1 + f.q2 + f.q3;
+/** Value for a member in a given period (quarters, 2026, 2025, or all-time). */
+export const val = (f: Member, p: PeriodId): number => {
+  const yr2026 = f.q1 + f.q2 + f.q3 + (f.q4 ?? 0);
+  return p === "q1"
+    ? f.q1
+    : p === "q2"
+      ? f.q2
+      : p === "q3"
+        ? f.q3
+        : p === "q4"
+          ? f.q4 ?? 0
+          : p === "y25"
+            ? f.total2025 ?? 0
+            : p === "all"
+              ? f.allTime ?? yr2026
+              : yr2026; // "yr" = 2026 total
+};
 
 /** Last workout label for a member in a given period. */
 export const lastOf = (f: Member, p: PeriodId): string | undefined => {
-  if (p === "q1" || p === "q2" || p === "q3") return f.last[p];
-  return f.last.q3 || f.last.q2 || f.last.q1;
+  if (p === "q1" || p === "q2" || p === "q3" || p === "q4") return f.last[p];
+  if (p === "y25") return undefined; // no per-2025 last-date tracked yet
+  return f.last.q4 || f.last.q3 || f.last.q2 || f.last.q1;
 };
 
 export const doyQuarter = (d: number): QuarterKey => (d <= 90 ? "q1" : d <= 181 ? "q2" : "q3");
@@ -60,7 +75,7 @@ export function rankOf(frens: Member[], name: string, p: PeriodId): number {
   let rank = 0;
   let prev: number | null = null;
   let shown = 0;
-  let res = 12;
+  let res = sorted.length;
   sorted.forEach((f) => {
     shown++;
     if (val(f, p) !== prev) {

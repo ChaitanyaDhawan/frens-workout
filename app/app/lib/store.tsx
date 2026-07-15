@@ -12,6 +12,7 @@ import {
 } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
+  CURRENT_Q,
   IST_YEAR,
   MONTHS,
   RECENTS,
@@ -28,6 +29,8 @@ import { useAuth } from "./auth";
 import { aggregate, fetchRaw, labelToMinutes, type DbWorkout, type RawData } from "./db";
 import { maybeSubscribeAfterLog } from "./push";
 import { compressImage } from "./compressImage";
+import { SAMPLE_RAW, DEMO_ME_ID } from "./demoData";
+import { fx } from "./fx";
 
 export type TabId = "home" | "board" | "you";
 export type SheetMode = "log" | "edit";
@@ -49,6 +52,8 @@ interface Store {
   doneDoy: Set<number>;
   dayData: Record<number, WorkoutDetail>;
   feed: FeedItem[];
+  /** All of my own app-entered workouts, newest first (You tab paginates this). */
+  mineFeed: FeedItem[];
   recents: string[];
   logged: boolean;
   bounceTick: number;
@@ -59,8 +64,19 @@ interface Store {
   sheet: { mode: SheetMode; doy: number } | null;
   daySheet: { doy: number } | null;
   celebration: CelebrationData | null;
+  /** workoutId whose comment thread is open, or null. */
+  commentSheet: string | null;
+  commentsByWorkout: Map<string, CommentThreadItem[]>;
+  /** workoutId whose kudos-givers list is open, or null. */
+  kudosSheet: string | null;
+  /** Bumps after a log so the feed can scroll+spotlight the new card. */
+  logFocusKey: number;
+  /** Notification deep-link target (workout to scroll to; kudos = also burst). */
+  deepLink: { id: string; kudos: boolean } | null;
 
   // ---- actions ----
+  /** Re-pull all data from Supabase (drives pull-to-refresh). */
+  refresh: () => Promise<void>;
   setTab: (v: TabId) => void;
   setPeriod: (p: PeriodId) => void;
   prevMonth: () => void;
@@ -83,7 +99,18 @@ interface Store {
   toggleLike: (workoutId: string, liked: boolean) => void;
   /** Post a comment on a workout. */
   addComment: (workoutId: string, body: string) => void;
+  openCommentSheet: (workoutId: string) => void;
+  closeCommentSheet: () => void;
+  openKudosSheet: (workoutId: string) => void;
+  closeKudosSheet: () => void;
+  /** Feed reads this once after a log to scroll+spotlight the new card. */
+  consumeLogFocus: () => boolean;
+  clearDeepLink: () => void;
 }
+
+// The full-screen celebration is kept in the codebase but pulled out of the log
+// flow — after logging we scroll to the fresh feed card instead.
+const SHOW_CELEBRATION = false;
 
 const StoreContext = createContext<Store | null>(null);
 
@@ -140,20 +167,71 @@ export interface CelebrationData {
   key: number;
 }
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export interface CommentThreadItem {
+  id: string;
+  name: string;
+  body: string;
+  tm: string;
+  mine: boolean;
+}
+
+function relTime(iso: string): string {
+  const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+  if (s < 60) return "now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  return `${Math.floor(s / 86400)}d`;
+}
+
+export function StoreProvider({ children, demo = false }: { children: ReactNode; demo?: boolean }) {
   const { supabase, member, session } = useAuth();
-  const myId = member?.id ?? null;
+  const myId = demo ? DEMO_ME_ID : (member?.id ?? null);
   const uid = session?.user.id ?? null;
 
   const [tab, setTab] = useState<TabId>("home");
-  const [period, setPeriodState] = useState<PeriodId>("q3");
+  const [period, setPeriodState] = useState<PeriodId>(CURRENT_Q);
   const [calM, setCalM] = useState<number>(Math.min(Math.max(TODAY_M, 0), MONTHS.length - 1));
 
-  const [raw, setRaw] = useState<RawData>(EMPTY_RAW);
+  const [raw, setRaw] = useState<RawData>(demo ? SAMPLE_RAW : EMPTY_RAW);
   const rawRef = useRef(raw);
   rawRef.current = raw;
 
-  const [recents, setRecents] = useState<string[]>(() => [...RECENTS]);
+  // Activities the user typed this session — immediate feedback before refetch.
+  const [sessionRecents, setSessionRecents] = useState<string[]>([]);
+  // Their real activity history, most-recent-first, so a custom chip persists
+  // across sessions (derived from their own workouts' `types`, not a constant).
+  const historyRecents = useMemo(() => {
+    if (!myId) return [] as string[];
+    const mine = raw.workouts
+      .filter((w) => w.member_id === myId && w.types && w.types.length)
+      .slice()
+      .sort((a, b) => (a.workout_date < b.workout_date ? 1 : -1));
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const w of mine) {
+      for (const t of w.types ?? []) {
+        const v = t.trim();
+        if (v && !seen.has(v.toLowerCase())) {
+          seen.add(v.toLowerCase());
+          out.push(v);
+        }
+      }
+    }
+    return out;
+  }, [raw, myId]);
+  // Merge just-added → history → defaults, case-insensitively deduped.
+  const recents = useMemo(() => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const t of [...sessionRecents, ...historyRecents, ...RECENTS]) {
+      const v = t.trim();
+      if (v && !seen.has(v.toLowerCase())) {
+        seen.add(v.toLowerCase());
+        out.push(v);
+      }
+    }
+    return out;
+  }, [sessionRecents, historyRecents]);
   const recentsRef = useRef(recents);
   recentsRef.current = recents;
 
@@ -168,6 +246,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [daySheet, setDaySheet] = useState<{ doy: number } | null>(null);
   const [celebration, setCelebration] = useState<CelebrationData | null>(null);
   const celKey = useRef(0);
+  const [commentSheet, setCommentSheet] = useState<string | null>(null);
+  const [kudosSheet, setKudosSheet] = useState<string | null>(null);
+  const [logFocusKey, setLogFocusKey] = useState(0);
+  const focusConsumed = useRef(0);
+  const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean } | null>(null);
 
   const [freshIds, setFreshIds] = useState<Set<string>>(() => new Set());
 
@@ -184,6 +267,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => agg.feed.map((f) => (freshIds.has(f.id) ? { ...f, fresh: true } : f)),
     [agg.feed, freshIds],
   );
+  const commentsByWorkout = useMemo(() => {
+    const nameById = new Map(raw.members.map((m) => [m.id, m.display_name]));
+    const map = new Map<string, CommentThreadItem[]>();
+    for (const c of [...raw.comments].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+      const arr = map.get(c.workout_id) ?? [];
+      arr.push({
+        id: c.id,
+        name: nameById.get(c.member_id) ?? "—",
+        body: c.body,
+        tm: relTime(c.created_at),
+        mine: c.member_id === myId,
+      });
+      map.set(c.workout_id, arr);
+    }
+    return map;
+  }, [raw, myId]);
+  const mineFeed = agg.mineFeed;
   const logged = doneDoy.has(TODAY_DOY);
 
   // ---- helpers ----
@@ -220,7 +320,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // ---- data load + realtime ----
   const refetch = useCallback(async () => {
-    if (!myId) return;
+    if (demo || !myId) return; // demo mode keeps its static sample data
     try {
       const data = await fetchRaw(supabase);
       rawRef.current = data;
@@ -239,7 +339,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!myId) return;
+    if (demo || !myId) return; // no live subscription in demo mode
     let cancelled = false;
     let channel: RealtimeChannel | null = null;
 
@@ -463,14 +563,44 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [myId, insertWorkout, showToast],
   );
 
-  const reinsertDay = useCallback(
-    async (doy: number) => {
+  // Undo-delete: re-insert the CAPTURED row with its details (not a blank one).
+  const restoreWorkout = useCallback(
+    async (row: DbWorkout) => {
+      if (!myId) return;
       setBounceTick((t) => t + 1);
-      const res = await insertWorkout(doyToIso(doy));
-      if (res.ok) showToast("Restored");
-      else showToast("Couldn't restore — try again");
+      const optimistic: DbWorkout = { ...row, id: tmpId() };
+      patchRaw((r) => ({ ...r, workouts: [...r.workouts, optimistic] }));
+      const { data, error } = await supabase
+        .from("workouts")
+        .insert({
+          member_id: row.member_id,
+          workout_date: row.workout_date,
+          types: row.types ?? [],
+          duration_min: row.duration_min,
+          note: row.note,
+          photo_path: row.photo_path,
+          source: row.source,
+        })
+        .select("id")
+        .single();
+      if (error) {
+        if ((error as { code?: string }).code === "23505") {
+          scheduleRefetch();
+          showToast("Restored");
+          return;
+        }
+        patchRaw((r) => ({ ...r, workouts: r.workouts.filter((w) => w.id !== optimistic.id) }));
+        showToast("Couldn't restore — try again");
+        return;
+      }
+      if (data?.id) {
+        const realId = data.id as string;
+        patchRaw((r) => ({ ...r, workouts: r.workouts.map((w) => (w.id === optimistic.id ? { ...w, id: realId } : w)) }));
+      }
+      showToast("Restored");
+      scheduleRefetch();
     },
-    [insertWorkout, showToast],
+    [myId, supabase, patchRaw, showToast, scheduleRefetch],
   );
 
   const removeDay = useCallback(
@@ -481,6 +611,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDaySheet(null);
       if (!row) return;
       const id = row.id;
+      const savedReactions = rawRef.current.reactions.filter((x) => x.workout_id === id);
+      const savedComments = rawRef.current.comments.filter((x) => x.workout_id === id);
       patchRaw((r) => ({
         ...r,
         workouts: r.workouts.filter((w) => w.id !== id),
@@ -488,18 +620,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         comments: r.comments.filter((x) => x.workout_id !== id),
       }));
       const m = monthOf(doy);
-      pushToast(`Removed ${m.n.slice(0, 3)} ${doy - m.off}`, 4000, () => reinsertDay(doy));
+      pushToast(`Removed ${m.n.slice(0, 3)} ${doy - m.off}`, 4000, () => restoreWorkout(row));
       if (!id.startsWith("tmp-")) {
         const { error } = await supabase.from("workouts").delete().eq("id", id);
         if (error) {
-          patchRaw((r) => ({ ...r, workouts: [...r.workouts, row] }));
+          // Delete failed — roll the row AND its reactions/comments back, then resync.
+          patchRaw((r) => ({
+            ...r,
+            workouts: [...r.workouts, row],
+            reactions: [...r.reactions, ...savedReactions],
+            comments: [...r.comments, ...savedComments],
+          }));
           showToast("Couldn't delete — try again");
+          scheduleRefetch();
           return;
         }
       }
       scheduleRefetch();
     },
-    [myId, supabase, patchRaw, pushToast, reinsertDay, showToast, scheduleRefetch],
+    [myId, supabase, patchRaw, pushToast, restoreWorkout, showToast, scheduleRefetch],
   );
 
   const saveDetails = useCallback(
@@ -531,7 +670,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         markFresh(optimistic.id);
         setLogTick((t) => t + 1);
         setBounceTick((t) => t + 1);
-        setCelebration(computeCelebration(doy, activity, photoUrl)); // rawRef already has the new row
+        if (SHOW_CELEBRATION) {
+          setCelebration(computeCelebration(doy, activity, photoUrl)); // rawRef already has the new row
+        } else if (doy === TODAY_DOY) {
+          // Only for a TODAY log: land on the feed, spotlight the fresh card,
+          // and pop a little confetti. A past-day backfill must NOT yank you to
+          // Home / ring the wrong (index-0) card.
+          setTab("home");
+          setLogFocusKey((k) => k + 1);
+          if (typeof window !== "undefined") {
+            const w = window.innerWidth;
+            const y = window.innerHeight * 0.3;
+            fx.scraps({ left: w * 0.2, top: y, width: w * 0.6, right: w * 0.8, bottom: y + 8, height: 8, x: w / 2, y } as DOMRect);
+          }
+        }
       } else if (isEdit) {
         patchRaw((r) => ({
           ...r,
@@ -587,14 +739,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       let photoPath: string | null = null;
       if (file && uid) {
-        const compressed = await compressImage(file); // WebP/JPEG shrink to spare the storage tier
-        const ext = compressed.type === "image/webp" ? "webp" : "jpg";
-        const path = `${uid}/${id}-${Date.now()}.${ext}`;
-        const up = await supabase.storage.from("proof").upload(path, compressed, {
-          upsert: true,
-          contentType: compressed.type,
-        });
-        if (!up.error) photoPath = path;
+        try {
+          const compressed = await compressImage(file); // WebP/JPEG shrink to spare the storage tier
+          const ext = compressed.type === "image/webp" ? "webp" : "jpg";
+          const path = `${uid}/${id}-${Date.now()}.${ext}`;
+          const up = await supabase.storage.from("proof").upload(path, compressed, {
+            upsert: true,
+            contentType: compressed.type,
+          });
+          if (up.error) showToast("Couldn't attach the photo — saved without it");
+          else photoPath = path;
+        } catch {
+          showToast("Couldn't attach the photo — saved without it");
+        }
       }
 
       // New logs already carry details in the insert; only edits or a photo need an update.
@@ -654,18 +811,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [myId, supabase, patchRaw, showToast, scheduleRefetch],
   );
 
+  const openCommentSheet = useCallback((workoutId: string) => setCommentSheet(workoutId), []);
+  const closeCommentSheet = useCallback(() => setCommentSheet(null), []);
+  const openKudosSheet = useCallback((workoutId: string) => setKudosSheet(workoutId), []);
+  const closeKudosSheet = useCallback(() => setKudosSheet(null), []);
+  const consumeLogFocus = useCallback(() => {
+    if (logFocusKey > 0 && focusConsumed.current !== logFocusKey) {
+      focusConsumed.current = logFocusKey;
+      return true;
+    }
+    return false;
+  }, [logFocusKey]);
+  const clearDeepLink = useCallback(() => setDeepLink(null), []);
+
+  // Notification deep-link — from the ?w= param (cold open) or a service-worker
+  // postMessage (app already running; more reliable than SW navigate in PWAs).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const applyUrl = (search: string) => {
+      const p = new URLSearchParams(search);
+      const w = p.get("w");
+      if (!w) return;
+      setDeepLink({ id: w, kudos: p.get("kudos") === "1" });
+      setTab("home");
+      window.history.replaceState(null, "", window.location.pathname);
+    };
+    applyUrl(window.location.search);
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data as { type?: string; url?: string } | null;
+      if (d?.type === "FRENS_DEEPLINK" && typeof d.url === "string") {
+        const qi = d.url.indexOf("?");
+        applyUrl(qi >= 0 ? d.url.slice(qi) : "");
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker?.removeEventListener("message", onMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const demoLog = useCallback(() => {
     /* Demo affordance retired — real friend logs arrive via realtime. */
   }, []);
 
   const addRecent = useCallback((t: string) => {
-    if (!recentsRef.current.includes(t)) {
-      setRecents((prev) => {
-        const next = [t, ...prev];
-        recentsRef.current = next;
-        return next;
-      });
-    }
+    const v = t.trim();
+    if (!v) return;
+    setSessionRecents((prev) =>
+      prev.some((x) => x.toLowerCase() === v.toLowerCase()) ? prev : [v, ...prev],
+    );
   }, []);
 
   const value = useMemo<Store>(
@@ -678,6 +871,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       doneDoy,
       dayData,
       feed,
+      mineFeed,
       recents,
       logged,
       bounceTick,
@@ -688,6 +882,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       sheet,
       daySheet,
       celebration,
+      commentSheet,
+      commentsByWorkout,
+      kudosSheet,
+      logFocusKey,
+      deepLink,
+      refresh: refetch,
       setTab,
       setPeriod,
       prevMonth,
@@ -708,12 +908,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       clearToast,
       toggleLike,
       addComment,
+      openCommentSheet,
+      closeCommentSheet,
+      openKudosSheet,
+      closeKudosSheet,
+      consumeLogFocus,
+      clearDeepLink,
     }),
     [
-      tab, frens, me, period, calM, doneDoy, dayData, feed, recents, logged, bounceTick,
-      logTick, otherTick, periodTick, toast, sheet, daySheet, celebration, setPeriod, prevMonth, nextMonth,
+      tab, frens, me, period, calM, doneDoy, dayData, feed, mineFeed, recents, logged, bounceTick,
+      logTick, otherTick, periodTick, toast, sheet, daySheet, celebration, commentSheet, commentsByWorkout, logFocusKey,
+      refetch, setPeriod, prevMonth, nextMonth,
       logToday, backfillDay, removeDay, saveDetails, openSheet, closeSheet, openDaySheet,
       closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment,
+      openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink,
     ],
   );
 

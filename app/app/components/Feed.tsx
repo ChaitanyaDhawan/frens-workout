@@ -6,8 +6,22 @@ import { fx } from "@/app/lib/fx";
 import { initials } from "@/app/lib/helpers";
 import type { FeedItem } from "@/app/lib/data";
 
-function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | null }) {
-  const { toggleLike, addComment } = useStore();
+function kudosSummary(names: string[]): string {
+  if (names.length === 1) return `${names[0]} gave kudos`;
+  if (names.length === 2) return `${names[0]} & ${names[1]} gave kudos`;
+  return `${names[0]}, ${names[1]} + ${names.length - 2} gave kudos`;
+}
+
+export function FeedCard({
+  item,
+  mountDelay,
+  spotlight,
+}: {
+  item: FeedItem;
+  mountDelay: number | null;
+  spotlight?: boolean;
+}) {
+  const { toggleLike, openCommentSheet, openSheet, openKudosSheet } = useStore();
   const [liked, setLiked] = useState(item.liked ?? false);
   const [popKey, setPopKey] = useState(0);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -23,24 +37,28 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
     if (becoming && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       fx.fire(r.left + r.width / 2, r.top + 4);
-      setPopKey((k) => k + 1); // restart the "KUDOS!" pop
+      setPopKey((k) => k + 1); // restart the "KUDOS!" pop + fire-icon bump
       navigator.vibrate?.(10);
     }
     toggleLike(item.id, becoming);
   };
 
-  const kudos = item.likes + (liked ? 1 : 0);
-
-  const onComment = () => {
-    const body = typeof window !== "undefined" ? window.prompt("Add a comment") : null;
-    if (body && body.trim()) addComment(item.id, body.trim());
+  const onEdit = () => {
+    if (item.doy != null) openSheet("edit", item.doy);
   };
+
+  const kudos = item.likes + (liked ? 1 : 0);
 
   const style =
     mountDelay != null ? ({ animation: `cardstag .35s ${mountDelay}ms both` } as React.CSSProperties) : undefined;
 
   return (
-    <div className={`card${item.fresh ? " fresh" : ""}`} style={style}>
+    <div className={`card${item.fresh ? " fresh" : ""}${spotlight ? " spotlight" : ""}`} style={style} data-fid={item.id}>
+      {item.mine && item.doy != null && (
+        <button className="card-edit" onClick={onEdit} aria-label="Edit this entry" title="Edit entry">
+          ✎
+        </button>
+      )}
       <div className="top">
         <div className="ava">{initials(item.n)}</div>
         <div className="meta">
@@ -50,6 +68,7 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
       </div>
       <div className="brag">
         <span className="bact">{item.act || "Workout"}</span>
+        {item.dur ? <span className="bdur">{item.dur}</span> : null}
         <span className="bstat">{item.brag || ""}</span>
       </div>
       {item.note ? <div className="note">{item.note}</div> : null}
@@ -59,14 +78,44 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
       ) : item.pic ? (
         <div className="pic">PROOF ATTACHED</div>
       ) : null}
+      {item.likers && item.likers.length > 0 && (
+        <div
+          className="kudos-from"
+          role="button"
+          tabIndex={0}
+          onClick={() => openKudosSheet(item.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openKudosSheet(item.id);
+            }
+          }}
+        >
+          <span className="kf-avas">
+            {item.likers.slice(0, 3).map((n, i) => (
+              <span className="kf-ava" key={i}>
+                {initials(n)}
+              </span>
+            ))}
+          </span>
+          <span className="kf-tx">{kudosSummary(item.likers)}</span>
+        </div>
+      )}
       <div className="acts">
         <button ref={btnRef} className={`act kudos-btn${liked ? " liked" : ""}`} onClick={onLike}>
-          <span className="ico">🔥</span> <span className="lc">{kudos} kudos</span>
+          <span key={`ico-${popKey}`} className={`ico${popKey > 0 ? " bump" : ""}`}>
+            🔥
+          </span>{" "}
+          <span className="lc">{kudos} kudos</span>
           {popKey > 0 && (
-            <span key={popKey} className="kudos-pop">KUDOS!</span>
+            <span key={popKey} className="kudos-pop">
+              KUDOS!
+            </span>
           )}
         </button>
-        <button className="act" onClick={onComment}>✎ {item.c} comments</button>
+        <button className="act" onClick={() => openCommentSheet(item.id)}>
+          💬 {item.c} {item.c === 1 ? "comment" : "comments"}
+        </button>
       </div>
     </div>
   );
@@ -74,7 +123,31 @@ function FeedCard({ item, mountDelay }: { item: FeedItem; mountDelay: number | n
 
 /** Home "Dispatches" feed. First 6 cards stagger in on mount; fresh cards pop. */
 export default function Feed() {
-  const { feed } = useStore();
+  const { feed, logFocusKey, consumeLogFocus, deepLink, clearDeepLink } = useStore();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [spotlight, setSpotlight] = useState(false);
+  const [deepId, setDeepId] = useState<string | null>(null);
+
+  // Notification deep-link (from the store): scroll to + spotlight the card; a
+  // kudos tap also fires the 🔥 burst on it.
+  useEffect(() => {
+    if (!deepLink) return;
+    const el = containerRef.current?.querySelector(`[data-fid="${deepLink.id}"]`);
+    if (!el) return; // card not in the feed yet — re-runs when feed loads
+    const isKudos = deepLink.kudos;
+    requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+    setDeepId(deepLink.id);
+    setTimeout(() => setDeepId(null), 2600);
+    if (isKudos) {
+      // Let the smooth-scroll settle, then pop the ember burst over the card.
+      setTimeout(() => {
+        const r = el.getBoundingClientRect();
+        fx.fire(r.left + r.width * 0.28, r.top + r.height * 0.82);
+      }, 650);
+    }
+    clearDeepLink();
+  }, [deepLink, feed, clearDeepLink]);
+
   // Fixed per-card delays captured at mount — stable across prepends so the
   // stagger plays once and never re-triggers when the feed changes.
   const [mountDelays] = useState(() => {
@@ -83,10 +156,29 @@ export default function Feed() {
     return map;
   });
 
+  // After a fresh log: scroll to the newest card and spotlight it briefly.
+  useEffect(() => {
+    if (!consumeLogFocus()) return;
+    setSpotlight(true);
+    const raf = requestAnimationFrame(() => {
+      containerRef.current?.querySelector(".card")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    const t = setTimeout(() => setSpotlight(false), 2400);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
+  }, [logFocusKey, consumeLogFocus]);
+
   return (
-    <div id="feed">
-      {feed.map((f) => (
-        <FeedCard key={f.id} item={f} mountDelay={mountDelays.get(f.id) ?? null} />
+    <div id="feed" ref={containerRef}>
+      {feed.map((f, i) => (
+        <FeedCard
+          key={f.id}
+          item={f}
+          mountDelay={mountDelays.get(f.id) ?? null}
+          spotlight={(spotlight && i === 0) || f.id === deepId}
+        />
       ))}
     </div>
   );

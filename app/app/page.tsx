@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AuthProvider } from "@/app/lib/auth";
 import { StoreProvider, useStore } from "@/app/lib/store";
@@ -11,14 +12,20 @@ import Board from "@/app/components/Board";
 import You from "@/app/components/You";
 import DemoButton from "@/app/components/DemoButton";
 import HoldPlate from "@/app/components/HoldPlate";
+import ScrollArea from "@/app/components/ScrollArea";
 import TabBar from "@/app/components/TabBar";
 import Toast from "@/app/components/Toast";
 import DetailSheet from "@/app/components/DetailSheet";
 import DayDetailSheet from "@/app/components/DayDetailSheet";
+import CommentSheet from "@/app/components/CommentSheet";
+import KudosSheet from "@/app/components/KudosSheet";
 import Celebration from "@/app/components/Celebration";
 import KudosReceived from "@/app/components/KudosReceived";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
 import InstallGuide from "@/app/components/InstallGuide";
+import BackgroundPicker from "@/app/components/BackgroundPicker";
+import Splash from "@/app/components/Splash";
+import NotificationPrompt from "@/app/components/NotificationPrompt";
 
 function Home() {
   return (
@@ -34,24 +41,28 @@ function Home() {
 }
 
 function Shell() {
-  const { tab, sheet, daySheet, closeSheet, closeDaySheet } = useStore();
-  const overlayOpen = !!sheet || !!daySheet;
+  const { tab, sheet, daySheet, commentSheet, kudosSheet, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet } =
+    useStore();
+  const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet;
 
   return (
     <>
       <div className="phone">
-        {tab !== "board" && <Header />}
-        {tab === "home" && <Home />}
-        {tab === "board" && (
-          <div className="view active" id="view-board">
-            <Board />
-          </div>
-        )}
-        {tab === "you" && (
-          <div className="view active" id="view-you">
-            <You />
-          </div>
-        )}
+        <div className="safe-top" aria-hidden />
+        <ScrollArea>
+          {tab !== "board" && <Header />}
+          {tab === "home" && <Home />}
+          {tab === "board" && (
+            <div className="view active" id="view-board">
+              <Board />
+            </div>
+          )}
+          {tab === "you" && (
+            <div className="view active" id="view-you">
+              <You />
+            </div>
+          )}
+        </ScrollArea>
         <DemoButton />
         <HoldPlate />
         <TabBar />
@@ -59,7 +70,7 @@ function Shell() {
 
       <Toast />
 
-      <InstallGuide />
+      <NotificationPrompt />
 
       <AnimatePresence>
         {overlayOpen && (
@@ -73,6 +84,8 @@ function Shell() {
             onClick={() => {
               closeSheet();
               closeDaySheet();
+              closeCommentSheet();
+              closeKudosSheet();
             }}
           />
         )}
@@ -80,6 +93,8 @@ function Shell() {
 
       <AnimatePresence>{sheet && <DetailSheet key="detail-sheet" />}</AnimatePresence>
       <AnimatePresence>{daySheet && <DayDetailSheet key="day-sheet" />}</AnimatePresence>
+      <AnimatePresence>{commentSheet && <CommentSheet key="comment-sheet" />}</AnimatePresence>
+      <AnimatePresence>{kudosSheet && <KudosSheet key="kudos-sheet" />}</AnimatePresence>
 
       <Celebration />
       <KudosReceived />
@@ -90,8 +105,40 @@ function Shell() {
 }
 
 export default function Page() {
+  // Splash approved — on for everyone (~1.25s cold-open title card).
+  const SPLASH_ENABLED = true;
+
+  // ?demo=1 — no-login sample-data mode, for launch/marketing screenshots of the
+  // current app. Never reachable in the normal flow.
+  const [demo, setDemo] = useState(false);
+  const [splashPreview, setSplashPreview] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.has("demo")) setDemo(true);
+    if (p.has("splash")) setSplashPreview(true); // ?splash=1 → preview the splash for approval
+  }, []);
+
+  if (demo) {
+    return (
+      <AuthProvider>
+        <BackgroundPicker />
+        <StoreProvider demo>
+          <Shell />
+        </StoreProvider>
+      </AuthProvider>
+    );
+  }
+
   return (
     <AuthProvider>
+      {/* Cold-start title card — overlays everything (including the auth
+          gate) and dismisses itself on a timer. */}
+      {(SPLASH_ENABLED || splashPreview) && <Splash />}
+      {/* Outside the gate so these show on every screen, including the
+          signed-out sign-in screen (install-first, then sign in). */}
+      <BackgroundPicker />
+      <InstallGuide />
       <AuthGate>
         <StoreProvider>
           <Shell />

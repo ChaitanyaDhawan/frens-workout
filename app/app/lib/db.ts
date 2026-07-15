@@ -3,7 +3,7 @@
 // WorkoutDetail + the day-of-year set). Nothing here touches React or the DOM.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { IST_YEAR, TODAY_DOY, type FeedItem, type Member, type QuarterKey, type WorkoutDetail } from "./data";
+import { CURRENT_Q, IST_YEAR, TODAY_DOY, type FeedItem, type Member, type QuarterKey, type WorkoutDetail } from "./data";
 import { nth } from "./helpers";
 
 // ---- Raw row shapes ----
@@ -64,8 +64,8 @@ export function doyOfDate(iso: string): number {
   const { y, m, d } = parseDate(iso);
   return dayOfYear(y, m, d);
 }
-function quarterOf(m0: number): QuarterKey | null {
-  return m0 < 3 ? "q1" : m0 < 6 ? "q2" : m0 < 9 ? "q3" : null;
+function quarterOf(m0: number): QuarterKey {
+  return m0 < 3 ? "q1" : m0 < 6 ? "q2" : m0 < 9 ? "q3" : "q4";
 }
 /** "Mar 30" style label from an ISO date. */
 export function lastLabel(iso: string): string {
@@ -98,6 +98,11 @@ export function feedTime(loggedAt: string): string {
 }
 
 // ---- Duration <-> label mapping (the sheet offers 30/45/60/90+) ----
+/** Day-of-year (1-based) for a YYYY-MM-DD string in the app's calendar year. */
+function isoDoy(iso: string): number {
+  return Math.floor((Date.parse(iso + "T00:00:00Z") - Date.UTC(IST_YEAR, 0, 1)) / 86400000) + 1;
+}
+
 export function minutesToLabel(min: number | null): string | null {
   if (min == null) return null;
   if (min === 30) return "30 min";
@@ -136,6 +141,7 @@ export interface Aggregate {
   doneDoy: Set<number>;
   dayData: Record<number, WorkoutDetail>;
   feed: FeedItem[];
+  mineFeed: FeedItem[];
 }
 
 /** Fold the raw tables into the UI view-model for the signed-in member. */
@@ -168,18 +174,22 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     const asc = [...ws].sort(
       (a, b) => a.workout_date.localeCompare(b.workout_date) || a.logged_at.localeCompare(b.logged_at),
     );
-    const qc: Record<QuarterKey, number> = { q1: 0, q2: 0, q3: 0 };
+    // Brag ordinals reset per calendar year, so a 2026 entry's "Nth this
+    // quarter/year" never counts imported 2025 rows (asc is date-sorted).
+    const qc: Record<QuarterKey, number> = { q1: 0, q2: 0, q3: 0, q4: 0 };
     let yr = 0;
+    let curYear = -1;
     for (const w of asc) {
-      const { m } = parseDate(w.workout_date);
-      const q = quarterOf(m);
-      let qCount = 0;
-      if (q) {
-        qc[q] += 1;
-        qCount = qc[q];
-        yr += 1;
+      const { y, m } = parseDate(w.workout_date);
+      if (y !== curYear) {
+        curYear = y;
+        qc.q1 = qc.q2 = qc.q3 = qc.q4 = 0;
+        yr = 0;
       }
-      meta.set(w.id, { qCount, yrCount: yr, isLatest: false });
+      const q = quarterOf(m);
+      qc[q] += 1;
+      yr += 1;
+      meta.set(w.id, { qCount: qc[q], yrCount: yr, isLatest: false });
     }
     if (asc.length) meta.get(asc[asc.length - 1].id)!.isLatest = true;
   }
@@ -188,27 +198,58 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
   const memberById = new Map<string, DbMember>();
   for (const m of members) memberById.set(m.id, m);
 
+  // Kudos RECEIVED per member (reactions on their workouts), split by quarter,
+  // plus the names of who reacted on each workout (for feed avatars).
+  const wOwnerQ = new Map<string, { owner: string; cur: boolean }>();
+  for (const w of raw.workouts) {
+    const { y, m } = parseDate(w.workout_date);
+    wOwnerQ.set(w.id, { owner: w.member_id, cur: y === IST_YEAR && quarterOf(m) === CURRENT_Q });
+  }
+  const kudosAllBy = new Map<string, number>();
+  const kudosQ3By = new Map<string, number>();
+  const likersBy = new Map<string, string[]>();
+  for (const rx of raw.reactions) {
+    const info = wOwnerQ.get(rx.workout_id);
+    if (info) {
+      kudosAllBy.set(info.owner, (kudosAllBy.get(info.owner) ?? 0) + 1);
+      if (info.cur) kudosQ3By.set(info.owner, (kudosQ3By.get(info.owner) ?? 0) + 1);
+    }
+    const nm = memberById.get(rx.member_id)?.display_name;
+    if (nm) {
+      const arr = likersBy.get(rx.workout_id) ?? [];
+      arr.push(nm);
+      likersBy.set(rx.workout_id, arr);
+    }
+  }
+
   const frens: Member[] = members.map((mem) => {
     const ws = wByMember.get(mem.id) ?? [];
     let q1 = 0,
       q2 = 0,
-      q3 = 0;
+      q3 = 0,
+      q4 = 0,
+      allTime = 0,
+      total2025 = 0;
     const maxByQ: Partial<Record<QuarterKey, string>> = {};
     const doys = new Set<number>();
     for (const w of ws) {
       const { y, m, d } = parseDate(w.workout_date);
       const q = quarterOf(m);
-      if (q === "q1") q1++;
-      else if (q === "q2") q2++;
-      else if (q === "q3") q3++;
-      if (q) {
+      allTime++;
+      if (y === IST_YEAR - 1) total2025++;
+      // Current-year quarters / streak / calendar only — 2025 rows never inflate these.
+      if (y === IST_YEAR) {
+        if (q === "q1") q1++;
+        else if (q === "q2") q2++;
+        else if (q === "q3") q3++;
+        else if (q === "q4") q4++;
         const cur = maxByQ[q];
         if (!cur || w.workout_date > cur) maxByQ[q] = w.workout_date;
+        doys.add(dayOfYear(y, m, d));
       }
-      if (y === IST_YEAR) doys.add(dayOfYear(y, m, d));
     }
     const last: Partial<Record<QuarterKey, string>> = {};
-    (["q1", "q2", "q3"] as QuarterKey[]).forEach((q) => {
+    (["q1", "q2", "q3", "q4"] as QuarterKey[]).forEach((q) => {
       const iso = maxByQ[q];
       if (iso) last[q] = lastLabel(iso);
     });
@@ -217,7 +258,18 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       q1,
       q2,
       q3,
+      q4,
       streak: streakFromDoys(doys, TODAY_DOY),
+      // "On fire" = worked out in the last 3 days — gap-tolerant, unlike a strict
+      // streak, so alternate-day regulars still light up.
+      hot: [0, 1, 2].some((k) => doys.has(TODAY_DOY - k)),
+      last7: Array.from({ length: 7 }, (_, k) => k).reduce((n, k) => n + (doys.has(TODAY_DOY - k) ? 1 : 0), 0),
+      last30: Array.from({ length: 30 }, (_, k) => k).reduce((n, k) => n + (doys.has(TODAY_DOY - k) ? 1 : 0), 0),
+      lastDoy: doys.size ? Math.max(...doys) : undefined,
+      kudosQ3: kudosQ3By.get(mem.id) ?? 0,
+      kudosAll: kudosAllBy.get(mem.id) ?? 0,
+      total2025,
+      allTime,
       last,
       you: myMemberId === mem.id,
     };
@@ -248,33 +300,43 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
   // Feed = the most recent workouts (any source), newest workout-day first, so
   // it's populated from imported history until in-app logs take over.
   const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const feed: FeedItem[] = [...workouts]
-    .sort((a, b) => b.workout_date.localeCompare(a.workout_date) || b.logged_at.localeCompare(a.logged_at))
-    .slice(0, 24)
-    .map((w) => {
-      const mem = memberById.get(w.member_id);
-      const memAgg = frensById.get(w.member_id);
-      const mt = meta.get(w.id) ?? { qCount: 0, yrCount: 0, isLatest: false };
-      const act = w.types && w.types.length ? w.types.join(" · ") : "Workout";
-      const tm = w.source === "app"
-        ? feedTime(w.logged_at)
-        : `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
-      return {
-        id: w.id,
-        n: mem?.display_name ?? "—",
-        tm,
-        act,
-        brag: memAgg ? bragForWorkout(memAgg, mt.qCount, mt.yrCount, mt.isLatest) : "",
-        note: w.note ?? "",
-        likes: likeCount.get(w.id) ?? 0,
-        c: commentCount.get(w.id) ?? 0,
-        pic: !!w.photo_path,
-        picUrl: w.photo_path ? raw.photoUrls[w.photo_path] : undefined,
-        liked: myLiked.has(w.id),
-      };
-    });
+  const toFeedItem = (w: DbWorkout): FeedItem => {
+    const mem = memberById.get(w.member_id);
+    const memAgg = frensById.get(w.member_id);
+    const mt = meta.get(w.id) ?? { qCount: 0, yrCount: 0, isLatest: false };
+    const act = w.types && w.types.length ? w.types.join(" · ") : "Workout";
+    const tm = w.source === "app"
+      ? feedTime(w.logged_at)
+      : `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
+    return {
+      id: w.id,
+      n: mem?.display_name ?? "—",
+      tm,
+      act,
+      brag: memAgg ? bragForWorkout(memAgg, mt.qCount, mt.yrCount, mt.isLatest) : "",
+      note: w.note ?? "",
+      dur: minutesToLabel(w.duration_min) ?? undefined,
+      likes: likeCount.get(w.id) ?? 0,
+      c: commentCount.get(w.id) ?? 0,
+      pic: !!w.photo_path,
+      picUrl: w.photo_path ? raw.photoUrls[w.photo_path] : undefined,
+      liked: myLiked.has(w.id),
+      mine: !!myMemberId && w.member_id === myMemberId,
+      doy: isoDoy(w.workout_date),
+      likers: likersBy.get(w.id) ?? [],
+    };
+  };
 
-  return { frens, meName, doneDoy, dayData, feed };
+  const sorted = [...workouts].sort(
+    (a, b) => b.workout_date.localeCompare(a.workout_date) || b.logged_at.localeCompare(a.logged_at),
+  );
+  const feed: FeedItem[] = sorted.slice(0, 24).map(toFeedItem);
+  // Every one of my own app-entered workouts, newest first — the You tab paginates this.
+  const mineFeed: FeedItem[] = myMemberId
+    ? sorted.filter((w) => w.member_id === myMemberId && w.source === "app").map(toFeedItem)
+    : [];
+
+  return { frens, meName, doneDoy, dayData, feed, mineFeed };
 }
 
 /** Find the signed-in member's workout id for a given day-of-year (or null). */
@@ -285,11 +347,19 @@ export function myWorkoutId(raw: RawData, myMemberId: string, iso: string): stri
 
 /** Pull all four tables in parallel. Requires a claimed session (RLS). */
 export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
+  // Explicit order + high limit so we never hit PostgREST's default 1000-row cap
+  // silently (reactions/workouts cross 1000 late in the year) and the result set
+  // is deterministic.
+  const CAP = 50000;
   const [m, w, r, c] = await Promise.all([
-    supabase.from("members").select("id, sheet_name, user_id, display_name, is_admin"),
-    supabase.from("workouts").select("id, member_id, workout_date, types, duration_min, note, photo_path, source, logged_at"),
-    supabase.from("reactions").select("id, workout_id, member_id, emoji"),
-    supabase.from("comments").select("id, workout_id, member_id, body, created_at"),
+    supabase.from("members").select("id, sheet_name, user_id, display_name, is_admin").order("id"),
+    supabase
+      .from("workouts")
+      .select("id, member_id, workout_date, types, duration_min, note, photo_path, source, logged_at")
+      .order("id")
+      .limit(CAP),
+    supabase.from("reactions").select("id, workout_id, member_id, emoji").order("id").limit(CAP),
+    supabase.from("comments").select("id, workout_id, member_id, body, created_at").order("id").limit(CAP),
   ]);
   if (m.error) throw m.error;
   if (w.error) throw w.error;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { pad } from "@/app/lib/helpers";
 
 interface FlapCounterProps {
   value: number;
@@ -11,23 +10,16 @@ interface FlapCounterProps {
   rollKey?: number;
   /** When this changes, changed digits flip once in place to `value`. */
   flipKey?: number;
+  /** Minimum number of tiles; widens automatically for 3+ digit values. */
   digits?: number;
 }
 
 /**
- * Split-flap ("solari") counter. Renders a fixed set of `.tile` cells and
- * animates them imperatively so React never fights the in-flight DOM text.
- * - value change + rollKey change  → roll (count up digit by digit)
- * - value change + flipKey change  → single flip on changed digits
- * - value change alone             → snap instantly (no animation)
+ * Split-flap ("solari") counter. Renders a set of `.tile` cells (at least
+ * `digits`, more when the value needs them) and animates them imperatively so
+ * React never fights the in-flight DOM text.
  */
-export default function FlapCounter({
-  value,
-  className,
-  rollKey,
-  flipKey,
-  digits = 2,
-}: FlapCounterProps) {
+export default function FlapCounter({ value, className, rollKey, flipKey, digits = 2 }: FlapCounterProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
   const prevValue = useRef(value);
@@ -35,13 +27,16 @@ export default function FlapCounter({
   const prevFlip = useRef(flipKey);
   const gen = useRef(0);
 
+  const width = Math.max(digits, String(Math.max(0, Math.trunc(value))).length);
+  const fmt = (n: number) => String(Math.max(0, Math.trunc(n))).padStart(width, "0");
+
   useEffect(() => {
     const container = ref.current;
     if (!container) return;
     const tiles = container.querySelectorAll<HTMLElement>(".tile");
 
     const setInstant = (to: number) => {
-      pad(to)
+      fmt(to)
         .split("")
         .forEach((d, i) => {
           if (tiles[i]) tiles[i].textContent = d;
@@ -68,8 +63,7 @@ export default function FlapCounter({
     const myGen = ++gen.current;
 
     if (rolled) {
-      // Count up: each digit ticks forward until it reaches the target.
-      const target = pad(value).split("");
+      const target = fmt(value).split("");
       tiles.forEach((t, i) => {
         const goal = +target[i];
         let cur = +(t.textContent || "0");
@@ -90,8 +84,7 @@ export default function FlapCounter({
         stepFlip();
       });
     } else if (flipped) {
-      // Single flip on changed digits; digit swaps at mid-flip.
-      const target = pad(value).split("");
+      const target = fmt(value).split("");
       tiles.forEach((t, i) => {
         if (t.textContent === target[i]) return;
         t.classList.add("flip");
@@ -105,11 +98,12 @@ export default function FlapCounter({
     } else {
       setInstant(value);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, rollKey, flipKey]);
 
   return (
     <div className={className} ref={ref}>
-      {Array.from({ length: digits }, (_, i) => (
+      {Array.from({ length: width }, (_, i) => (
         <div className="tile" key={i} />
       ))}
     </div>

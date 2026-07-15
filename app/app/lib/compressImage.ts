@@ -4,7 +4,10 @@
 // at equal quality), falling back to JPEG where WebP encoding isn't supported.
 
 const MAX_EDGE = 1600;
-const QUALITY = 0.85; // WebP at 0.85 is visually near-lossless yet small
+// 0.92 keeps proof photos visually indistinguishable from the original (0.85 was
+// dimming/softening them noticeably in the feed) while staying well within the
+// storage tier — a 1600px WebP at 0.92 is still only ~150–300 KB.
+const QUALITY = 0.92;
 
 function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
   return new Promise((res) => canvas.toBlob(res, type, quality));
@@ -13,7 +16,8 @@ function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promi
 export async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
   try {
-    const bitmap = await createImageBitmap(file);
+    // from-image respects EXIF orientation so portrait phone shots aren't rotated.
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
     const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));

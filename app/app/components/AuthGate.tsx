@@ -9,7 +9,7 @@ function AuthSplash() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-eyebrow">Est. 2026</div>
+        <div className="auth-eyebrow">Est. 2025</div>
         <div className="auth-mark">
           FRENS WORKOUT
         </div>

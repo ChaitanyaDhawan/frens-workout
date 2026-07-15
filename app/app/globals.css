@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root{
-  --paper:#F3EFE6; --card:#FAF7F0; --ink:#1B1812; --mut:#8A8375;
+  --paper:#F9F6EF; --card:#FFFFFF; --ink:#1B1812; --mut:#8A8375;
   --line:#DCD5C6; --brass:#A98A2F; --ox:#9E2B25;
   --tile:#24211B; --tiletx:#F2EDE0;
   --gold:#C0A050; --silver:#A9A9A4; --bronze:#AE7A4B;
@@ -28,14 +28,27 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%; background:var(--paper)}
 body{
   background:var(--paper); color:var(--ink);
   font-family:var(--font-archivo),system-ui,sans-serif;
-  min-height:100dvh; display:flex; justify-content:center;
+  height:100dvh; overflow:hidden; display:flex; justify-content:center;
 }
-.phone{width:100%; max-width:430px; min-height:100dvh; position:relative;
-  padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+/* App shell: the viewport is locked and only .scroll scrolls, so the fixed
+   tab bar + dock stay put in the installed PWA (body-scroll used to let iOS
+   momentum drag them away and bleed content above/below the nav). */
+.phone{width:100%; max-width:430px; height:100dvh; position:relative; background:var(--paper);
+  display:flex; flex-direction:column; overflow:hidden}
+/* No -webkit-overflow-scrolling:touch — its separate GPU layer leaves gray ghost
+   tiles after momentum scroll in the standalone PWA. Modern iOS scrolls smoothly
+   without it. */
+.scroll{flex:1; min-height:0; overflow-y:auto; background:var(--paper);
+  overscroll-behavior:none; padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+/* Opaque Ivory paint over the status-bar strip so iOS can't show its gray there
+   as content scrolls under the translucent status bar. */
+.safe-top{position:fixed; top:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:430px; height:env(safe-area-inset-top);
+  background:var(--paper); z-index:34; pointer-events:none}
 
 header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .eyebrow{font-family:var(--font-archivo); font-size:9.5px; font-weight:500; letter-spacing:.28em; color:var(--mut); text-transform:uppercase}
@@ -78,8 +91,8 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .tile-you .t-flaps{display:flex; gap:3px; perspective:300px}
 .tile-you .tile{
   width:34px; height:46px; font-size:28px; border-radius:4px;
-  background:linear-gradient(180deg,#2FBF5C,#1E8A40); color:#fff;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.2), 0 2.5px 0 #176B31;
+  background:var(--tile); color:var(--tiletx);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.35), 0 2.5px 0 #000;
 }
 .tile-you .tile::after{background:rgba(9,58,26,.5)}
 .tile-you .t-cap{font-family:var(--font-archivo); font-size:9px; font-weight:600; font-weight:600; letter-spacing:.2em; color:var(--green-d); text-transform:uppercase; margin-top:7px; text-align:center}
@@ -112,7 +125,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
   animation:tickpop .45s cubic-bezier(.2,1.8,.4,1);
 }
-.twc.today{border:2px solid var(--ox)}
+.twc.today{border:2px solid var(--mut)}
 .twc.today.hit{border-color:var(--green-d)}
 @keyframes tickpop{from{transform:scale(0) rotate(-25deg)}60%{transform:scale(1.35) rotate(5deg)}}
 
@@ -239,6 +252,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .nm{font-weight:700; font-size:14.5px; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .sub{font-family:var(--font-archivo); font-size:9px; letter-spacing:.14em; color:var(--mut); margin-top:2px; text-transform:uppercase}
 .sub .st{color:var(--brass); font-weight:600}
+.rowflame{font-size:13px; vertical-align:-2px; margin-right:1px}
 .youtag{font-family:var(--font-archivo); font-size:9px; font-weight:600; font-weight:600; letter-spacing:.12em; color:var(--paper); background:var(--ink); padding:2px 5px; margin-left:7px; vertical-align:2px}
 .flaps{display:flex; gap:2.5px; perspective:280px}
 
@@ -276,16 +290,27 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .kudos-btn{position:relative; overflow:visible}
 .kudos-pop{
   position:absolute; left:50%; bottom:100%; pointer-events:none; z-index:6;
-  font-family:var(--font-archivo); font-weight:900; font-size:15px; letter-spacing:.02em;
+  font-family:var(--font-archivo); font-weight:900; font-size:17px; letter-spacing:.02em;
   color:#E8590C; text-shadow:0 1px 0 rgba(158,43,37,.35); white-space:nowrap;
-  animation:kudospop 1.05s cubic-bezier(.2,.8,.3,1) forwards;
+  animation:kudospop 1.15s cubic-bezier(.18,1.5,.3,1) forwards;
 }
 @keyframes kudospop{
-  0%{opacity:0; transform:translate(-50%,4px) scale(.6)}
-  22%{opacity:1; transform:translate(-50%,-8px) scale(1.15)}
-  100%{opacity:0; transform:translate(-50%,-34px) scale(1)}
+  0%{opacity:0; transform:translate(-50%,6px) scale(.5)}
+  16%{opacity:1; transform:translate(-50%,-34px) scale(1.35)}
+  34%{transform:translate(-50%,-52px) scale(1.05)}
+  52%{transform:translate(-50%,-44px) scale(1.12)}
+  100%{opacity:0; transform:translate(-50%,-78px) scale(1)}
 }
-@media (prefers-reduced-motion:reduce){.kudos-pop{animation:none; opacity:0}}
+/* the 🔥 itself leaps when you give kudos */
+.kudos-btn .ico{display:inline-block; transform-origin:50% 80%}
+.kudos-btn .ico.bump{animation:icobump .55s cubic-bezier(.2,1.7,.35,1)}
+@keyframes icobump{
+  0%{transform:translateY(0) scale(1) rotate(0)}
+  30%{transform:translateY(-10px) scale(1.5) rotate(-9deg)}
+  55%{transform:translateY(-3px) scale(1.2) rotate(6deg)}
+  100%{transform:translateY(0) scale(1) rotate(0)}
+}
+@media (prefers-reduced-motion:reduce){.kudos-pop{animation:none; opacity:0}.kudos-btn .ico.bump{animation:none}}
 
 /* ================= CELEBRATION ================= */
 .cel-scrim{
@@ -367,7 +392,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   position:absolute; inset:0; margin:auto; width:32px; height:32px; border-radius:50%;
   z-index:1; pointer-events:none; border:1.5px solid transparent;
 }
-.day.today .badge{border:2px solid var(--ox)}
+.day.today .dnum{font-weight:800}
 .day.past:hover .badge{border-color:var(--line)}
 .day.done .dnum{color:#fff; font-family:var(--font-archivo); font-weight:800; font-size:14px}
 .day.done .badge{
@@ -376,18 +401,18 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   box-shadow:0 2.5px 0 var(--green-d), 0 0 14px -3px rgba(39,174,82,.55);
   animation:tickin .4s cubic-bezier(.2,1.8,.4,1);
 }
-.day.done:hover .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ox)}
-.day.done.today .badge{box-shadow:0 2.5px 0 var(--green-d), 0 0 0 3px var(--paper), 0 0 0 4.5px var(--ox)}
+.day.done:hover .badge{box-shadow:0 2.5px 0 var(--green-d)}
+.day.done.today .badge{box-shadow:0 2.5px 0 var(--green-d)}
 @keyframes tickin{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(6deg)}}
 .cal .hint{margin-top:12px; font-family:var(--font-archivo); font-size:9px; font-weight:600; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
 
 /* ================= hold plate ================= */
 .dock{
   position:fixed; bottom:calc(56px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
-  width:100%; max-width:430px; padding:30px 22px 16px;
-  background:linear-gradient(180deg, rgba(243,239,230,0) 0px, var(--paper) 26px, var(--paper) 100%);
-  z-index:30; display:flex; justify-content:center;
+  width:100%; max-width:430px; padding:0 22px;
+  z-index:30; display:flex; justify-content:center; pointer-events:none;
 }
+.dock .plate{pointer-events:auto}
 .plate{
   position:relative; width:100%; height:58px; border:1.5px solid var(--ink);
   background:var(--card); cursor:pointer; overflow:hidden; touch-action:none;
@@ -412,7 +437,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   display:flex; padding-bottom:env(safe-area-inset-bottom);
 }
 .tb{
-  flex:1; border:0; background:none; cursor:pointer; padding:13px 0 11px;
+  flex:1; border:0; background:none; cursor:pointer; padding:12px 0 8px;
   font-family:var(--font-archivo); font-size:10px; font-weight:600; letter-spacing:.26em;
   color:var(--mut); text-transform:uppercase; position:relative;
 }
@@ -512,11 +537,13 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 
 /* ================= AUTH: sign-in / claim ================= */
 .auth-wrap{
-  width:100%; max-width:430px; min-height:100dvh; margin:0 auto;
-  display:flex; align-items:center; justify-content:center;
+  width:100%; max-width:430px; height:100dvh; margin:0 auto;
+  display:flex; justify-content:center; overflow-y:auto;
   padding:24px 22px calc(24px + env(safe-area-inset-bottom));
 }
-.auth-card{width:100%}
+/* margin:auto centers vertically when it fits, but still scrolls to the top when
+   the name list is taller than the viewport (the body itself is locked). */
+.auth-card{width:100%; margin:auto 0}
 .auth-eyebrow{
   font-family:var(--font-archivo); font-size:9.5px; font-weight:500; letter-spacing:.28em;
   color:var(--mut); text-transform:uppercase;
@@ -525,13 +552,41 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .auth-mark i{font-style:normal; color:var(--ox)}
 .auth-rule{height:1.5px; background:var(--line); margin:18px 0}
 .auth-sub{font-size:14.5px; line-height:1.55; color:#453F33; max-width:34ch}
+.auth-input{
+  display:block; width:100%; margin-top:18px; border:1.5px solid var(--line); background:var(--card); color:var(--ink);
+  padding:14px; font-family:var(--font-archivo); font-size:16px; border-radius:4px;
+}
+.auth-input:focus{outline:none; border-color:var(--ink)}
+.auth-code{text-align:center; letter-spacing:.4em; font-weight:700; font-size:22px}
+.auth-code-note{font-size:13px; color:#453F33; margin-top:16px; line-height:1.5}
+.auth-code-note b{font-weight:700}
+.auth-primary{
+  display:block; width:100%; margin-top:12px; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper);
+  padding:15px 0; font-family:var(--font-archivo); font-weight:600; font-size:11.5px; letter-spacing:.16em;
+  text-transform:uppercase; cursor:pointer; transition:transform .1s;
+}
+.auth-primary:active{transform:scale(.98)}
+.auth-primary:disabled{opacity:.55; cursor:default}
+.auth-link{
+  display:block; width:100%; margin-top:12px; border:0; background:none; color:var(--mut); cursor:pointer;
+  font-family:var(--font-archivo); font-size:9.5px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+}
+.auth-err{
+  margin-top:14px; padding:10px 12px; border:1px solid var(--ox); background:#F7E9E4; color:var(--ox);
+  font-size:12.5px; border-radius:3px;
+}
+.auth-or{display:flex; align-items:center; gap:12px; margin-top:20px; color:var(--mut)}
+.auth-or::before, .auth-or::after{content:""; flex:1; height:1px; background:var(--line)}
+.auth-or span{font-family:var(--font-archivo); font-size:9px; font-weight:600; letter-spacing:.2em; text-transform:uppercase}
 .auth-google{
-  display:block; width:100%; margin-top:22px; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper);
+  display:block; width:100%; margin-top:14px; border:1.5px solid var(--ink); background:none; color:var(--ink);
   padding:15px 0; font-family:var(--font-archivo); font-weight:600; font-size:11.5px; letter-spacing:.16em;
   text-transform:uppercase; cursor:pointer; transition:transform .1s;
 }
 .auth-google:active{transform:scale(.98)}
 .auth-google:disabled{opacity:.55; cursor:default}
+/* when OTP is off, Google is the sole (primary, filled) button */
+.auth-google.solo{background:var(--ink); color:var(--paper); margin-top:22px}
 .auth-fine{
   margin-top:14px; font-family:var(--font-archivo); font-size:9px; letter-spacing:.16em;
   color:var(--mut); text-transform:uppercase;
@@ -607,4 +662,175 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
   font-family:var(--font-archivo); font-size:9.5px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;
 }
 
+/* who gave kudos on a feed card */
+.kudos-from{display:flex; align-items:center; gap:8px; margin-top:11px; cursor:pointer}
+.kudos-from:active{opacity:.7}
+.kf-avas{display:flex}
+.kf-ava{
+  width:22px; height:22px; border-radius:50%; margin-left:-6px;
+  background:var(--ink); color:var(--paper); border:1.5px solid var(--card);
+  display:grid; place-items:center; font-family:var(--font-archivo); font-weight:700; font-size:8.5px;
+}
+.kf-ava:first-child{margin-left:0}
+.kf-tx{font-family:var(--font-archivo); font-size:10px; font-weight:600; letter-spacing:.04em; color:var(--ox); text-transform:uppercase}
+
+/* ================= feed card extras ================= */
+.card{position:relative}
+.card-edit{
+  position:absolute; top:15px; right:15px; z-index:2;
+  width:30px; height:30px; display:grid; place-items:center;
+  border:1px solid var(--line); background:var(--card); color:var(--mut);
+  border-radius:3px; cursor:pointer; font-size:13px; transition:transform .1s, color .15s, border-color .15s;
+}
+.card-edit:hover{color:var(--ink); border-color:var(--ink)}
+.card-edit:active{transform:scale(.9)}
+.card .bdur{font-family:var(--font-archivo); font-size:9.5px; font-weight:600; letter-spacing:.14em; color:var(--mut); text-transform:uppercase}
+.card.spotlight{animation:spotlight 2.4s ease both}
+@keyframes spotlight{
+  0%{box-shadow:0 0 0 0 rgba(39,174,82,0); transform:scale(1)}
+  10%{box-shadow:0 0 0 3px rgba(39,174,82,.55); transform:scale(1.015)}
+  55%{box-shadow:0 0 0 3px rgba(39,174,82,.35)}
+  100%{box-shadow:0 0 0 0 rgba(39,174,82,0); transform:scale(1)}
+}
+
+/* ================= 30-day history strip ================= */
+.hist{display:flex; gap:2px; align-items:flex-end; height:26px; margin-top:14px}
+.hist-cell{flex:1; height:6px; border-radius:1.5px; background:#E3DFD4}
+.hist-cell.hit{height:100%; background:var(--green)}
+.hist-cell.today{outline:1.5px solid var(--ink); outline-offset:1.5px}
+.hist-cap{margin-top:7px; font-family:var(--font-archivo); font-size:8.5px; font-weight:600; letter-spacing:.2em; color:var(--mut); text-transform:uppercase; text-align:center}
+
+/* ================= comment thread sheet ================= */
+.csheet h2{font-weight:800; font-size:20px; letter-spacing:-.02em}
+.csheet .cmt-sub{font-family:var(--font-archivo); color:var(--mut); font-size:9px; margin-top:5px; letter-spacing:.16em; text-transform:uppercase}
+.cmt-list{margin-top:16px; display:flex; flex-direction:column; gap:14px; max-height:46dvh; overflow-y:auto}
+.cmt-empty{padding:26px 0; text-align:center; color:var(--mut); font-size:13px}
+.cmt{display:flex; gap:10px; align-items:flex-start}
+.cmt-ava{flex:none; width:30px; height:30px; border-radius:50%; background:var(--ink); color:var(--paper);
+  display:grid; place-items:center; font-weight:700; font-size:11px}
+.cmt.mine .cmt-ava{background:var(--ox)}
+.cmt-b{flex:1; min-width:0}
+.cmt-h{display:flex; align-items:baseline; gap:8px}
+.cmt-name{font-weight:700; font-size:13px}
+.cmt-time{font-family:var(--font-archivo); font-size:9px; letter-spacing:.1em; color:var(--mut); text-transform:uppercase}
+.cmt-text{font-size:13.5px; line-height:1.5; color:#33302A; margin-top:2px; word-wrap:break-word}
+.cmt-composer{display:flex; gap:8px; margin-top:16px; align-items:flex-end}
+.cmt-input{
+  flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:4px;
+  padding:11px 12px; font-family:var(--font-archivo); font-size:14px; resize:none; line-height:1.4; max-height:120px;
+}
+.cmt-input:focus{outline:none; border-color:var(--ink)}
+.cmt-send{
+  flex:none; border:1.5px solid var(--ox); background:var(--ox); color:#fff; border-radius:4px;
+  padding:11px 15px; font-family:var(--font-archivo); font-weight:700; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; cursor:pointer; transition:transform .1s, opacity .15s;
+}
+.cmt-send:disabled{opacity:.4; cursor:default}
+.cmt-send:active:not(:disabled){transform:scale(.96)}
+
+/* ================= You · My dispatches ================= */
+.mine-sect{margin-top:26px}
+.mine-h{display:flex; align-items:center; gap:10px; margin:0 22px 12px}
+.mine-h h2{font-weight:800; font-size:15px; letter-spacing:.02em; text-transform:uppercase}
+.mine-h .ln{flex:1; height:1px; background:var(--line)}
+.mine-empty{margin:0 22px; color:var(--mut); font-size:13px}
+.mine-more{
+  display:block; width:calc(100% - 44px); margin:6px 22px 0; border:1px solid var(--ink); background:none; color:var(--ink);
+  padding:12px 0; font-family:var(--font-archivo); font-weight:600; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; cursor:pointer; transition:background .15s, color .15s;
+}
+.mine-more:hover{background:var(--ink); color:var(--paper)}
+
+/* ================= pull to refresh ================= */
+.ptr{display:flex; align-items:center; justify-content:center; overflow:hidden; transition:height .28s cubic-bezier(.2,1,.3,1)}
+.ptr.dragging{transition:none}
+.ptr-ico{width:22px; height:22px; border-radius:50%; border:2.5px solid rgba(27,24,18,.14); border-top-color:var(--ox)}
+.ptr-ico.spin{animation:ptrspin .7s linear infinite}
+@keyframes ptrspin{to{transform:rotate(360deg)}}
+
+/* ================= You · sign out ================= */
+.signout-row{margin:30px 22px 10px; display:flex; flex-direction:column; align-items:center; gap:10px}
+.signout-who{font-family:var(--font-archivo); font-size:9px; font-weight:600; letter-spacing:.16em; color:var(--mut); text-transform:uppercase}
+.signout-btn{
+  border:1px solid var(--line); background:none; color:var(--mut); cursor:pointer;
+  font-family:var(--font-archivo); font-size:10px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;
+  padding:10px 22px; border-radius:4px; transition:border-color .15s, color .15s;
+}
+.signout-btn:hover{border-color:var(--ox); color:var(--ox)}
+.signout-btn:active{transform:scale(.97)}
+
+/* ================= background picker (approval tool, ?pick=1) ================= */
+.bgpick{
+  position:fixed; top:calc(8px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
+  z-index:90; display:flex; align-items:center; gap:5px; flex-wrap:wrap; justify-content:center;
+  max-width:96vw; padding:7px 9px; background:var(--ink); border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,.28);
+}
+.bgpick-lbl{font-family:var(--font-archivo); font-size:8px; font-weight:700; letter-spacing:.18em; color:#B9B2A2; text-transform:uppercase; margin-right:2px}
+.bgpick-b{
+  border:1px solid #4A463C; background:#2C2820; color:#E8E2D2; border-radius:5px; cursor:pointer;
+  font-family:var(--font-archivo); font-size:10px; font-weight:600; letter-spacing:.06em; padding:6px 9px;
+}
+.bgpick-b.on{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+
+/* ================= SPLASH: cold-start title card ================= */
+.splash{
+  position:fixed; inset:0; z-index:100; background:var(--paper);
+  display:flex; align-items:center; justify-content:center;
+  /* No-JS / failed-hydration failsafe: if React never unmounts the splash,
+     CSS hides it on its own well after the normal ~2s dismissal. */
+  animation:splash-failsafe .6s ease 7s forwards;
+}
+@keyframes splash-failsafe{to{opacity:0; visibility:hidden}}
+.splash-inner{display:flex; flex-direction:column; align-items:center; padding:0 22px; transform:translateY(-4%)}
+.splash-crest{position:relative; width:172px; height:172px}
+.splash-crest img{width:100%; height:100%; display:block; filter:drop-shadow(0 14px 26px rgba(27,24,18,.16))}
+/* Shine sweep, alpha-masked to the shield so the glint never spills onto the paper. */
+.splash-shine{
+  position:absolute; inset:0; overflow:hidden; pointer-events:none;
+  -webkit-mask-image:url("/icons/icon-splash.png"); mask-image:url("/icons/icon-splash.png");
+  -webkit-mask-size:100% 100%; mask-size:100% 100%;
+}
+.splash-shine-band{
+  position:absolute; top:-12%; bottom:-12%; left:0; width:55%;
+  background:linear-gradient(105deg, rgba(255,255,255,0) 18%, rgba(255,253,246,.78) 46%, rgba(255,242,205,.6) 55%, rgba(255,255,255,0) 82%);
+}
+.splash-word{overflow:hidden; margin-top:22px; padding:2px 8px}
+.splash-word>div{font-weight:900; font-size:38px; letter-spacing:-.03em; line-height:1.05; white-space:nowrap}
+.splash-word i{font-style:normal; color:var(--ox)}
+.splash-eyebrow{
+  display:flex; align-items:center; gap:12px; margin-top:13px;
+  font-family:var(--font-archivo); font-size:9.5px; font-weight:500; letter-spacing:.28em;
+  color:var(--mut); text-transform:uppercase; white-space:nowrap;
+}
+.splash-rule{width:44px; height:1.5px; background:var(--line)}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* The splash failsafe is load-bearing (it unblocks the app if JS dies), so it
+   survives the reduced-motion animation kill above — it's only a fade. */
+@media (prefers-reduced-motion:reduce){
+  .splash{animation:splash-failsafe .6s ease 7s forwards!important}
+}
+
+/* ================= early notification opt-in ================= */
+.notif-prompt{
+  position:fixed; top:calc(10px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
+  width:calc(100% - 28px); max-width:404px; z-index:46;
+  background:var(--ink); color:var(--paper); border-radius:11px; padding:13px 14px;
+  display:flex; align-items:center; gap:12px; box-shadow:0 10px 34px rgba(0,0,0,.28);
+  animation:notif-in .4s cubic-bezier(.2,1.2,.4,1) both;
+}
+@keyframes notif-in{from{opacity:0; transform:translate(-50%,-14px)}}
+.notif-tx{flex:1; display:flex; flex-direction:column; gap:3px; min-width:0}
+.notif-tx b{font-size:14px; font-weight:800}
+.notif-tx span{font-size:11px; color:#C9C2B2; line-height:1.35}
+.notif-btns{display:flex; flex-direction:column; gap:5px; flex:none}
+.notif-enable{
+  background:var(--green); color:#fff; border:0; border-radius:7px; padding:9px 15px;
+  font-family:var(--font-archivo); font-weight:700; font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; cursor:pointer;
+}
+.notif-enable:active{transform:scale(.96)}
+.notif-later{
+  background:none; border:0; color:#9a9484; cursor:pointer;
+  font-family:var(--font-archivo); font-size:9px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+}

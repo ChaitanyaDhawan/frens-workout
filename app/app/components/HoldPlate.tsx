@@ -51,7 +51,7 @@ export default function HoldPlate() {
   };
 
   return (
-    <div className="dock" style={{ display: tab === "you" ? "none" : "flex" }}>
+    <div className={`dock${logged ? " logged" : ""}`} style={{ display: tab === "you" ? "none" : "flex" }}>
       <button
         ref={plateRef}
         className={`plate${logged ? " done" : ""}`}
