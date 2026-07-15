@@ -40,7 +40,7 @@ function Shell() {
   return (
     <>
       <div className="phone">
-        <Header />
+        {tab !== "board" && <Header />}
         {tab === "home" && <Home />}
         {tab === "board" && (
           <div className="view active" id="view-board">

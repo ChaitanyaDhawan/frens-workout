@@ -243,19 +243,24 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     }
   }
 
-  // Feed = app-sourced workouts, newest first.
-  const feed: FeedItem[] = workouts
-    .filter((w) => w.source === "app")
-    .sort((a, b) => b.logged_at.localeCompare(a.logged_at))
+  // Feed = the most recent workouts (any source), newest workout-day first, so
+  // it's populated from imported history until in-app logs take over.
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const feed: FeedItem[] = [...workouts]
+    .sort((a, b) => b.workout_date.localeCompare(a.workout_date) || b.logged_at.localeCompare(a.logged_at))
+    .slice(0, 24)
     .map((w) => {
       const mem = memberById.get(w.member_id);
       const memAgg = frensById.get(w.member_id);
       const mt = meta.get(w.id) ?? { qCount: 0, yrCount: 0, isLatest: false };
       const act = w.types && w.types.length ? w.types.join(" · ") : "Workout";
+      const tm = w.source === "app"
+        ? feedTime(w.logged_at)
+        : `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
       return {
         id: w.id,
         n: mem?.display_name ?? "—",
-        tm: feedTime(w.logged_at),
+        tm,
         act,
         brag: memAgg ? bragForWorkout(memAgg, mt.qCount, mt.yrCount, mt.isLatest) : "",
         note: w.note ?? "",
