@@ -181,36 +181,50 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .plq.p3 .medal{background:radial-gradient(circle at 38% 30%, #F3C89A, #CD8B4E 48%, #9E5F28 82%, #703F16)}
 .plq .mdays{font-family:var(--font-archivo); font-size:9px; font-weight:600; letter-spacing:.14em; color:var(--mut); text-transform:uppercase; margin:7px 0 10px}
 .plq .riser{
-  position:relative; width:100%; border-radius:8px 8px 0 0;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
-  padding:15px 5px 12px;
+  position:relative; width:100%; border-radius:9px 9px 0 0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  padding:17px 6px 17px;
   box-shadow:
-    inset 0 3px 0 rgba(255,255,255,.45),
-    inset 3px 0 0 rgba(255,255,255,.18),
-    inset -3px 0 0 rgba(0,0,0,.18),
-    inset 0 -16px 22px -12px rgba(0,0,0,.4),
-    0 8px 16px -6px rgba(43,38,26,.4);
+    inset 0 2px 1px rgba(255,255,255,.6),
+    inset 5px 0 7px -3px rgba(255,255,255,.4),
+    inset -5px 0 8px -3px rgba(0,0,0,.3),
+    inset 0 -22px 26px -14px rgba(0,0,0,.42),
+    0 13px 22px -8px rgba(43,38,26,.5);
 }
-/* 3D top face of the pedestal block (tinted per metal below) */
+/* raised 3D top face of the pedestal */
 .plq .riser::before{
-  content:""; position:absolute; top:-6px; left:4px; right:4px; height:9px; border-radius:5px 5px 0 0;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  content:""; position:absolute; top:-7px; left:5px; right:5px; height:10px; border-radius:6px 6px 0 0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 1px 2px rgba(0,0,0,.18); z-index:1;
 }
-.plq .riser .rno{font-family:var(--font-archivo); font-weight:900; line-height:1; text-shadow:0 1px 0 rgba(255,255,255,.35)}
-.plq .riser .rn-name{font-family:var(--font-archivo); font-size:12px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
-/* vibrant gold / silver / bronze pedestals with dark engraved text */
-.plq.p1 .riser{height:106px; background:linear-gradient(180deg,#FCE07E 0%,#E9C24D 48%,#C99A28 100%)}
-.plq.p1 .riser::before{background:linear-gradient(180deg,#FFF0AE,#F2CF62)}
-.plq.p1 .riser .rno{font-size:38px; color:#5B3F0C}
-.plq.p1 .riser .rn-name{color:#5B3F0C}
-.plq.p2 .riser{height:88px; background:linear-gradient(180deg,#E4E8EC 0%,#BCC2C9 48%,#98A0A8 100%)}
-.plq.p2 .riser::before{background:linear-gradient(180deg,#F3F5F7,#CDD2D8)}
-.plq.p2 .riser .rno{font-size:30px; color:#3B4149}
-.plq.p2 .riser .rn-name{color:#3B4149}
-.plq.p3 .riser{height:76px; background:linear-gradient(180deg,#E8A96A 0%,#C67F44 48%,#A2652F 100%)}
-.plq.p3 .riser::before{background:linear-gradient(180deg,#F3C495,#D69259)}
-.plq.p3 .riser .rno{font-size:26px; color:#4A2C10}
-.plq.p3 .riser .rn-name{color:#4A2C10}
+/* glossy sheen over the upper half */
+.plq .riser::after{
+  content:""; position:absolute; left:0; right:0; top:0; height:46%; border-radius:9px 9px 0 0;
+  background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.14) 55%, rgba(255,255,255,0) 100%);
+  pointer-events:none; z-index:0;
+}
+/* engraved (debossed) text: dark strokes with a light highlight beneath */
+.plq .riser .rno{
+  position:relative; z-index:2; font-family:var(--font-archivo); font-weight:900; line-height:1;
+  text-shadow:0 1.5px 0 rgba(255,255,255,.55), 0 -1px 1px rgba(0,0,0,.22);
+}
+.plq .riser .rn-name{
+  position:relative; z-index:2; font-family:var(--font-archivo); font-size:12px; font-weight:800;
+  letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+  text-shadow:0 1px 0 rgba(255,255,255,.5);
+}
+/* refined, even gold / silver / bronze */
+.plq.p1 .riser{height:110px; background:linear-gradient(180deg,#FBEBA0 0%,#EFCD66 34%,#DBB042 64%,#C0982A 100%)}
+.plq.p1 .riser::before{background:linear-gradient(180deg,#FFF4BC,#F2D26A)}
+.plq.p1 .riser .rno{font-size:38px; color:#5A3E0A}
+.plq.p1 .riser .rn-name{color:#5A3E0A}
+.plq.p2 .riser{height:92px; background:linear-gradient(180deg,#F0F3F6 0%,#D0D5DB 34%,#B0B7BE 64%,#969DA5 100%)}
+.plq.p2 .riser::before{background:linear-gradient(180deg,#F8FAFB,#D6DBE0)}
+.plq.p2 .riser .rno{font-size:30px; color:#39404A}
+.plq.p2 .riser .rn-name{color:#39404A}
+.plq.p3 .riser{height:82px; background:linear-gradient(180deg,#F1BE84 0%,#D2925A 34%,#B4753C 64%,#96602C 100%)}
+.plq.p3 .riser::before{background:linear-gradient(180deg,#F7CFA0,#DC9A63)}
+.plq.p3 .riser .rno{font-size:25px; color:#48290E}
+.plq.p3 .riser .rn-name{color:#48290E}
 
 .list{margin:20px 22px 0; border-top:1px solid var(--line)}
 .row{display:flex; align-items:center; gap:12px; padding:11px 2px; border-bottom:1px solid var(--line); background:var(--paper)}
