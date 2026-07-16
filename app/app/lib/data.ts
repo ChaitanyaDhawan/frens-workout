@@ -32,6 +32,8 @@ export interface Member {
    *  this year's workout days (for the profile's 30-day strip). */
   bestStreak?: number;
   typeCounts?: Record<string, number>;
+  /** Workouts with no activity type (mostly imported check-mark history). */
+  untagged?: number;
   days?: Set<number>;
   /** Last workout date per quarter, e.g. { q1: "Mar 30", q3: "Jul 13" }. */
   last: Partial<Record<QuarterKey, string>>;

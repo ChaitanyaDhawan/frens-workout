@@ -926,3 +926,16 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .prof-act{font-family:var(--font-sans); font-weight:600; font-size:13px; padding:7px 11px; border:1px solid var(--line); border-radius:2px; background:var(--card); color:var(--ink)}
 .prof-act b{font-weight:800; color:var(--ox)}
 .prof-empty,.prof-empty2{color:var(--mut); font-size:13px; padding:8px 0}
+
+/* profile — activity bar list + show-more */
+.prof-actlist{border:1px solid var(--line); background:var(--card)}
+.prof-actrow{display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line)}
+.prof-actrow:last-child{border-bottom:none}
+.prof-actrow .pa-name{flex:0 0 33%; font-family:var(--font-sans); font-weight:700; font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.prof-actrow .pa-bar{flex:1; height:8px; background:var(--paper); border:1px solid var(--line); position:relative; overflow:hidden}
+.prof-actrow .pa-fill{position:absolute; top:0; bottom:0; left:0; background:var(--green)}
+.prof-actrow .pa-c{flex:0 0 auto; width:28px; text-align:right; font-family:var(--font-mono); font-weight:600; font-size:12px; color:var(--ink)}
+.prof-actrow.untag .pa-name{color:var(--mut); font-weight:600}
+.prof-actrow.untag .pa-fill{background:var(--line)}
+.prof-actrow.untag .pa-c{color:var(--mut)}
+.prof-more{margin-top:10px; width:100%; background:none; border:1px solid var(--line); border-radius:2px; padding:9px; font-family:var(--font-mono); font-weight:600; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ox); cursor:pointer}

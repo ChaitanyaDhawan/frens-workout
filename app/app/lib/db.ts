@@ -242,6 +242,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       q3 = 0,
       q4 = 0,
       allTime = 0,
+      untagged = 0,
       total2025 = 0;
     const maxByQ: Partial<Record<QuarterKey, string>> = {};
     const doys = new Set<number>();
@@ -250,10 +251,15 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       const { y, m, d } = parseDate(w.workout_date);
       const q = quarterOf(m);
       allTime++;
+      let tagged = false;
       for (const t of w.types ?? []) {
         const k = t.trim();
-        if (k) typeCounts[k] = (typeCounts[k] ?? 0) + 1;
+        if (k) {
+          typeCounts[k] = (typeCounts[k] ?? 0) + 1;
+          tagged = true;
+        }
       }
+      if (!tagged) untagged++;
       if (y === IST_YEAR - 1) total2025++;
       // Current-year quarters / streak / calendar only — 2025 rows never inflate these.
       if (y === IST_YEAR) {
@@ -290,6 +296,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       allTime,
       bestStreak: bestStreakOf(doys),
       typeCounts,
+      untagged,
       days: doys,
       last,
       you: myMemberId === mem.id,
