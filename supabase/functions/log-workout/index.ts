@@ -32,7 +32,7 @@ const TYPE_MAP: Record<string, string> = {
   walking: "Walk", walk: "Walk", hiking: "Hike", hike: "Hike",
   cycling: "Cycling", "outdoor cycle": "Cycling", "indoor cycle": "Cycling", biking: "Cycling", ride: "Cycling",
   "traditional strength training": "Gym", "functional strength training": "Gym",
-  "strength training": "Gym", "core training": "Gym", "weight training": "Gym", gym: "Gym", lifting: "Gym",
+  "strength training": "Gym", "core training": "Gym", "weight training": "Gym", gym: "Gym", lifting: "Gym", lift: "Gym",
   yoga: "Yoga", pilates: "Pilates", "mind and body": "Yoga",
   swimming: "Swim", "pool swim": "Swim", "open water swim": "Swim", swim: "Swim",
   "high intensity interval training": "HIIT", hiit: "HIIT",
