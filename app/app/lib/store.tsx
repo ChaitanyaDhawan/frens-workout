@@ -31,6 +31,7 @@ import { maybeSubscribeAfterLog } from "./push";
 import { compressImage } from "./compressImage";
 import { SAMPLE_RAW, DEMO_ME_ID } from "./demoData";
 import { fx } from "./fx";
+import { markAppReady } from "./ready";
 
 export type TabId = "home" | "board" | "you";
 export type SheetMode = "log" | "edit";
@@ -343,8 +344,15 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       setRaw(data);
     } catch {
       /* transient — a later realtime event or visibility refetch reconciles */
+    } finally {
+      markAppReady(); // first load done (or failed) → the splash can reveal the app
     }
   }, [supabase, myId]);
+
+  // Demo mode has static data — ready to reveal immediately.
+  useEffect(() => {
+    if (demo) markAppReady();
+  }, [demo]);
   const refetchRef = useRef(refetch);
   refetchRef.current = refetch;
 
@@ -371,7 +379,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       if (mid && mid !== myId) setOtherTick((t) => t + 1);
       if (payload.eventType === "INSERT") {
         const n = payload.new;
-        if (n && n.source === "app" && n.id) markFresh(n.id as string);
+        if (n && n.source !== "sheet" && n.id) markFresh(n.id as string);
       }
       scheduleRefetch();
     };
