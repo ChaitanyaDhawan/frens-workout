@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useStore } from "@/app/lib/store";
 import { useAuth } from "@/app/lib/auth";
 import NotifTile from "./NotifTile";
+import KudosSoundTile from "./KudosSoundTile";
 
 const EASE: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
@@ -44,6 +45,7 @@ export default function SettingsDrawer() {
           <span className="al-entry-arrow">›</span>
         </button>
         <NotifTile />
+        <KudosSoundTile />
       </div>
 
       <div className="set-foot">

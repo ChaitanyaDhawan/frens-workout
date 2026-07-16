@@ -39,15 +39,23 @@ export default function KudosReceived() {
       const givers = giverIds.map((id) => nameById.get(id) || "Someone");
       setData({ count: reacts.length, givers });
       navigator.vibrate?.([10, 30, 10, 30, 16]);
+      // Visual burst on open, but no sound — tapping the badge plays it (audio
+      // that autoplays on open startles people, and browsers block it anyway).
       setTimeout(() => {
         fx.clap(window.innerWidth / 2, window.innerHeight * 0.34);
-        playKudos();
       }, 200);
     })();
     return () => {
       cancelled = true;
     };
   }, [member?.id, supabase]);
+
+  const playApplause = () => {
+    if (!data) return;
+    playKudos(data.count); // length scales with how many kudos landed
+    fx.clap(window.innerWidth / 2, window.innerHeight * 0.34);
+    navigator.vibrate?.(12);
+  };
 
   const dismiss = async () => {
     setData(null);
@@ -69,14 +77,19 @@ export default function KudosReceived() {
         transition={{ duration: 0.5, ease: CEL_EASE }}
       >
         <div className="cel-eyebrow">While you were out</div>
-        <motion.div
+        <motion.button
+          type="button"
           className="cel-badge kudos"
+          onClick={playApplause}
+          aria-label="Play applause"
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
+          whileTap={{ scale: 0.92 }}
           transition={{ delay: 0.12, duration: 0.5, ease: [0.2, 1.8, 0.4, 1] }}
         >
           👏
-        </motion.div>
+        </motion.button>
+        <div className="cel-hear">Tap 👏 to hear</div>
         <h1 className="cel-headline">
           {data.count} new {data.count === 1 ? "kudos" : "kudos"}!
         </h1>

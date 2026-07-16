@@ -1,9 +1,39 @@
-// Synthesized applause for kudos — no audio asset needed, works offline.
-// A short cluster of band-passed noise "claps" that reads as a quick round of
-// applause. Must be triggered from a user gesture (the kudos tap) so the
-// browser lets the AudioContext run.
+// Applause for kudos — one clip (small-crowd cheer + claps), used everywhere.
+// How LONG it plays scales with how many kudos landed: a quick burst for a
+// single give, up to the full clip for a big haul. Prefers the bundled clip;
+// falls back to synthesized applause when it can't load (offline / blocked).
+// Must be triggered from a user gesture (a tap) so the browser lets audio run.
+
+const CLIP_SRC: string | null = "/audio/kudos.mp3";
+const CLIP_LEN_MS = 2200; // real length of kudos.mp3
 
 let ctx: AudioContext | null = null;
+let clip: HTMLAudioElement | null = null;
+let clipBroken = false;
+let fadeTimer = 0;
+let fadeRaf = 0;
+
+// Per-device preference for the kudos applause. On by default; the Settings
+// drawer flips it. Stored in localStorage so it survives reloads. Gates every
+// kudos sound — giving, receiving, and the preview.
+const SND_KEY = "frens_kudos_sound";
+
+export function isKudosSoundOn(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return localStorage.getItem(SND_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setKudosSoundOn(on: boolean): void {
+  try {
+    localStorage.setItem(SND_KEY, on ? "on" : "off");
+  } catch {
+    /* private mode / storage disabled — the sound just isn't remembered */
+  }
+}
 
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -20,46 +50,149 @@ function audio(): AudioContext | null {
   }
 }
 
-/** One clap: a short burst of band-passed white noise with a fast decay. */
-function clap(ac: AudioContext, t: number, gain: number, freq: number) {
-  const dur = 0.09;
+/** Play length for a given kudos count: ~1s for one, up to the full clip. */
+function scaledDurationMs(count: number): number {
+  const c = Math.max(1, Math.floor(count) || 1);
+  return Math.min(CLIP_LEN_MS, 1000 + (c - 1) * 300);
+}
+
+function clearFade() {
+  if (fadeTimer) {
+    clearTimeout(fadeTimer);
+    fadeTimer = 0;
+  }
+  if (fadeRaf) {
+    cancelAnimationFrame(fadeRaf);
+    fadeRaf = 0;
+  }
+}
+
+/** Fade the clip out and stop it at `durMs`, unless that's basically the whole
+ *  clip (then let it end on its own). */
+function scheduleClipFade(durMs: number) {
+  clearFade();
+  if (durMs >= CLIP_LEN_MS - 150 || typeof performance === "undefined") return;
+  const fadeMs = 280;
+  fadeTimer = window.setTimeout(() => {
+    if (!clip) return;
+    const start = performance.now();
+    const v0 = clip.volume;
+    const tick = (now: number) => {
+      if (!clip) return;
+      const k = Math.min(1, (now - start) / fadeMs);
+      clip.volume = Math.max(0, v0 * (1 - k));
+      if (k < 1) {
+        fadeRaf = requestAnimationFrame(tick);
+      } else {
+        clip.pause();
+        clip.currentTime = 0;
+        clip.volume = v0;
+        fadeRaf = 0;
+      }
+    };
+    fadeRaf = requestAnimationFrame(tick);
+  }, Math.max(50, durMs - fadeMs));
+}
+
+function noiseBuffer(ac: AudioContext, dur: number): AudioBuffer {
+  const buf = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+/** One hand clap: a very short noise smack — sharp attack, fast decay, high-passed
+ *  with a peak around 1.6 kHz so it reads as a clap, not a hiss. */
+function oneClap(ac: AudioContext, t: number, gain: number) {
+  const dur = 0.05;
   const buf = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate);
   const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) {
-    const env = Math.pow(1 - i / d.length, 2.4); // sharp attack, quick tail
+    const env = Math.pow(1 - i / d.length, 6);
     d[i] = (Math.random() * 2 - 1) * env;
   }
   const src = ac.createBufferSource();
   src.buffer = buf;
-  const bp = ac.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.frequency.value = freq;
-  bp.Q.value = 0.7;
+  const hp = ac.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 900;
+  const peak = ac.createBiquadFilter();
+  peak.type = "peaking";
+  peak.frequency.value = 1600;
+  peak.gain.value = 6;
+  peak.Q.value = 1;
   const g = ac.createGain();
   g.gain.value = gain;
-  src.connect(bp).connect(g).connect(ac.destination);
+  src.connect(hp).connect(peak).connect(g).connect(ac.destination);
   src.start(t);
   src.stop(t + dur);
 }
 
-/** A quick round of applause. Safe to call anywhere; it no-ops if audio isn't
- *  available or the context can't run. */
-export function playKudos() {
+/** A soft crowd "wooo" swell behind the claps. */
+function cheer(ac: AudioContext, t: number, durS: number) {
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuffer(ac, durS);
+  const bp = ac.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(680, t);
+  bp.frequency.linearRampToValueAtTime(1150, t + durS * 0.5);
+  bp.frequency.linearRampToValueAtTime(820, t + durS);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.13, t + Math.min(0.2, durS * 0.3));
+  g.gain.linearRampToValueAtTime(0.0001, t + durS);
+  src.connect(bp).connect(g).connect(ac.destination);
+  src.start(t);
+  src.stop(t + durS);
+}
+
+/** Synthesized round of applause, scaled to the kudos count. */
+function synthApplause(count: number) {
   const ac = audio();
   if (!ac) return;
   const now = ac.currentTime;
-  // a lead clap, then a scattered flurry that thins out — "applause"
-  const pattern: [number, number, number][] = [
-    [0.0, 0.5, 1900],
-    [0.05, 0.34, 1500],
-    [0.09, 0.42, 2200],
-    [0.15, 0.26, 1700],
-    [0.2, 0.32, 2000],
-    [0.26, 0.2, 1600],
-    [0.32, 0.24, 2100],
-    [0.4, 0.15, 1800],
-  ];
-  for (const [dt, gain, freq] of pattern) {
-    clap(ac, now + dt + Math.random() * 0.012, gain, freq);
+  const durS = scaledDurationMs(count) / 1000;
+  cheer(ac, now, durS);
+  const N = Math.min(28, 9 + Math.round((count - 1) * 2.5));
+  const spread = Math.max(0.3, durS - 0.3);
+  for (let i = 0; i < N; i++) {
+    const t = now + (i / N) * spread + Math.random() * 0.03;
+    const gain = Math.max(0.1, 0.5 - (i / N) * 0.25 + Math.random() * 0.12);
+    oneClap(ac, t, gain);
   }
+}
+
+/**
+ * Play the kudos applause, its length scaled to `count`. No-ops when the user
+ * has muted kudos sounds. Prefers the bundled clip; falls back to synthesis.
+ */
+export function playKudos(count = 1) {
+  if (!isKudosSoundOn()) return;
+  const dur = scaledDurationMs(count);
+  if (CLIP_SRC && !clipBroken) {
+    try {
+      if (!clip) {
+        clip = new Audio(CLIP_SRC);
+        clip.preload = "auto";
+      }
+      clearFade();
+      clip.volume = 0.9;
+      clip.currentTime = 0;
+      const p = clip.play();
+      scheduleClipFade(dur);
+      if (p && typeof p.then === "function") {
+        p.catch(() => {
+          clipBroken = true; // missing / offline / blocked — synth from now on
+          clearFade();
+          synthApplause(count);
+        });
+      }
+      return;
+    } catch {
+      clipBroken = true;
+      clearFade();
+    }
+  }
+  synthApplause(count);
 }

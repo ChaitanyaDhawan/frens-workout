@@ -250,7 +250,10 @@ export async function enableNotifications(
 ): Promise<NotifState> {
   const base = notifState();
   if (base === "unsupported" || base === "needs-install" || base === "blocked") return base;
-  if (!memberId) return base;
+  // Fire the native OS prompt first, straight from the tap gesture (before any
+  // await that could drop user activation on iOS, and regardless of whether the
+  // member row has loaded yet). Once denied, browsers refuse to re-prompt — only
+  // device Settings can undo that, so there's nothing to open in the "blocked" case.
   let permission = Notification.permission;
   if (permission === "default") {
     try {
@@ -260,10 +263,12 @@ export async function enableNotifications(
     }
   }
   if (permission !== "granted") return permission === "denied" ? "blocked" : "off";
-  try {
-    await ensureSubscription(supabase, memberId);
-  } catch {
-    /* best-effort — a later log retries */
+  if (memberId) {
+    try {
+      await ensureSubscription(supabase, memberId);
+    } catch {
+      /* best-effort — a later log retries */
+    }
   }
   return "on";
 }
