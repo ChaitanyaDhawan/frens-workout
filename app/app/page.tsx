@@ -30,6 +30,7 @@ import InstallGuide from "@/app/components/InstallGuide";
 import BackgroundPicker from "@/app/components/BackgroundPicker";
 import Splash from "@/app/components/Splash";
 import NotificationPrompt from "@/app/components/NotificationPrompt";
+import { initKudosAudio } from "@/app/lib/sound";
 
 function Home() {
   return (
@@ -49,10 +50,14 @@ function Shell() {
     useStore();
   const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet || autoLog || !!profileMember || settings || dispatchesOpen;
 
+  // Warm the kudos applause so the first play after a cold open isn't a cold stutter.
+  useEffect(() => {
+    initKudosAudio();
+  }, []);
+
   return (
     <>
       <div className="phone">
-        <div className="safe-top" aria-hidden />
         <ScrollArea>
           {tab !== "board" && <Header />}
           {tab === "home" && <Home />}

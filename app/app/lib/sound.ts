@@ -35,6 +35,27 @@ export function setKudosSoundOn(on: boolean): void {
   }
 }
 
+/**
+ * Warm the kudos audio early (call once on app mount). A fresh `new Audio()`
+ * isn't downloaded/decoded yet, so the very first play after a cold open
+ * stutters or drops — by the second play it's buffered and fine. Creating and
+ * loading the clip up front makes the first real play warm too. (iOS still
+ * unlocks output on the first gesture-driven play, which the first kudos tap
+ * provides.)
+ */
+export function initKudosAudio(): void {
+  if (typeof window === "undefined") return;
+  if (CLIP_SRC && !clip) {
+    try {
+      clip = new Audio(CLIP_SRC);
+      clip.preload = "auto";
+      clip.load();
+    } catch {
+      /* best-effort — playKudos still works, just cold the first time */
+    }
+  }
+}
+
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {

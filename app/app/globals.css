@@ -28,32 +28,31 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-text-size-adjust:100%; background:var(--paper)}
+html{-webkit-text-size-adjust:100%; background:var(--paper); overscroll-behavior:none}
 body{
   background:var(--paper); color:var(--ink);
   font-family:var(--font-archivo),system-ui,sans-serif;
-  height:100dvh; overflow:hidden; display:flex; justify-content:center;
+  height:100dvh; overflow:hidden; overscroll-behavior:none; display:flex; justify-content:center;
 }
 /* App shell: the viewport is locked and only .scroll scrolls, so the fixed
    tab bar + dock stay put in the installed PWA (body-scroll used to let iOS
    momentum drag them away and bleed content above/below the nav). */
+/* The whole frame is inset from the top by the status-bar strip with plain
+   padding (NOT a fixed overlay). This keeps scrolling content from ever passing
+   under the translucent status bar, so there's nothing for iOS to paint gray —
+   and no pinned/composited layer that could ghost after momentum scroll. The
+   strip itself is just this element's opaque paper background, which never
+   scrolls and is never on its own GPU layer. */
 .phone{width:100%; max-width:430px; height:100dvh; position:relative; background:var(--paper);
-  display:flex; flex-direction:column; overflow:hidden}
+  display:flex; flex-direction:column; overflow:hidden;
+  padding-top:env(safe-area-inset-top)}
 /* No -webkit-overflow-scrolling:touch — its separate GPU layer leaves gray ghost
    tiles after momentum scroll in the standalone PWA. Modern iOS scrolls smoothly
    without it. */
 .scroll{flex:1; min-height:0; overflow-y:auto; background:var(--paper);
   overscroll-behavior:none; padding-bottom:calc(150px + env(safe-area-inset-bottom))}
-/* Opaque Ivory paint over the status-bar strip so iOS can't show its gray there
-   as content scrolls under the translucent status bar. Full-width with NO
-   transform on purpose: a transformed fixed element is a separate GPU layer,
-   and those leave gray ghost tiles after momentum scroll in the standalone PWA
-   (same reason -webkit-overflow-scrolling was dropped above). */
-.safe-top{position:fixed; top:0; left:0; right:0;
-  height:env(safe-area-inset-top);
-  background:var(--paper); z-index:34; pointer-events:none}
 
-header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
+header{padding:18px 22px 0}
 .hdr-row{display:flex; align-items:center; justify-content:space-between; gap:12px}
 .hdr-gear{
   flex:0 0 auto; width:36px; height:36px; display:grid; place-items:center; cursor:pointer;
@@ -151,7 +150,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 @keyframes flap{0%{transform:rotateX(0)}49%{transform:rotateX(-88deg)}51%{transform:rotateX(88deg)}100%{transform:rotateX(0)}}
 
 /* ================= BOARD ================= */
-#view-board{padding-top:max(16px,env(safe-area-inset-top))}
+#view-board{padding-top:16px}
 .periods{display:flex; gap:6px; margin:18px 0 0; padding:0 22px; overflow-x:auto; scrollbar-width:none}
 .periods::-webkit-scrollbar{display:none}
 .period{
@@ -916,8 +915,15 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .notif-pill.on{background:var(--green); color:#fff; border-color:var(--green)}
 
 /* ===== Member profile sheet ===== */
-.prof-sheet{max-height:90vh; overflow-y:auto; padding-bottom:28px}
-.prof-head{min-height:8px}
+/* Fixed height so every profile opens the same size (not sized to its content),
+   scrolls internally when content overflows, and reads as a tall bottom sheet
+   with a clear gap above — never full-screen. */
+.prof-sheet{height:85vh; height:85dvh; max-height:85dvh; overflow-y:auto; padding-bottom:28px}
+/* Close button pinned as a sticky bar so it stays reachable while the body
+   scrolls. Scoped to .prof-sheet so it beats `.sheet .shead{position:relative}`. */
+.prof-sheet .prof-head{position:sticky; top:0; z-index:3; min-height:0;
+  display:flex; justify-content:flex-end; align-items:center;
+  margin:-18px -22px 4px; padding:12px 20px 8px; background:var(--paper)}
 .prof-hero{display:flex; flex-direction:column; align-items:center; text-align:center; margin-top:2px}
 .prof-ava{width:62px; height:62px; border-radius:50%; border:1.5px solid var(--ink); display:grid; place-items:center; font-family:var(--font-sans); font-weight:800; font-size:23px; color:var(--ink); background:var(--card)}
 .prof-name{margin-top:10px; font-family:var(--font-sans); font-weight:800; font-size:23px; letter-spacing:-.02em; color:var(--ink); display:flex; align-items:center; gap:8px}
