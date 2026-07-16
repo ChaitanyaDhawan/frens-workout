@@ -19,6 +19,7 @@ import DetailSheet from "@/app/components/DetailSheet";
 import DayDetailSheet from "@/app/components/DayDetailSheet";
 import CommentSheet from "@/app/components/CommentSheet";
 import KudosSheet from "@/app/components/KudosSheet";
+import AutoLogSheet from "@/app/components/AutoLogSheet";
 import Celebration from "@/app/components/Celebration";
 import KudosReceived from "@/app/components/KudosReceived";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
@@ -41,9 +42,9 @@ function Home() {
 }
 
 function Shell() {
-  const { tab, sheet, daySheet, commentSheet, kudosSheet, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet } =
+  const { tab, sheet, daySheet, commentSheet, kudosSheet, autoLog, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet, closeAutoLog } =
     useStore();
-  const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet;
+  const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet || autoLog;
 
   return (
     <>
@@ -86,6 +87,7 @@ function Shell() {
               closeDaySheet();
               closeCommentSheet();
               closeKudosSheet();
+              closeAutoLog();
             }}
           />
         )}
@@ -95,6 +97,7 @@ function Shell() {
       <AnimatePresence>{daySheet && <DayDetailSheet key="day-sheet" />}</AnimatePresence>
       <AnimatePresence>{commentSheet && <CommentSheet key="comment-sheet" />}</AnimatePresence>
       <AnimatePresence>{kudosSheet && <KudosSheet key="kudos-sheet" />}</AnimatePresence>
+      <AnimatePresence>{autoLog && <AutoLogSheet key="autolog-sheet" />}</AnimatePresence>
 
       <Celebration />
       <KudosReceived />

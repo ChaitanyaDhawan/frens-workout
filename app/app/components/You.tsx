@@ -8,7 +8,6 @@ import { bestStreak, streakNow, val } from "@/app/lib/helpers";
 import Flame from "./Flame";
 import WeekStrip from "./WeekStrip";
 import { FeedCard } from "./Feed";
-import AutoLog from "./AutoLog";
 
 const PAGE = 5;
 
@@ -247,14 +246,28 @@ function SignOutRow() {
   );
 }
 
+function AutoLogEntry() {
+  const { openAutoLog } = useStore();
+  return (
+    <button className="al-entry" onClick={openAutoLog}>
+      <span className="al-entry-ic">⚡</span>
+      <span className="al-entry-tx">
+        <span className="al-entry-t">Auto-logging</span>
+        <span className="al-entry-s">Apple Watch &amp; more — log workouts automatically</span>
+      </span>
+      <span className="al-entry-arrow">›</span>
+    </button>
+  );
+}
+
 export default function You() {
   return (
     <>
       <StreakHero />
       <Stats />
       <Calendar />
+      <AutoLogEntry />
       <MyDispatches />
-      <AutoLog />
       <SignOutRow />
     </>
   );

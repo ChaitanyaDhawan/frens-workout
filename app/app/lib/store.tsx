@@ -69,6 +69,7 @@ interface Store {
   commentsByWorkout: Map<string, CommentThreadItem[]>;
   /** workoutId whose kudos-givers list is open, or null. */
   kudosSheet: string | null;
+  autoLog: boolean;
   /** Bumps after a log so the feed can scroll+spotlight the new card. */
   logFocusKey: number;
   /** Notification deep-link target (workout to scroll to; kudos = also burst). */
@@ -103,6 +104,8 @@ interface Store {
   closeCommentSheet: () => void;
   openKudosSheet: (workoutId: string) => void;
   closeKudosSheet: () => void;
+  openAutoLog: () => void;
+  closeAutoLog: () => void;
   /** Feed reads this once after a log to scroll+spotlight the new card. */
   consumeLogFocus: () => boolean;
   clearDeepLink: () => void;
@@ -248,6 +251,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const celKey = useRef(0);
   const [commentSheet, setCommentSheet] = useState<string | null>(null);
   const [kudosSheet, setKudosSheet] = useState<string | null>(null);
+  const [autoLog, setAutoLog] = useState(false);
   const [logFocusKey, setLogFocusKey] = useState(0);
   const focusConsumed = useRef(0);
   const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean } | null>(null);
@@ -815,6 +819,8 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const closeCommentSheet = useCallback(() => setCommentSheet(null), []);
   const openKudosSheet = useCallback((workoutId: string) => setKudosSheet(workoutId), []);
   const closeKudosSheet = useCallback(() => setKudosSheet(null), []);
+  const openAutoLog = useCallback(() => setAutoLog(true), []);
+  const closeAutoLog = useCallback(() => setAutoLog(false), []);
   const consumeLogFocus = useCallback(() => {
     if (logFocusKey > 0 && focusConsumed.current !== logFocusKey) {
       focusConsumed.current = logFocusKey;
@@ -912,6 +918,9 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       closeCommentSheet,
       openKudosSheet,
       closeKudosSheet,
+      autoLog,
+      openAutoLog,
+      closeAutoLog,
       consumeLogFocus,
       clearDeepLink,
     }),
@@ -922,6 +931,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       logToday, backfillDay, removeDay, saveDetails, openSheet, closeSheet, openDaySheet,
       closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment,
       openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink,
+      autoLog, openAutoLog, closeAutoLog,
     ],
   );
 
