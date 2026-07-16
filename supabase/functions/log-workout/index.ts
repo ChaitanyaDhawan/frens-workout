@@ -112,7 +112,9 @@ Deno.serve(async (req) => {
   const insert: Record<string, unknown> = {
     member_id: row.member_id,
     workout_date: istToday(),
-    source: "app",
+    // 'auto' (vs 'app' for in-app logs) so the push webhook knows to also send
+    // the logger a "your workout was logged" self-notification.
+    source: "auto",
     types: mappedType ? [mappedType] : [],
   };
   const min = toMinutes(minRaw, secRaw);

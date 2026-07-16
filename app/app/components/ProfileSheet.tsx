@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { useStore } from "@/app/lib/store";
-import { initials, val } from "@/app/lib/helpers";
+import { initials, streakNow, val } from "@/app/lib/helpers";
 import { CURRENT_Q } from "@/app/lib/data";
 import HistoryStrip from "./HistoryStrip";
 import ActivityBreakdown from "./ActivityBreakdown";
@@ -40,6 +40,7 @@ export default function ProfileSheet() {
   if (!m) return shell(<div className="prof-empty">No profile yet.</div>);
 
   const allTime = m.allTime ?? 0;
+  const streak = streakNow(m.days ?? new Set<number>());
   const stats: { v: string; k: string; fire?: boolean }[] = [
     { v: String(val(m, CURRENT_Q)), k: `This ${CURRENT_Q.toUpperCase()}` },
     { v: String(allTime), k: "All-time" },
@@ -54,6 +55,12 @@ export default function ProfileSheet() {
         <div className="prof-name">
           {m.name}
           {m.you && <span className="youtag">YOU</span>}
+          {streak >= 2 && (
+            <span className="prof-streak" aria-label={`${streak} day streak`}>
+              {streak}
+              <span className="pf">🔥</span>
+            </span>
+          )}
         </div>
         <div className="prof-tag">
           {allTime} workout{allTime === 1 ? "" : "s"} on the record · est. 2025

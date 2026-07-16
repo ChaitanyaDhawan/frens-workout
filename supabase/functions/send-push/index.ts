@@ -3,7 +3,8 @@
 // Fans out Web Push notifications to the right members, minus the actor.
 //
 // Recipients:
-//   workout (source='app' only)  → every claimed member except the logger
+//   workout (source app/auto)    → every claimed member except the logger;
+//                                  auto-logs ALSO ping the logger ("logged ✓")
 //   reaction                     → the workout owner (skip self-likes)
 //   comment                      → the workout owner + everyone who already commented
 //                                  on that workout, deduped, minus the actor
@@ -51,38 +52,50 @@ const ordinal = (n: number) => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
 
-async function recipientsAndMessage(table: string, record: any):
-  Promise<{ recipients: string[]; title: string; body: string; url: string } | null> {
+type Group = { recipients: string[]; title: string; body: string; url: string };
+
+async function groupsFor(table: string, record: any): Promise<Group[]> {
   if (table === 'workouts') {
-    if (record.source !== 'app') return null; // never notify on imported history
+    // 'app' = in-app log, 'auto' = device/Apple-Watch auto-log. Both notify the
+    // group; 'sheet' (imported history) notifies no one.
+    if (record.source !== 'app' && record.source !== 'auto') return [];
     const name = await nameOf(record.member_id);
     const n = await quarterCount(record.member_id);
     const { data: all } = await db.from('members').select('id').not('user_id', 'is', null);
-    const recipients = (all ?? []).map(m => m.id).filter(id => id !== record.member_id);
-    return { recipients, title: `${name} just worked out 🔥`, body: `${ordinal(n)} this quarter`, url: `/?w=${record.id}` };
+    const others = (all ?? []).map(m => m.id).filter(id => id !== record.member_id);
+    const groups: Group[] = [];
+    // Everyone else hears about it — same as a manual log.
+    if (others.length) {
+      groups.push({ recipients: others, title: `${name} just worked out 🔥`, body: `${ordinal(n)} this quarter`, url: `/?w=${record.id}` });
+    }
+    // Auto-logs also ping the logger so they know it landed and can review/edit.
+    if (record.source === 'auto') {
+      groups.push({ recipients: [record.member_id], title: 'Workout auto-logged ✓', body: 'Tap to review or edit your entry', url: `/?w=${record.id}` });
+    }
+    return groups;
   }
   if (table === 'reactions') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
-    if (!w || w.member_id === record.member_id) return null; // no self-kudos ping
+    if (!w || w.member_id === record.member_id) return []; // no self-kudos ping
     const name = await nameOf(record.member_id);
-    return { recipients: [w.member_id], title: `${name} gave you kudos 👏`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` };
+    return [{ recipients: [w.member_id], title: `${name} gave you kudos 👏`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` }];
   }
   if (table === 'comments') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
-    if (!w) return null;
+    if (!w) return [];
     const { data: prior } = await db.from('comments').select('member_id').eq('workout_id', record.workout_id);
     const set = new Set<string>([w.member_id, ...(prior ?? []).map(c => c.member_id)]);
     set.delete(record.member_id); // never the actor
-    if (!set.size) return null;
+    if (!set.size) return [];
     const name = await nameOf(record.member_id);
     const ownerName = await nameOf(w.member_id);
     const isReply = w.member_id !== record.member_id && (prior ?? []).length > 1;
     const title = w.member_id === record.member_id
       ? `${name} commented 💬`
       : isReply ? `${name} replied on ${ownerName}'s workout 💬` : `${name} commented on your workout 💬`;
-    return { recipients: [...set], title, body: String(record.body ?? '').slice(0, 140), url: `/?w=${record.workout_id}` };
+    return [{ recipients: [...set], title, body: String(record.body ?? '').slice(0, 140), url: `/?w=${record.workout_id}` }];
   }
-  return null;
+  return [];
 }
 
 Deno.serve(async (req) => {
@@ -91,25 +104,27 @@ Deno.serve(async (req) => {
   }
   const payload = await req.json();
   const { table, record } = payload;
-  const info = await recipientsAndMessage(table, record);
-  if (!info || !info.recipients.length) return new Response('no-op', { status: 200 });
+  const groups = (await groupsFor(table, record)).filter(g => g.recipients.length);
+  if (!groups.length) return new Response('no-op', { status: 200 });
 
-  const { data: subs } = await db.from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth')
-    .in('member_id', info.recipients);
+  for (const info of groups) {
+    const { data: subs } = await db.from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth')
+      .in('member_id', info.recipients);
 
-  const notification = JSON.stringify({ title: info.title, body: info.body, url: info.url });
-  await Promise.allSettled((subs ?? []).map(async (s) => {
-    try {
-      await webpush.sendNotification(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        notification,
-      );
-    } catch (err: any) {
-      if (err?.statusCode === 404 || err?.statusCode === 410) {
-        await db.from('push_subscriptions').delete().eq('id', s.id); // prune dead endpoint
+    const notification = JSON.stringify({ title: info.title, body: info.body, url: info.url });
+    await Promise.allSettled((subs ?? []).map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          notification,
+        );
+      } catch (err: any) {
+        if (err?.statusCode === 404 || err?.statusCode === 410) {
+          await db.from('push_subscriptions').delete().eq('id', s.id); // prune dead endpoint
+        }
       }
-    }
-  }));
+    }));
+  }
   return new Response('sent', { status: 200 });
 });

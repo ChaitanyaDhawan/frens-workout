@@ -22,7 +22,7 @@ export interface DbWorkout {
   duration_min: number | null;
   note: string | null;
   photo_path: string | null;
-  source: "app" | "sheet";
+  source: "app" | "sheet" | "auto";
   logged_at: string; // timestamptz ISO
 }
 export interface DbReaction {
@@ -339,7 +339,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     const lp = istParts(new Date(w.logged_at));
     const loggedIso = `${lp.y}-${String(lp.m + 1).padStart(2, "0")}-${String(lp.d).padStart(2, "0")}`;
     const tm =
-      w.source === "app"
+      w.source !== "sheet"
         ? w.workout_date === loggedIso
           ? feedTime(w.logged_at)
           : `${wLabel} · logged ${feedTime(w.logged_at)}`
@@ -371,7 +371,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
   const feed: FeedItem[] = sorted.slice(0, 24).map(toFeedItem);
   // Every one of my own app-entered workouts, newest first — the You tab paginates this.
   const mineFeed: FeedItem[] = myMemberId
-    ? sorted.filter((w) => w.member_id === myMemberId && w.source === "app").map(toFeedItem)
+    ? sorted.filter((w) => w.member_id === myMemberId && w.source !== "sheet").map(toFeedItem)
     : [];
 
   return { frens, meName, doneDoy, dayData, feed, mineFeed };
