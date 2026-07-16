@@ -28,6 +28,11 @@ export interface Member {
   /** 2025 total + all-time total (all years) — for the 2025 / All-time boards. */
   total2025?: number;
   allTime?: number;
+  /** Profile: longest streak this year, activity-type tally, and the set of
+   *  this year's workout days (for the profile's 30-day strip). */
+  bestStreak?: number;
+  typeCounts?: Record<string, number>;
+  days?: Set<number>;
   /** Last workout date per quarter, e.g. { q1: "Mar 30", q3: "Jul 13" }. */
   last: Partial<Record<QuarterKey, string>>;
   /** True for the signed-in athlete (drives the "YOU" tag + Home tile). */

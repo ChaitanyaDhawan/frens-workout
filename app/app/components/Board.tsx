@@ -102,6 +102,7 @@ function BoardRow({
   flapKey,
   reorderKey,
   rowinDelay,
+  onProfile,
 }: {
   row: RankedRow;
   period: PeriodId;
@@ -109,6 +110,7 @@ function BoardRow({
   flapKey: number;
   reorderKey: number;
   rowinDelay: number;
+  onProfile: (name: string) => void;
 }) {
   const { f, v, rank } = row;
   const isR1 = rank === 1 && v > 0;
@@ -124,6 +126,8 @@ function BoardRow({
       layoutDependency={reorderKey}
       className={`row${isR1 ? " r1" : ""}`}
       data-n={f.name}
+      onClick={() => onProfile(f.name)}
+      style={{ cursor: "pointer" }}
       // Each scoreboard row slides + fades in as it scrolls into view (once),
       // instead of all animating at mount off-screen. Composes with `layout`
       // since the reveal completes before any reorder.
@@ -161,7 +165,7 @@ function BoardRow({
 }
 
 export default function Board() {
-  const { frens, period, doneDoy, setPeriod, flapTick, reorderTick } = useStore();
+  const { frens, period, doneDoy, setPeriod, flapTick, reorderTick, openProfile } = useStore();
   const p = PERIODS.find((x) => x.id === period)!;
   const rows = rankedRows(frens, period);
   const meds = rows.slice(0, 3).map((r) => r.f);
@@ -220,6 +224,7 @@ export default function Board() {
             flapKey={flapTick}
             reorderKey={reorderTick}
             rowinDelay={rowDelays.get(r.f.name) ?? 0}
+            onProfile={openProfile}
           />
         ))}
       </div>

@@ -128,6 +128,19 @@ function streakFromDoys(doys: Set<number>, todayDoy: number): number {
   return s;
 }
 
+/** Longest run of consecutive workout days (this year) — for the profile. */
+function bestStreakOf(doys: Set<number>): number {
+  if (!doys.size) return 0;
+  const sorted = [...doys].sort((a, b) => a - b);
+  let best = 1;
+  let cur = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    cur = sorted[i] === sorted[i - 1] + 1 ? cur + 1 : 1;
+    if (cur > best) best = cur;
+  }
+  return best;
+}
+
 /** Feed brag line, mirroring helpers.bragFor but with the workout's historical ordinal. */
 function bragForWorkout(m: Member, qCount: number, yrCount: number, isLatest: boolean): string {
   if (isLatest && m.streak > 1) return `${m.streak}-day streak 🔥`;
@@ -232,10 +245,15 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       total2025 = 0;
     const maxByQ: Partial<Record<QuarterKey, string>> = {};
     const doys = new Set<number>();
+    const typeCounts: Record<string, number> = {};
     for (const w of ws) {
       const { y, m, d } = parseDate(w.workout_date);
       const q = quarterOf(m);
       allTime++;
+      for (const t of w.types ?? []) {
+        const k = t.trim();
+        if (k) typeCounts[k] = (typeCounts[k] ?? 0) + 1;
+      }
       if (y === IST_YEAR - 1) total2025++;
       // Current-year quarters / streak / calendar only — 2025 rows never inflate these.
       if (y === IST_YEAR) {
@@ -270,6 +288,9 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       kudosAll: kudosAllBy.get(mem.id) ?? 0,
       total2025,
       allTime,
+      bestStreak: bestStreakOf(doys),
+      typeCounts,
+      days: doys,
       last,
       you: myMemberId === mem.id,
     };

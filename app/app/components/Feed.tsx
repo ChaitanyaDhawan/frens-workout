@@ -21,7 +21,7 @@ export function FeedCard({
   mountDelay: number | null;
   spotlight?: boolean;
 }) {
-  const { toggleLike, openCommentSheet, openSheet, openKudosSheet } = useStore();
+  const { toggleLike, openCommentSheet, openSheet, openKudosSheet, openProfile } = useStore();
   const [liked, setLiked] = useState(item.liked ?? false);
   const [popKey, setPopKey] = useState(0);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -60,9 +60,13 @@ export function FeedCard({
         </button>
       )}
       <div className="top">
-        <div className="ava">{initials(item.n)}</div>
+        <div className="ava" onClick={() => openProfile(item.n)} style={{ cursor: "pointer" }}>
+          {initials(item.n)}
+        </div>
         <div className="meta">
-          <div className="cnm">{item.n}</div>
+          <div className="cnm" onClick={() => openProfile(item.n)} style={{ cursor: "pointer" }}>
+            {item.n}
+          </div>
           <div className="tm">{item.tm}</div>
         </div>
       </div>

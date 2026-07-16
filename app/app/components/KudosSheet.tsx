@@ -9,7 +9,7 @@ const SHEET_EASE: [number, number, number, number] = [0.3, 1.15, 0.35, 1];
 
 /** Bottom sheet listing everyone who gave kudos on a workout. */
 export default function KudosSheet() {
-  const { kudosSheet, feed } = useStore();
+  const { kudosSheet, feed, openProfile, closeKudosSheet } = useStore();
   const snap = useRef(kudosSheet);
   if (kudosSheet) snap.current = kudosSheet;
   const workoutId = snap.current;
@@ -35,7 +35,15 @@ export default function KudosSheet() {
           <div className="cmt-empty">No kudos yet — be the first 🔥</div>
         ) : (
           givers.map((n, i) => (
-            <div className="cmt" key={`${n}-${i}`}>
+            <div
+              className="cmt"
+              key={`${n}-${i}`}
+              onClick={() => {
+                closeKudosSheet();
+                openProfile(n);
+              }}
+              style={{ cursor: "pointer" }}
+            >
               <div className="cmt-ava">{initials(n)}</div>
               <div className="cmt-b">
                 <div className="cmt-h">
