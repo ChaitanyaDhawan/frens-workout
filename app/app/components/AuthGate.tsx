@@ -23,10 +23,12 @@ function AuthSplash() {
 /** Switches between sign-in, name-claim, and the app based on auth phase. */
 export default function AuthGate({ children }: { children: ReactNode }) {
   const { phase } = useAuth();
-  // Sign-in / claim are real content — let the splash reveal them. (The signed-in
-  // app marks itself ready from the store once data loads.)
+  // Reveal the app the moment auth resolves to ANY real screen (sign-in, claim,
+  // or the signed-in app) — so the splash covers the "Loading…" auth phase but
+  // does NOT wait on the full workout fetch (that made cold starts slow). Data
+  // streams into the already-visible app.
   useEffect(() => {
-    if (phase === "signedOut" || phase === "unclaimed") markAppReady();
+    if (phase !== "loading") markAppReady();
   }, [phase]);
   if (phase === "loading") return <AuthSplash />;
   if (phase === "signedOut") return <SignIn />;

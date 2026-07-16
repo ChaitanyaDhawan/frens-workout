@@ -344,12 +344,12 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       setRaw(data);
     } catch {
       /* transient — a later realtime event or visibility refetch reconciles */
-    } finally {
-      markAppReady(); // first load done (or failed) → the splash can reveal the app
     }
   }, [supabase, myId]);
 
-  // Demo mode has static data — ready to reveal immediately.
+  // The splash reveals on auth-resolved (see AuthGate), not on the data fetch —
+  // waiting for all workouts made cold starts slow. Demo has no auth gate, so
+  // mark it ready here.
   useEffect(() => {
     if (demo) markAppReady();
   }, [demo]);
