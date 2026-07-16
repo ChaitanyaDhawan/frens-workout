@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/app/lib/store";
 import { fx } from "@/app/lib/fx";
+import { playKudos } from "@/app/lib/sound";
 import { initials } from "@/app/lib/helpers";
 import type { FeedItem } from "@/app/lib/data";
 
@@ -36,9 +37,10 @@ export function FeedCard({
     setLiked(becoming);
     if (becoming && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      fx.fire(r.left + r.width / 2, r.top + 4);
-      setPopKey((k) => k + 1); // restart the "KUDOS!" pop + fire-icon bump
-      navigator.vibrate?.(10);
+      fx.clap(r.left + r.width / 2, r.top + 4);
+      setPopKey((k) => k + 1); // restart the "KUDOS!" pop + clap-icon bump
+      playKudos();
+      navigator.vibrate?.([12, 24, 12]);
     }
     toggleLike(item.id, becoming);
   };
@@ -108,7 +110,7 @@ export function FeedCard({
       <div className="acts">
         <button ref={btnRef} className={`act kudos-btn${liked ? " liked" : ""}`} onClick={onLike}>
           <span key={`ico-${popKey}`} className={`ico${popKey > 0 ? " bump" : ""}`}>
-            🔥
+            👏
           </span>{" "}
           <span className="lc">{kudos} kudos</span>
           {popKey > 0 && (
@@ -133,7 +135,7 @@ export default function Feed() {
   const [deepId, setDeepId] = useState<string | null>(null);
 
   // Notification deep-link (from the store): scroll to + spotlight the card; a
-  // kudos tap also fires the 🔥 burst on it.
+  // kudos tap also fires the 👏 burst on it.
   useEffect(() => {
     if (!deepLink) return;
     const el = containerRef.current?.querySelector(`[data-fid="${deepLink.id}"]`);
@@ -146,7 +148,7 @@ export default function Feed() {
       // Let the smooth-scroll settle, then pop the ember burst over the card.
       setTimeout(() => {
         const r = el.getBoundingClientRect();
-        fx.fire(r.left + r.width * 0.28, r.top + r.height * 0.82);
+        fx.clap(r.left + r.width * 0.28, r.top + r.height * 0.82);
       }, 650);
     }
     clearDeepLink();

@@ -50,7 +50,14 @@ body{
   width:100%; max-width:430px; height:env(safe-area-inset-top);
   background:var(--paper); z-index:34; pointer-events:none}
 
-header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
+header{padding:max(18px,env(safe-area-inset-top)) 22px 0; position:relative}
+.hdr-gear{
+  position:absolute; top:max(14px,env(safe-area-inset-top)); right:20px; z-index:5;
+  width:38px; height:38px; display:grid; place-items:center; cursor:pointer;
+  border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:2px;
+  transition:background .12s, color .12s;
+}
+.hdr-gear:active{background:var(--ink); color:var(--paper)}
 .eyebrow{font-family:var(--font-archivo); font-size:9.5px; font-weight:500; letter-spacing:.28em; color:var(--mut); text-transform:uppercase}
 .wordmark{font-weight:900; font-size:38px; letter-spacing:-.03em; line-height:1.02; margin-top:4px}
 .wordmark i{font-style:normal; color:var(--ox)}
@@ -290,8 +297,8 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
 .kudos-btn{position:relative; overflow:visible}
 .kudos-pop{
   position:absolute; left:50%; bottom:100%; pointer-events:none; z-index:6;
-  font-family:var(--font-archivo); font-weight:900; font-size:17px; letter-spacing:.02em;
-  color:#E8590C; text-shadow:0 1px 0 rgba(158,43,37,.35); white-space:nowrap;
+  font-family:var(--font-archivo); font-weight:900; font-size:21px; letter-spacing:.02em;
+  color:#B4801A; text-shadow:0 1px 0 rgba(27,24,18,.3), 0 0 14px rgba(199,154,46,.45); white-space:nowrap;
   animation:kudospop 1.15s cubic-bezier(.18,1.5,.3,1) forwards;
 }
 @keyframes kudospop{
@@ -301,7 +308,7 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   52%{transform:translate(-50%,-44px) scale(1.12)}
   100%{opacity:0; transform:translate(-50%,-78px) scale(1)}
 }
-/* the 🔥 itself leaps when you give kudos */
+/* the 👏 itself leaps when you give kudos */
 .kudos-btn .ico{display:inline-block; transform-origin:50% 80%}
 .kudos-btn .ico.bump{animation:icobump .55s cubic-bezier(.2,1.7,.35,1)}
 @keyframes icobump{
@@ -325,9 +332,9 @@ header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
   font-size:52px; color:#fff; background:radial-gradient(circle at 32% 26%, var(--green-hi), var(--green) 72%);
   border:2px solid var(--green-d); box-shadow:0 6px 0 var(--green-d), 0 0 30px -6px rgba(39,174,82,.6);
 }
-.cel-badge.fire{
-  background:radial-gradient(circle at 32% 26%, #FFC48A, #E8590C 60%, #B23A1A);
-  border-color:#8C2E12; box-shadow:0 6px 0 #8C2E12, 0 0 34px -6px rgba(232,89,12,.7);
+.cel-badge.kudos{
+  background:radial-gradient(circle at 32% 26%, #F4D98B, #C79A2E 62%, #9A7420);
+  border-color:#7E5E18; box-shadow:0 6px 0 #7E5E18, 0 0 34px -6px rgba(199,154,46,.62);
 }
 .cel-headline{font-family:var(--font-archivo); font-weight:900; font-size:34px; line-height:1.05; letter-spacing:-.02em; color:var(--ink); padding:0 10px}
 .cel-sub{font-size:15px; color:#5A5346; margin-top:12px; line-height:1.4; padding:0 20px}
@@ -938,4 +945,91 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .prof-actrow.untag .pa-name{color:var(--mut); font-weight:600}
 .prof-actrow.untag .pa-fill{background:var(--line)}
 .prof-actrow.untag .pa-c{color:var(--mut)}
-.prof-more{margin-top:10px; width:100%; background:none; border:1px solid var(--line); border-radius:2px; padding:9px; font-family:var(--font-mono); font-weight:600; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ox); cursor:pointer}
+.prof-more{
+  display:block; width:100%; margin-top:8px; background:none; border:1px solid var(--ink); color:var(--ink);
+  padding:12px 0; font-family:var(--font-archivo); font-weight:600; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; cursor:pointer; transition:background .15s, color .15s;
+}
+.prof-more:hover{background:var(--ink); color:var(--paper)}
+
+/* profile/you — activity split (count + %) ; shared ActivityBreakdown */
+.sec-total{font-family:var(--font-mono); font-weight:600; font-size:9.5px; letter-spacing:.06em; color:var(--mut)}
+.act-list{border:1px solid var(--line); background:var(--card)}
+.act-row{display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line)}
+.act-row:last-child{border-bottom:none}
+.act-name{flex:0 0 28%; font-family:var(--font-sans); font-weight:700; font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.act-bar{flex:1; height:8px; background:var(--paper); border:1px solid var(--line); position:relative; overflow:hidden}
+.act-fill{position:absolute; top:0; bottom:0; left:0; background:var(--green)}
+.act-val{flex:0 0 auto; display:flex; align-items:baseline; gap:6px; font-family:var(--font-mono)}
+.act-val b{font-weight:700; font-size:13px; color:var(--ink)}
+.act-val .act-p{font-size:10px; color:var(--mut); width:32px; text-align:right}
+
+/* Give the shared profile/activity/rankings blocks the You-tab side inset. */
+.you-block{margin:0 22px}
+
+/* 4-up stats — tighter than the 3-up default so the numbers breathe. */
+.stats4 .stat{padding:12px 5px}
+.stats4 .stat .v{font-size:21px}
+.stat-ico{font-size:0.62em}
+
+/* ---- Settings drawer (slides from the right edge of the frame) ---- */
+.set-drawer{
+  position:fixed; top:0; bottom:0; right:max(0px, calc(50% - 215px)); z-index:50;
+  width:min(330px, 84vw); background:var(--paper); border-left:2px solid var(--ink);
+  display:flex; flex-direction:column;
+  padding:calc(18px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+  box-shadow:-14px 0 40px rgba(27,24,18,.16);
+}
+.set-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px}
+.set-head h2{font-weight:800; font-size:22px; letter-spacing:-.02em}
+.set-x{
+  width:34px; height:34px; display:grid; place-items:center; cursor:pointer;
+  border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:14px; border-radius:2px;
+}
+.set-group{display:flex; flex-direction:column}
+.set-drawer .al-entry{width:100%; margin:0}
+.set-drawer .notif-tile{margin-top:10px}
+.set-foot{margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:26px}
+.set-who{font-family:var(--font-archivo); font-size:9px; font-weight:600; letter-spacing:.16em; color:var(--mut); text-transform:uppercase}
+.set-signout{
+  width:100%; padding:13px; cursor:pointer; border-radius:2px;
+  border:1px solid var(--line); background:var(--card); color:var(--mut);
+  font-family:var(--font-archivo); font-weight:600; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  transition:border-color .12s, color .12s;
+}
+.set-signout:hover{border-color:var(--ox); color:var(--ox)}
+.set-signout:active{transform:scale(.98)}
+
+/* ---- Dispatches full page (slides from the right, covers the frame) ---- */
+.disp-page{
+  position:fixed; top:0; bottom:0; left:0; right:0; margin:0 auto; z-index:50;
+  width:100%; max-width:430px; background:var(--paper); overflow-y:auto;
+  display:flex; flex-direction:column;
+}
+.disp-head{
+  position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:12px;
+  padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+  background:var(--paper); border-bottom:1px solid var(--line);
+}
+.disp-back{
+  flex:0 0 auto; width:34px; height:34px; display:grid; place-items:center; cursor:pointer;
+  border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:20px; line-height:1; border-radius:2px;
+}
+.disp-head h2{flex:1; font-weight:800; font-size:19px; letter-spacing:-.02em}
+.disp-count{
+  flex:0 0 auto; font-family:var(--font-mono); font-weight:700; font-size:12px; color:var(--mut);
+  padding:4px 9px; border:1px solid var(--line); border-radius:2px; background:var(--card);
+}
+.disp-body{flex:1; padding:14px 0 calc(28px + env(safe-area-inset-bottom))}
+
+/* ---- Home tile: running-streak sticker (fire = streak) ---- */
+.streak-sticker{
+  position:absolute; top:-11px; right:6px; z-index:4;
+  display:flex; align-items:center; gap:3px; line-height:1;
+  padding:4px 8px;
+  background:var(--flame); color:#fff; border:1.5px solid var(--ink); border-radius:3px;
+  box-shadow:0 3px 0 rgba(27,24,18,.22);
+  font-family:var(--font-mono); font-weight:700;
+}
+.streak-sticker .ss-num{font-size:13px; letter-spacing:.01em}
+.streak-sticker .ss-flame{font-size:12px}

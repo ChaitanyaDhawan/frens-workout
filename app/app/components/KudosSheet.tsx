@@ -26,13 +26,13 @@ export default function KudosSheet() {
       transition={{ duration: 0.4, ease: SHEET_EASE }}
     >
       <div className="shead">
-        <h2>Kudos 🔥</h2>
+        <h2>Kudos 👏</h2>
       </div>
       {item && <div className="cmt-sub">{`${item.n} · ${item.act ?? "Workout"}`}</div>}
 
       <div className="cmt-list">
         {givers.length === 0 ? (
-          <div className="cmt-empty">No kudos yet — be the first 🔥</div>
+          <div className="cmt-empty">No kudos yet — be the first 👏</div>
         ) : (
           givers.map((n, i) => (
             <div
@@ -50,7 +50,7 @@ export default function KudosSheet() {
                   <span className="cmt-name">{n}</span>
                 </div>
                 <div className="cmt-text" style={{ color: "var(--ox)" }}>
-                  gave kudos 🔥
+                  gave kudos 👏
                 </div>
               </div>
             </div>

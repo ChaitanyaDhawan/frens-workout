@@ -1,7 +1,7 @@
 "use client";
 
 import { useStore } from "@/app/lib/store";
-import { pad, rankOf, val } from "@/app/lib/helpers";
+import { pad, rankOf, streakNow, val } from "@/app/lib/helpers";
 import { CURRENT_Q, TODAY_DOY } from "@/app/lib/data";
 import FlapCounter from "./FlapCounter";
 import HistoryStrip from "./HistoryStrip";
@@ -12,6 +12,7 @@ const QL = CURRENT_Q.toUpperCase();
 export default function StatsTile() {
   const { me, frens, doneDoy, rollTick, setTab } = useStore();
   const rank = rankOf(frens, me.name, CURRENT_Q);
+  const streak = streakNow(doneDoy);
   let last30 = 0;
   for (let d = Math.max(1, TODAY_DOY - 29); d <= TODAY_DOY; d++) if (doneDoy.has(d)) last30++;
 
@@ -28,6 +29,12 @@ export default function StatsTile() {
         }
       }}
     >
+      {streak > 0 && (
+        <div className="streak-sticker" aria-label={`${streak} day streak`}>
+          <span className="ss-num">{streak}</span>
+          <span className="ss-flame">🔥</span>
+        </div>
+      )}
       <div className="t-top">
         <span className="t-eyebrow">Your {QL}</span>
         <span className="t-link">Your ledger →</span>

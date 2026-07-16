@@ -6,7 +6,7 @@ import { reduceMotion } from "@/app/lib/helpers";
 
 const COLS = ["#1B1812", "#A98A2F", "#9E2B25", "#FAF7F0", "#C0A050"];
 
-/** Full-screen canvas that renders the paper-scrap and fire-ember bursts. */
+/** Full-screen canvas that renders the paper-scrap and handclap bursts. */
 export default function ParticleCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -76,58 +76,55 @@ export default function ParticleCanvas() {
       tick();
     };
 
-    // Fiery embers rising from a point on a like tap.
-    const fire = (cx: number, cy: number) => {
+    // Handclaps popping up from a point when kudos are given or collected.
+    const clap = (cx: number, cy: number) => {
       if (reduceMotion()) return;
-      const ps = Array.from({ length: 26 }, () => {
-        const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.3;
-        const v = 1.8 + Math.random() * 4.2;
+      const ps = Array.from({ length: 16 }, () => {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.5;
+        const v = 3 + Math.random() * 5;
         return {
-          x: cx + (Math.random() - 0.5) * 14,
+          x: cx + (Math.random() - 0.5) * 22,
           y: cy,
           vx: Math.cos(a) * v,
           vy: Math.sin(a) * v,
-          g: -0.045 - Math.random() * 0.05, // negative gravity: heat rises
-          wob: Math.random() * 6.28,
+          g: 0.17, // pop up, then fall
+          rot: (Math.random() - 0.5) * 0.7,
+          vr: (Math.random() - 0.5) * 0.22,
           life: 1,
-          sz: 1.6 + Math.random() * 3.2,
-          hue: 8 + Math.random() * 38,
+          sz: 16 + Math.random() * 13,
         };
       });
       const tick = () => {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         let alive = false;
         ps.forEach((p) => {
           if (p.life <= 0) return;
           alive = true;
-          p.wob += 0.3;
-          p.x += p.vx + Math.sin(p.wob) * 0.5;
+          p.x += p.vx;
           p.y += p.vy;
           p.vy += p.g;
-          p.life -= 0.022;
+          p.vx *= 0.99;
+          p.rot += p.vr;
+          p.life -= 0.02;
           if (p.life <= 0) return;
-          ctx.globalAlpha = Math.max(0, p.life);
-          ctx.fillStyle = `hsl(${p.hue + (1 - p.life) * 20} 100% ${50 + p.life * 22}%)`;
-          ctx.shadowColor = "#FF6A1F";
-          ctx.shadowBlur = 9;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, Math.max(0.1, p.sz * p.life), 0, 7);
-          ctx.fill();
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.35));
+          ctx.font = `${p.sz}px serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("👏", 0, 0);
+          ctx.restore();
         });
         ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
-        if (alive) {
-          requestAnimationFrame(() => {
-            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-            tick();
-          });
-        } else {
-          ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        }
+        if (alive) requestAnimationFrame(tick);
+        else ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       };
       tick();
     };
 
-    registerFx({ scraps, fire });
+    registerFx({ scraps, clap });
     return () => window.removeEventListener("resize", fit);
   }, []);
 

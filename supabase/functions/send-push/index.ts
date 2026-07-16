@@ -65,7 +65,7 @@ async function recipientsAndMessage(table: string, record: any):
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
     if (!w || w.member_id === record.member_id) return null; // no self-kudos ping
     const name = await nameOf(record.member_id);
-    return { recipients: [w.member_id], title: `${name} gave you kudos 🔥`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` };
+    return { recipients: [w.member_id], title: `${name} gave you kudos 👏`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` };
   }
   if (table === 'comments') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();

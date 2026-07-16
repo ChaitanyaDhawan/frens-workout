@@ -2,23 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/app/lib/store";
-import { useAuth } from "@/app/lib/auth";
 import { CURRENT_Q, MONTHS, TODAY_DOY } from "@/app/lib/data";
-import { bestStreak, streakNow, val } from "@/app/lib/helpers";
+import { streakNow, val } from "@/app/lib/helpers";
 import Flame from "./Flame";
 import WeekStrip from "./WeekStrip";
 import { FeedCard } from "./Feed";
-import NotifTile from "./NotifTile";
+import ActivityBreakdown from "./ActivityBreakdown";
+import Rankings from "./Rankings";
 
-const PAGE = 5;
-
-/** My own dispatches below the calendar — paginated in pages of 5. */
+/** My dispatches preview — just the latest entry; "Show all" opens the full page. */
 function MyDispatches() {
-  const { mineFeed } = useStore();
-  const [limit, setLimit] = useState(PAGE);
-  const shown = mineFeed.slice(0, limit);
-  const remaining = mineFeed.length - limit;
-
+  const { mineFeed, openDispatches } = useStore();
   return (
     <div className="mine-sect">
       <div className="mine-h">
@@ -29,12 +23,10 @@ function MyDispatches() {
         <div className="mine-empty">No dispatches yet — log a workout to start your ledger.</div>
       ) : (
         <>
-          {shown.map((f) => (
-            <FeedCard key={f.id} item={f} mountDelay={null} />
-          ))}
-          {remaining > 0 && (
-            <button className="mine-more" onClick={() => setLimit((l) => l + PAGE)}>
-              View all · {remaining} more
+          <FeedCard key={mineFeed[0].id} item={mineFeed[0]} mountDelay={null} />
+          {mineFeed.length > 1 && (
+            <button className="mine-more" onClick={openDispatches}>
+              Show all · {mineFeed.length}
             </button>
           )}
         </>
@@ -80,39 +72,32 @@ function StreakHero() {
 }
 
 function Stats() {
-  const { me, doneDoy } = useStore();
+  const { me } = useStore();
   const q = useCountUp(val(me, CURRENT_Q));
-  const y = useCountUp(me.q1 + me.q2 + me.q3 + (me.q4 ?? 0));
-  const b = useCountUp(bestStreak(doneDoy));
-  const kq = useCountUp(me.kudosQ3 ?? 0);
-  const ka = useCountUp(me.kudosAll ?? 0);
+  const a = useCountUp(me.allTime ?? 0);
+  const b = useCountUp(me.bestStreak ?? 0);
+  const k = useCountUp(me.kudosAll ?? 0);
   return (
-    <>
-      <div className="stats">
-        <div className="stat">
-          <div className="v">{q}</div>
-          <div className="k">This quarter</div>
-        </div>
-        <div className="stat">
-          <div className="v">{y}</div>
-          <div className="k">2026</div>
-        </div>
-        <div className="stat">
-          <div className="v">{b}</div>
-          <div className="k">Best streak</div>
-        </div>
+    <div className="stats stats4">
+      <div className="stat">
+        <div className="v">{q}</div>
+        <div className="k">This {CURRENT_Q.toUpperCase()}</div>
       </div>
-      <div className="stats">
-        <div className="stat">
-          <div className="v">{kq} 🔥</div>
-          <div className="k">Kudos · {CURRENT_Q.toUpperCase()}</div>
-        </div>
-        <div className="stat">
-          <div className="v">{ka} 🔥</div>
-          <div className="k">Kudos · all-time</div>
-        </div>
+      <div className="stat">
+        <div className="v">{a}</div>
+        <div className="k">All-time</div>
       </div>
-    </>
+      <div className="stat">
+        <div className="v">{b}</div>
+        <div className="k">Best streak</div>
+      </div>
+      <div className="stat">
+        <div className="v">
+          {k} <span className="stat-ico">👏</span>
+        </div>
+        <div className="k">Kudos</div>
+      </div>
+    </div>
   );
 }
 
@@ -235,42 +220,20 @@ function Calendar() {
   );
 }
 
-function SignOutRow() {
-  const { member, signOut } = useAuth();
-  return (
-    <div className="signout-row">
-      {member && <div className="signout-who">Signed in as {member.display_name}</div>}
-      <button className="signout-btn" onClick={() => signOut()}>
-        Sign out
-      </button>
-    </div>
-  );
-}
-
-function AutoLogEntry() {
-  const { openAutoLog } = useStore();
-  return (
-    <button className="al-entry" onClick={openAutoLog}>
-      <span className="al-entry-ic">⚡</span>
-      <span className="al-entry-tx">
-        <span className="al-entry-t">Auto-logging</span>
-        <span className="al-entry-s">Apple Watch &amp; more — log workouts automatically</span>
-      </span>
-      <span className="al-entry-arrow">›</span>
-    </button>
-  );
-}
-
 export default function You() {
+  const { me, frens } = useStore();
   return (
     <>
       <StreakHero />
       <Stats />
+      <div className="you-block">
+        <ActivityBreakdown member={me} />
+      </div>
       <Calendar />
-      <AutoLogEntry />
-      <NotifTile />
       <MyDispatches />
-      <SignOutRow />
+      <div className="you-block">
+        <Rankings member={me} frens={frens} />
+      </div>
     </>
   );
 }

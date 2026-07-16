@@ -21,6 +21,8 @@ import CommentSheet from "@/app/components/CommentSheet";
 import KudosSheet from "@/app/components/KudosSheet";
 import AutoLogSheet from "@/app/components/AutoLogSheet";
 import ProfileSheet from "@/app/components/ProfileSheet";
+import SettingsDrawer from "@/app/components/SettingsDrawer";
+import DispatchesPage from "@/app/components/DispatchesPage";
 import Celebration from "@/app/components/Celebration";
 import KudosReceived from "@/app/components/KudosReceived";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
@@ -43,9 +45,9 @@ function Home() {
 }
 
 function Shell() {
-  const { tab, sheet, daySheet, commentSheet, kudosSheet, autoLog, profileMember, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet, closeAutoLog, closeProfile } =
+  const { tab, sheet, daySheet, commentSheet, kudosSheet, autoLog, profileMember, settings, dispatchesOpen, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet, closeAutoLog, closeProfile, closeSettings, closeDispatches } =
     useStore();
-  const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet || autoLog || !!profileMember;
+  const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet || autoLog || !!profileMember || settings || dispatchesOpen;
 
   return (
     <>
@@ -90,6 +92,8 @@ function Shell() {
               closeKudosSheet();
               closeAutoLog();
               closeProfile();
+              closeSettings();
+              closeDispatches();
             }}
           />
         )}
@@ -101,6 +105,8 @@ function Shell() {
       <AnimatePresence>{kudosSheet && <KudosSheet key="kudos-sheet" />}</AnimatePresence>
       <AnimatePresence>{autoLog && <AutoLogSheet key="autolog-sheet" />}</AnimatePresence>
       <AnimatePresence>{profileMember && <ProfileSheet key="profile-sheet" />}</AnimatePresence>
+      <AnimatePresence>{settings && <SettingsDrawer key="settings-drawer" />}</AnimatePresence>
+      <AnimatePresence>{dispatchesOpen && <DispatchesPage key="dispatches-page" />}</AnimatePresence>
 
       <Celebration />
       <KudosReceived />

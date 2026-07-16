@@ -71,6 +71,8 @@ interface Store {
   kudosSheet: string | null;
   autoLog: boolean;
   profileMember: string | null;
+  settings: boolean;
+  dispatchesOpen: boolean;
   /** Bumps after a log so the feed can scroll+spotlight the new card. */
   logFocusKey: number;
   /** Notification deep-link target (workout to scroll to; kudos = also burst). */
@@ -109,6 +111,10 @@ interface Store {
   closeAutoLog: () => void;
   openProfile: (name: string) => void;
   closeProfile: () => void;
+  openSettings: () => void;
+  closeSettings: () => void;
+  openDispatches: () => void;
+  closeDispatches: () => void;
   /** Feed reads this once after a log to scroll+spotlight the new card. */
   consumeLogFocus: () => boolean;
   clearDeepLink: () => void;
@@ -256,6 +262,8 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const [kudosSheet, setKudosSheet] = useState<string | null>(null);
   const [autoLog, setAutoLog] = useState(false);
   const [profileMember, setProfileMember] = useState<string | null>(null);
+  const [settings, setSettings] = useState(false);
+  const [dispatchesOpen, setDispatchesOpen] = useState(false);
   const [logFocusKey, setLogFocusKey] = useState(0);
   const focusConsumed = useRef(0);
   const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean } | null>(null);
@@ -827,6 +835,10 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const closeAutoLog = useCallback(() => setAutoLog(false), []);
   const openProfile = useCallback((name: string) => setProfileMember(name), []);
   const closeProfile = useCallback(() => setProfileMember(null), []);
+  const openSettings = useCallback(() => setSettings(true), []);
+  const closeSettings = useCallback(() => setSettings(false), []);
+  const openDispatches = useCallback(() => setDispatchesOpen(true), []);
+  const closeDispatches = useCallback(() => setDispatchesOpen(false), []);
   const consumeLogFocus = useCallback(() => {
     if (logFocusKey > 0 && focusConsumed.current !== logFocusKey) {
       focusConsumed.current = logFocusKey;
@@ -930,6 +942,12 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       profileMember,
       openProfile,
       closeProfile,
+      settings,
+      dispatchesOpen,
+      openSettings,
+      closeSettings,
+      openDispatches,
+      closeDispatches,
       consumeLogFocus,
       clearDeepLink,
     }),
@@ -942,6 +960,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink,
       autoLog, openAutoLog, closeAutoLog,
       profileMember, openProfile, closeProfile,
+      settings, dispatchesOpen, openSettings, closeSettings, openDispatches, closeDispatches,
     ],
   );
 

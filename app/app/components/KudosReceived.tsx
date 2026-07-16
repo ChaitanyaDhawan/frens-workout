@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useAuth } from "@/app/lib/auth";
 import { fx } from "@/app/lib/fx";
+import { playKudos } from "@/app/lib/sound";
 
 const CEL_EASE: [number, number, number, number] = [0.2, 1.1, 0.3, 1];
 
@@ -39,7 +40,8 @@ export default function KudosReceived() {
       setData({ count: reacts.length, givers });
       navigator.vibrate?.([10, 30, 10, 30, 16]);
       setTimeout(() => {
-        fx.fire(window.innerWidth / 2, window.innerHeight * 0.34);
+        fx.clap(window.innerWidth / 2, window.innerHeight * 0.34);
+        playKudos();
       }, 200);
     })();
     return () => {
@@ -68,12 +70,12 @@ export default function KudosReceived() {
       >
         <div className="cel-eyebrow">While you were out</div>
         <motion.div
-          className="cel-badge fire"
+          className="cel-badge kudos"
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 0.12, duration: 0.5, ease: [0.2, 1.8, 0.4, 1] }}
         >
-          🔥
+          👏
         </motion.div>
         <h1 className="cel-headline">
           {data.count} new {data.count === 1 ? "kudos" : "kudos"}!
@@ -81,7 +83,7 @@ export default function KudosReceived() {
         <div className="cel-sub">from {formatGivers(data.givers)}</div>
         <div className="cel-btns" style={{ marginTop: 30 }}>
           <button className="cel-share" style={{ flex: 1 }} onClick={dismiss}>
-            Nice 🔥
+            Nice 👏
           </button>
         </div>
       </motion.div>
