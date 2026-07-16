@@ -267,3 +267,28 @@ export async function enableNotifications(
   }
   return "on";
 }
+
+/**
+ * Turn notifications OFF: unsubscribe this device's push subscription and drop
+ * its row. The OS permission stays "granted" (only device Settings can revoke
+ * it), but with no subscription, no pushes are ever delivered. Re-enabling needs
+ * no prompt.
+ */
+export async function disableNotifications(
+  supabase: SupabaseClient,
+  memberId: string | null,
+): Promise<void> {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return;
+    const endpoint = sub.endpoint;
+    await sub.unsubscribe();
+    if (memberId) {
+      await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+    }
+  } catch {
+    /* best-effort */
+  }
+}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/lib/auth";
 import { useStore } from "@/app/lib/store";
-import { enableNotifications, notifState, hasPushSubscription, type NotifState } from "@/app/lib/push";
+import { enableNotifications, disableNotifications, notifState, hasPushSubscription, type NotifState } from "@/app/lib/push";
 
 const META: Record<NotifState | "loading", { sub: string; pill: string; on: boolean }> = {
   loading: { sub: "Checking…", pill: "", on: false },
@@ -38,7 +38,14 @@ export default function NotifTile() {
 
   const tap = async () => {
     if (busy || state === "loading") return;
-    if (state === "on") return showToast("Notifications are already on 🔔");
+    if (state === "on") {
+      setBusy(true);
+      await disableNotifications(supabase, member?.id ?? null);
+      setBusy(false);
+      setState("off");
+      showToast("Notifications off");
+      return;
+    }
     if (state === "blocked") return showToast("Turn notifications on for FRENS in your device Settings");
     if (state === "needs-install") return showToast("Add FRENS to your Home Screen first, then turn these on");
     if (state === "unsupported") return showToast("Notifications aren’t supported on this device");
