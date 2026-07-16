@@ -78,6 +78,9 @@ Deno.serve(async (req) => {
   let type = url.searchParams.get("type") ?? url.searchParams.get("workout");
   let minRaw: unknown = url.searchParams.get("min") ?? url.searchParams.get("minutes") ?? url.searchParams.get("duration");
   let secRaw: unknown = url.searchParams.get("sec") ?? url.searchParams.get("seconds");
+  // &quiet[=<minutes>] mutes the group notification for this member's workouts
+  // for a window (default 10 min, max 60) — for testing without pinging everyone.
+  let quietRaw: unknown = url.searchParams.has("quiet") ? url.searchParams.get("quiet") ?? "" : null;
 
   if (req.method === "POST") {
     try {
@@ -87,6 +90,7 @@ Deno.serve(async (req) => {
         type = type ?? body.type ?? body.workout ?? null;
         minRaw = minRaw ?? body.min ?? body.minutes ?? body.duration ?? null;
         secRaw = secRaw ?? body.sec ?? body.seconds ?? null;
+        if (quietRaw == null && ("quiet" in body)) quietRaw = body.quiet ?? "";
       }
     } catch {
       /* not JSON — query params only */
@@ -107,6 +111,17 @@ Deno.serve(async (req) => {
     return reply("temporary error — try again", 503);
   }
   if (!row) return reply("invalid token", 401);
+
+  // Arm the "mute the group" window BEFORE inserting, so the insert's webhook
+  // (send-push) sees it and skips the group ping for this member.
+  if (quietRaw != null) {
+    let mins = Math.round(parseFloat(String(quietRaw)));
+    if (!Number.isFinite(mins) || mins <= 0) mins = 10;
+    mins = Math.min(mins, 60);
+    await db.from("members")
+      .update({ notify_quiet_until: new Date(Date.now() + mins * 60000).toISOString() })
+      .eq("id", row.member_id);
+  }
 
   const mappedType = mapType(type);
   const insert: Record<string, unknown> = {

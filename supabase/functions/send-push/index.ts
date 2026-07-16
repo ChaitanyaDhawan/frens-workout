@@ -59,16 +59,22 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
     // 'app' = in-app log, 'auto' = device/Apple-Watch auto-log. Both notify the
     // group; 'sheet' (imported history) notifies no one.
     if (record.source !== 'app' && record.source !== 'auto') return [];
-    const name = await nameOf(record.member_id);
-    const n = await quarterCount(record.member_id);
-    const { data: all } = await db.from('members').select('id').not('user_id', 'is', null);
-    const others = (all ?? []).map(m => m.id).filter(id => id !== record.member_id);
+    const { data: mem } = await db.from('members')
+      .select('display_name, notify_quiet_until').eq('id', record.member_id).single();
+    const name = mem?.display_name ?? 'Someone';
+    // Testing mute: while notify_quiet_until is in the future, skip the group ping.
+    const muted = mem?.notify_quiet_until != null && new Date(mem.notify_quiet_until).getTime() > Date.now();
     const groups: Group[] = [];
-    // Everyone else hears about it — same as a manual log.
-    if (others.length) {
-      groups.push({ recipients: others, title: `${name} just worked out 🔥`, body: `${ordinal(n)} this quarter`, url: `/?w=${record.id}` });
+    // Everyone else hears about it — same as a manual log (unless muted for testing).
+    if (!muted) {
+      const n = await quarterCount(record.member_id);
+      const { data: all } = await db.from('members').select('id').not('user_id', 'is', null);
+      const others = (all ?? []).map(m => m.id).filter(id => id !== record.member_id);
+      if (others.length) {
+        groups.push({ recipients: others, title: `${name} just worked out 🔥`, body: `${ordinal(n)} this quarter`, url: `/?w=${record.id}` });
+      }
     }
-    // Auto-logs also ping the logger so they know it landed and can review/edit.
+    // Auto-logs always ping the logger so they know it landed and can review/edit.
     if (record.source === 'auto') {
       groups.push({ recipients: [record.member_id], title: 'Workout auto-logged ✓', body: 'Tap to review or edit your entry', url: `/?w=${record.id}` });
     }
