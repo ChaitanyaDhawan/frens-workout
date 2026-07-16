@@ -28,7 +28,7 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-text-size-adjust:100%; background:var(--paper); overscroll-behavior:none}
+html{-webkit-text-size-adjust:100%; background:var(--paper); overscroll-behavior:none; color-scheme:light}
 body{
   background:var(--paper); color:var(--ink);
   font-family:var(--font-archivo),system-ui,sans-serif;

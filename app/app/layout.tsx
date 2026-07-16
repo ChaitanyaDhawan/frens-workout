@@ -49,6 +49,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#F9F6EF",
+  // Light-only app — declare it so iOS in dark mode doesn't paint the web view
+  // black for a beat before our CSS loads (the black flash before the splash).
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -64,8 +67,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${archivo.variable} ${plexMono.variable}`}>
-      <body>
+    <html
+      lang="en"
+      className={`${archivo.variable} ${plexMono.variable}`}
+      // Inline paper background so the very first paint (before external CSS) is
+      // Ivory, not the web view's default — no black flash ahead of the splash.
+      style={{ backgroundColor: "#F9F6EF", colorScheme: "light" }}
+    >
+      <body style={{ backgroundColor: "#F9F6EF" }}>
         {children}
         <PwaBootstrap />
       </body>
