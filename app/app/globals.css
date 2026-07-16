@@ -45,9 +45,12 @@ body{
 .scroll{flex:1; min-height:0; overflow-y:auto; background:var(--paper);
   overscroll-behavior:none; padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 /* Opaque Ivory paint over the status-bar strip so iOS can't show its gray there
-   as content scrolls under the translucent status bar. */
-.safe-top{position:fixed; top:0; left:50%; transform:translateX(-50%);
-  width:100%; max-width:430px; height:env(safe-area-inset-top);
+   as content scrolls under the translucent status bar. Full-width with NO
+   transform on purpose: a transformed fixed element is a separate GPU layer,
+   and those leave gray ghost tiles after momentum scroll in the standalone PWA
+   (same reason -webkit-overflow-scrolling was dropped above). */
+.safe-top{position:fixed; top:0; left:0; right:0;
+  height:env(safe-area-inset-top);
   background:var(--paper); z-index:34; pointer-events:none}
 
 header{padding:max(18px,env(safe-area-inset-top)) 22px 0}
