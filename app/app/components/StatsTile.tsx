@@ -29,7 +29,7 @@ export default function StatsTile() {
         }
       }}
     >
-      {streak > 0 && (
+      {streak >= 2 && (
         <div className="streak-sticker" aria-label={`${streak} day streak`}>
           <span className="ss-num">{streak}</span>
           <span className="ss-flame">🔥</span>
