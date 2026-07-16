@@ -896,3 +896,8 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 /* compact tiles so they never balloon on wide screens */
 .al-tile{padding:12px; gap:5px; min-height:84px; justify-content:center}
 .al-tile .al-ico{font-size:20px}
+
+/* ===== Notifications tile (You tab) ===== */
+.notif-tile{margin-top:10px}
+.notif-pill{flex:0 0 auto; font-family:var(--font-mono); font-weight:700; font-size:10px; letter-spacing:.1em; padding:4px 9px; border-radius:2px; background:var(--paper); color:var(--mut); border:1px solid var(--line)}
+.notif-pill.on{background:var(--green); color:#fff; border-color:var(--green)}

@@ -22,8 +22,11 @@ const CORS = {
 const reply = (body: string, status = 200) =>
   new Response(body, { status, headers: { ...CORS, "content-type": "text/plain" } });
 
+// Tokens are hex uuids (dashes stripped) — a cheap gate before touching the DB.
+const TOKEN_RE = /^[a-f0-9]{16,64}$/i;
+
 // Map common Apple/Strava workout-type names onto the app's activity vocab;
-// unknown types pass through (title-cased, capped).
+// unknown types pass through (sanitized, title-cased, capped).
 const TYPE_MAP: Record<string, string> = {
   running: "Run", run: "Run", "outdoor run": "Run", "indoor run": "Run", jogging: "Run",
   walking: "Walk", walk: "Walk", hiking: "Hike", hike: "Hike",
@@ -41,11 +44,14 @@ const TYPE_MAP: Record<string, string> = {
 
 function mapType(raw: string | null): string | null {
   if (!raw) return null;
-  const t = raw.trim();
+  // strip NUL + other control chars (can't live in a Postgres text column)
+  let t = String(raw).replace(/[\x00-\x1F\x7F]/g, "").trim();
   if (!t) return null;
   const m = TYPE_MAP[t.toLowerCase()];
   if (m) return m;
-  return t.slice(0, 40).replace(/\b\w/g, (c) => c.toUpperCase());
+  t = t.slice(0, 40);
+  if (/[\uD800-\uDBFF]$/.test(t)) t = t.slice(0, -1); // drop a dangling lone surrogate
+  return t.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function istToday(): string {
@@ -76,10 +82,12 @@ Deno.serve(async (req) => {
   if (req.method === "POST") {
     try {
       const body = await req.json();
-      token = token ?? body.token ?? null;
-      type = type ?? body.type ?? body.workout ?? null;
-      minRaw = minRaw ?? body.min ?? body.minutes ?? body.duration ?? null;
-      secRaw = secRaw ?? body.sec ?? body.seconds ?? null;
+      if (body && typeof body === "object") {
+        token = token ?? body.token ?? null;
+        type = type ?? body.type ?? body.workout ?? null;
+        minRaw = minRaw ?? body.min ?? body.minutes ?? body.duration ?? null;
+        secRaw = secRaw ?? body.sec ?? body.seconds ?? null;
+      }
     } catch {
       /* not JSON — query params only */
     }
@@ -87,12 +95,17 @@ Deno.serve(async (req) => {
 
   token = token?.trim() || null;
   if (!token) return reply("missing token", 400);
+  if (!TOKEN_RE.test(token)) return reply("invalid token", 401);
 
-  const { data: row } = await db
+  const { data: row, error: lookupErr } = await db
     .from("member_log_tokens")
     .select("member_id")
     .eq("token", token)
     .maybeSingle();
+  if (lookupErr) {
+    console.error("token lookup failed:", lookupErr.message);
+    return reply("temporary error — try again", 503);
+  }
   if (!row) return reply("invalid token", 401);
 
   const mappedType = mapType(type);
@@ -109,7 +122,8 @@ Deno.serve(async (req) => {
   if (error) {
     // 23505 = already a workout for today → idempotent success.
     if ((error as { code?: string }).code === "23505") return reply("already logged today ✓");
-    return reply("error: " + error.message, 500);
+    console.error("insert failed:", error.message);
+    return reply("something went wrong", 500);
   }
   return reply(mappedType ? `logged ${mappedType} ✓` : "logged ✓");
 });

@@ -18,40 +18,47 @@ const SOURCES: Source[] = [
   { key: "whoop", name: "Whoop", icon: "🔴" },
 ];
 
+// iOS 17+ flow: the "run without asking" choice now appears right after the
+// trigger (it used to be "Ask Before Running" at the end), so it's its own step.
 const STEPS: { title: string; body: ReactNode }[] = [
   { title: "Open Shortcuts", body: (<>Open the <b>Shortcuts</b> app → tap the <b>Automation</b> tab → tap <b>＋</b>.</>) },
   { title: "Choose the trigger", body: (<>Tap <b>Create Personal Automation</b> → <b>Workout</b> → <b>Any</b>, <b>Is Ended</b> → <b>Next</b>.</>) },
-  { title: "Paste your link", body: (<>Add <b>Get Contents of URL</b> → paste your link (Copy above) as the URL.</>) },
-  { title: "Turn it on", body: (<>Tap <b>Next</b> → turn off <b>“Ask Before Running”</b> → <b>Done</b>. 🎉</>) },
+  { title: "Run it automatically", body: (<>Choose <b>Run Immediately</b> (not “After Confirmation”) so it never asks you each time → <b>Next</b>.</>) },
+  { title: "Add your link", body: (<>Add <b>Get Contents of URL</b> → paste your link (Copy above) as the URL → <b>Done</b>. 🎉</>) },
 ];
 const REMAIN = ["~2 min left", "~1 min left", "~30 sec left", "almost done!"];
 
 /** Bottom sheet: a tile menu of auto-log sources; Apple Watch opens the setup. */
 export default function AutoLogSheet() {
   const { supabase } = useAuth();
-  const { closeAutoLog } = useStore();
+  const { closeAutoLog, showToast } = useStore();
   const [view, setView] = useState<"menu" | "apple">("menu");
   const [token, setToken] = useState<string | null>(null);
+  const [err, setErr] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [copied, setCopied] = useState(false);
   const [step, setStep] = useState(1);
-  const [adv, setAdv] = useState(false);
 
   useEffect(() => {
     if (view !== "apple" || token) return;
     let active = true;
-    supabase
-      .from("member_log_tokens")
-      .select("token")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (active && data?.token) setToken(data.token as string);
-      });
+    setErr(false);
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("member_log_tokens").select("token").maybeSingle();
+        if (!active) return;
+        if (data?.token && !error) setToken(data.token as string);
+        else setErr(true); // no row / RLS-empty / error → show a retry, never hang
+      } catch {
+        if (active) setErr(true);
+      }
+    })();
     return () => {
       active = false;
     };
-  }, [view, token, supabase]);
+  }, [view, token, supabase, retry]);
 
-  const link = token ? `${SUPA}/functions/v1/log-workout?token=${token}` : "";
+  const link = token && SUPA ? `${SUPA}/functions/v1/log-workout?token=${token}` : "";
   const copy = async () => {
     if (!link) return;
     try {
@@ -59,7 +66,11 @@ export default function AutoLogSheet() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
-      /* clipboard blocked — field is selectable */
+      // clipboard blocked (non-secure context / iOS webview) — select for a manual copy
+      const el = document.querySelector<HTMLInputElement>(".al-link");
+      el?.focus();
+      el?.select();
+      showToast("Long-press the link to copy it");
     }
   };
 
@@ -109,17 +120,32 @@ export default function AutoLogSheet() {
           </div>
 
           <div className="al-step-label">1. Copy your private link</div>
-          <div className="al-linkrow">
-            <input
-              className="al-link"
-              readOnly
-              value={token ? link : "Loading your link…"}
-              onFocus={(e) => e.currentTarget.select()}
-            />
-            <button className="al-copy" onClick={copy} disabled={!token}>
-              {copied ? "Copied ✓" : "Copy"}
-            </button>
-          </div>
+          {err ? (
+            <div className="al-linkrow">
+              <input className="al-link" readOnly value="Couldn’t load your link" />
+              <button
+                className="al-copy"
+                onClick={() => {
+                  setErr(false);
+                  setRetry((r) => r + 1);
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div className="al-linkrow">
+              <input
+                className="al-link"
+                readOnly
+                value={token ? link : "Loading your link…"}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <button className="al-copy" onClick={copy} disabled={!token}>
+                {copied ? "Copied ✓" : "Copy"}
+              </button>
+            </div>
+          )}
 
           <div className="al-step-label">2. Set it up in Shortcuts</div>
           <div className="al-wiz">
@@ -135,20 +161,6 @@ export default function AutoLogSheet() {
             </div>
             <div className="al-wiz-title">{STEPS[step - 1].title}</div>
             <div className="al-wiz-body">{STEPS[step - 1].body}</div>
-            {step === 3 && (
-              <div className="al-adv-wrap">
-                <button className="al-adv-toggle" onClick={() => setAdv((v) => !v)}>
-                  {adv ? "▾" : "▸"} Advanced: also capture the activity + duration
-                </button>
-                {adv && (
-                  <div className="al-adv">
-                    Before pasting the link, tap the <b>▸</b> arrow on <b>Get Contents of URL</b> → set{" "}
-                    <b>Method: POST</b>, <b>Request Body: JSON</b>, and add two fields: <b>type</b> = the{" "}
-                    <i>Workout Type</i> variable, <b>min</b> = the <i>Duration</i> variable.
-                  </div>
-                )}
-              </div>
-            )}
             <div className="al-wiz-nav">
               <button className="al-wiz-back" disabled={step === 1} onClick={() => setStep((s) => Math.max(1, s - 1))}>
                 Back
@@ -163,6 +175,10 @@ export default function AutoLogSheet() {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="al-adv">
+            Logs a plain workout for the day — open today’s entry in the app to add the activity or a note.
           </div>
         </>
       )}

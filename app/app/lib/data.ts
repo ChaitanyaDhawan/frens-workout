@@ -197,7 +197,7 @@ export const PERIODS: Period[] = [
 
 // Activity chip options for the detail sheet.
 export const RECENTS = ["Gym", "Run"];
-export const DEFAULTS = ["Lift", "Yoga", "Football", "Swim", "Badminton"];
+export const DEFAULTS = ["Lift", "Yoga", "Football", "Swim", "Badminton", "Dance"];
 
 // Demo button pools — a friend "logs" a workout on tap.
 export const DEMO_POOL = ["Vareni", "Mugdha", "Saksham", "Abhimanyu", "Saavy", "Bhawna"];

@@ -209,3 +209,61 @@ export async function maybeSubscribeAfterLog(
     /* best-effort */
   }
 }
+
+export type NotifState = "on" | "off" | "blocked" | "needs-install" | "unsupported";
+
+/** Current notification state for the Notifications tile (no side effects). */
+export function notifState(): NotifState {
+  if (
+    typeof window === "undefined" ||
+    !("Notification" in window) ||
+    !("PushManager" in window) ||
+    !("serviceWorker" in navigator)
+  ) {
+    return "unsupported";
+  }
+  if (isIOS() && !isStandalone()) return "needs-install";
+  const p = Notification.permission;
+  if (p === "granted") return "on";
+  if (p === "denied") return "blocked";
+  return "off";
+}
+
+/** Confirms a live push subscription exists (permission alone isn't enough). */
+export async function hasPushSubscription(): Promise<boolean> {
+  try {
+    if (!("serviceWorker" in navigator)) return false;
+    const reg = await navigator.serviceWorker.ready;
+    return !!(await reg.pushManager.getSubscription());
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Turn notifications ON from a user gesture (the Notifications tile). Requests
+ * permission if still "default", then subscribes. Returns the resulting state.
+ */
+export async function enableNotifications(
+  supabase: SupabaseClient,
+  memberId: string | null,
+): Promise<NotifState> {
+  const base = notifState();
+  if (base === "unsupported" || base === "needs-install" || base === "blocked") return base;
+  if (!memberId) return base;
+  let permission = Notification.permission;
+  if (permission === "default") {
+    try {
+      permission = await Notification.requestPermission();
+    } catch {
+      return "off";
+    }
+  }
+  if (permission !== "granted") return permission === "denied" ? "blocked" : "off";
+  try {
+    await ensureSubscription(supabase, memberId);
+  } catch {
+    /* best-effort — a later log retries */
+  }
+  return "on";
+}

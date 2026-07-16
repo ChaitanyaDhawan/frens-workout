@@ -48,7 +48,17 @@ export default function DetailSheet() {
     showToast(`“${t.toUpperCase()}” saved — appears first next time`);
   };
 
-  const onSave = () => saveDetails({ types, dur, note: note.trim(), photo }, file);
+  const onSave = () => {
+    // Fold in a custom activity that was typed but not "added" (Enter) — otherwise
+    // hitting "Log it" straight after typing silently drops it.
+    const pending = customVal.trim();
+    let finalTypes = types;
+    if (pending && !types.some((x) => x.toLowerCase() === pending.toLowerCase())) {
+      finalTypes = [...types, pending];
+      addRecent(pending);
+    }
+    saveDetails({ types: finalTypes, dur, note: note.trim(), photo }, file);
+  };
 
   const onDelete = () => {
     closeSheet();

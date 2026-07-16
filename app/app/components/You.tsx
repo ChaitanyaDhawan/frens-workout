@@ -8,6 +8,7 @@ import { bestStreak, streakNow, val } from "@/app/lib/helpers";
 import Flame from "./Flame";
 import WeekStrip from "./WeekStrip";
 import { FeedCard } from "./Feed";
+import NotifTile from "./NotifTile";
 
 const PAGE = 5;
 
@@ -267,6 +268,7 @@ export default function You() {
       <Stats />
       <Calendar />
       <AutoLogEntry />
+      <NotifTile />
       <MyDispatches />
       <SignOutRow />
     </>
