@@ -862,3 +862,20 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .al-steps{margin:10px 0 0; padding-left:20px; display:flex; flex-direction:column; gap:8px}
 .al-steps li{font-size:13px; line-height:1.45; color:var(--ink)}
 .al-tip{margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--paper); font-size:12.5px; color:var(--mut); line-height:1.4}
+
+/* ===== Auto-log setup wizard ===== */
+.al-step-label{font-family:var(--font-mono); font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--mut); margin:14px 0 6px}
+.al-wiz{border:1px solid var(--line); border-radius:14px; padding:14px; background:var(--paper)}
+.al-wiz-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.al-wiz-count{font-family:var(--font-mono); font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ox)}
+.al-wiz-dots{display:flex; gap:6px}
+.al-dot{width:8px; height:8px; border-radius:50%; background:var(--line)}
+.al-dot.on{background:var(--ox)}
+.al-wiz-title{font-family:var(--font-sans); font-weight:900; font-size:17px; color:var(--ink); margin-bottom:5px}
+.al-wiz-body{font-size:14px; line-height:1.5; color:var(--ink); min-height:70px}
+.al-wiz-nav{display:flex; gap:10px; margin-top:12px}
+.al-wiz-back{flex:0 0 auto; font-family:var(--font-sans); font-weight:700; font-size:14px; padding:11px 18px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer}
+.al-wiz-back:disabled{opacity:.4}
+.al-wiz-next{flex:1; font-family:var(--font-sans); font-weight:800; font-size:15px; padding:11px 16px; border-radius:10px; border:none; background:var(--ink); color:var(--paper); cursor:pointer}
+.al-adv-toggle{margin-top:14px; background:none; border:none; padding:0; font-family:var(--font-mono); font-weight:600; font-size:12.5px; color:var(--mut); cursor:pointer; text-align:left}
+.al-adv{margin-top:8px; padding:10px 12px; border-radius:10px; background:var(--paper); border:1px dashed var(--line); font-size:12.5px; line-height:1.5; color:var(--ink)}
