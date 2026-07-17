@@ -26,7 +26,7 @@ import {
 } from "./data";
 import { monthOf } from "./helpers";
 import { useAuth } from "./auth";
-import { aggregate, fetchRaw, labelToMinutes, type DbWorkout, type RawData } from "./db";
+import { aggregate, fetchRaw, labelToMinutes, type DbWorkout, type RawData, type RequestVoter } from "./db";
 import { maybeSubscribeAfterLog } from "./push";
 import { compressImage } from "./compressImage";
 import { SAMPLE_RAW, DEMO_ME_ID } from "./demoData";
@@ -71,6 +71,10 @@ interface Store {
   /** workoutId whose kudos-givers list is open, or null. */
   kudosSheet: string | null;
   autoLog: boolean;
+  /** "Bring it sooner" votes per not-yet-live source, earliest asker first. */
+  requestsBySource: Record<string, RequestVoter[]>;
+  /** Sources I've personally asked for. */
+  myRequests: Set<string>;
   profileMember: string | null;
   settings: boolean;
   dispatchesOpen: boolean;
@@ -110,6 +114,8 @@ interface Store {
   closeKudosSheet: () => void;
   openAutoLog: () => void;
   closeAutoLog: () => void;
+  /** Add or remove my "bring it sooner" vote for a source. */
+  toggleIntegrationRequest: (source: string, wanted: boolean) => void;
   openProfile: (name: string) => void;
   closeProfile: () => void;
   openSettings: () => void;
@@ -127,7 +133,7 @@ const SHOW_CELEBRATION = false;
 
 const StoreContext = createContext<Store | null>(null);
 
-const EMPTY_RAW: RawData = { members: [], workouts: [], reactions: [], comments: [], photoUrls: {} };
+const EMPTY_RAW: RawData = { members: [], workouts: [], reactions: [], comments: [], integrationRequests: [], photoUrls: {} };
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const tmpId = () => "tmp-" + Math.random().toString(36).slice(2);
 
@@ -301,6 +307,8 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
     return map;
   }, [raw, myId]);
   const mineFeed = agg.mineFeed;
+  const requestsBySource = agg.requestsBySource;
+  const myRequests = agg.myRequests;
   const logged = doneDoy.has(TODAY_DOY);
 
   // ---- helpers ----
@@ -393,6 +401,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
         )
         .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, onAux)
         .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, onAux)
+        .on("postgres_changes", { event: "*", schema: "public", table: "integration_requests" }, onAux)
         .subscribe((status: string) => {
           if (
             !cancelled &&
@@ -841,6 +850,49 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const closeKudosSheet = useCallback(() => setKudosSheet(null), []);
   const openAutoLog = useCallback(() => setAutoLog(true), []);
   const closeAutoLog = useCallback(() => setAutoLog(false), []);
+
+  const toggleIntegrationRequest = useCallback(
+    async (source: string, wanted: boolean) => {
+      if (!myId) return;
+      if (wanted) {
+        patchRaw((r) =>
+          r.integrationRequests.some((x) => x.source === source && x.member_id === myId)
+            ? r
+            : {
+                ...r,
+                integrationRequests: [
+                  ...r.integrationRequests,
+                  { id: tmpId(), source, member_id: myId, created_at: new Date().toISOString() },
+                ],
+              },
+        );
+        if (demo) return; // demo has no session — keep it optimistic-only
+        const { error } = await supabase.from("integration_requests").insert({ source, member_id: myId });
+        if (error && (error as { code?: string }).code !== "23505") {
+          patchRaw((r) => ({
+            ...r,
+            integrationRequests: r.integrationRequests.filter((x) => !(x.source === source && x.member_id === myId)),
+          }));
+        } else {
+          scheduleRefetch();
+        }
+      } else {
+        patchRaw((r) => ({
+          ...r,
+          integrationRequests: r.integrationRequests.filter((x) => !(x.source === source && x.member_id === myId)),
+        }));
+        if (demo) return;
+        const { error } = await supabase
+          .from("integration_requests")
+          .delete()
+          .eq("source", source)
+          .eq("member_id", myId);
+        scheduleRefetch();
+        void error; // a failed delete just resyncs on the next refetch
+      }
+    },
+    [myId, demo, supabase, patchRaw, scheduleRefetch],
+  );
   const openProfile = useCallback((name: string) => setProfileMember(name), []);
   const closeProfile = useCallback(() => setProfileMember(null), []);
   const openSettings = useCallback(() => setSettings(true), []);
@@ -947,6 +999,9 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       autoLog,
       openAutoLog,
       closeAutoLog,
+      requestsBySource,
+      myRequests,
+      toggleIntegrationRequest,
       profileMember,
       openProfile,
       closeProfile,
@@ -966,7 +1021,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       logToday, backfillDay, removeDay, saveDetails, openSheet, closeSheet, openDaySheet,
       closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment,
       openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink,
-      autoLog, openAutoLog, closeAutoLog,
+      autoLog, openAutoLog, closeAutoLog, requestsBySource, myRequests, toggleIntegrationRequest,
       profileMember, openProfile, closeProfile,
       settings, dispatchesOpen, openSettings, closeSettings, openDispatches, closeDispatches,
     ],

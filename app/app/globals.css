@@ -940,6 +940,50 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .al-tile{padding:12px; gap:5px; min-height:84px; justify-content:center}
 .al-tile .al-ico{font-size:20px}
 
+/* Not-live sources keep their "Soon" status but are tappable to request next.
+   Untouched ones stay grayed; once anyone requests, the tile wakes into an
+   "in-progress" state. The top-right marker carries the request affordance. */
+.al-tile{position:relative}
+.al-tile.soon{opacity:1; cursor:pointer}
+.al-tile.soon .al-ico{filter:grayscale(1); opacity:.62}
+.al-tile.soon .al-name{color:var(--ink)}
+.al-tile.soon .al-badge{color:var(--mut)}
+.al-tile.soon:active{background:var(--paper)}
+/* top-right marker — quiet, never a pill, never louder than the live tile.
+   "Request" reads clearly clickable (dark), the count sits a touch softer. */
+.al-corner{position:absolute; top:10px; right:11px; font-family:var(--font-mono); font-weight:700;
+  font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink)}
+.al-corner.on{color:var(--mut); font-weight:600}
+/* a source people have asked for gets a soft active edge — below the live tile */
+.al-tile.soon.active{border-color:#CBBFA2}
+.al-tile.soon.requested{border-color:#CBBFA2}
+
+/* ===== Request an integration ("bring it sooner") — a compact utility sheet,
+   not a full-screen onboarding moment, so the hero stays modest. ===== */
+.al-req{display:flex; flex-direction:column; min-height:52vh; padding-bottom:6px}
+.al-req .al-intro-main{padding:14px 8px 4px}
+.al-req .al-intro-ic{font-size:40px}
+.al-req .al-intro-title{font-size:19px; margin-top:12px}
+.al-req .al-intro-sub{font-size:13.5px; margin-top:8px; max-width:34ch}
+.al-req-btn{width:100%; margin-top:auto; padding:14px 16px; border-radius:3px; border:none;
+  background:var(--ink); color:var(--paper); font-family:var(--font-sans); font-weight:700; font-size:14px;
+  cursor:pointer; transition:transform .1s, opacity .15s}
+.al-req-btn:active{transform:scale(.98)}
+.al-req-btn.on{background:var(--paper); color:var(--ox); border:1.5px solid var(--ox)}
+.al-req-who{width:100%; margin-top:22px; border-top:1px solid var(--line); padding-top:15px}
+.al-req-wholabel{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-weight:600;
+  font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut)}
+.al-req-count{display:grid; place-items:center; min-width:18px; height:18px; padding:0 5px; border-radius:9px;
+  background:var(--ox); color:var(--paper); font-size:10.5px; letter-spacing:0}
+.al-req-voters{display:flex; flex-wrap:wrap; gap:7px; margin-top:12px}
+.al-req-voter{display:flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; border-radius:20px;
+  border:1px solid var(--line); background:var(--card)}
+.al-req-voter.you{border-color:var(--ox)}
+.al-req-ava{flex:none; width:24px; height:24px; border-radius:50%; background:var(--ink); color:var(--paper);
+  display:grid; place-items:center; font-weight:700; font-size:9.5px}
+.al-req-voter.you .al-req-ava{background:var(--ox)}
+.al-req-vname{font-family:var(--font-sans); font-weight:600; font-size:12.5px; color:var(--ink)}
+
 /* ===== Notifications tile (You tab) ===== */
 .notif-tile{margin-top:10px}
 .notif-pill{flex:0 0 auto; font-family:var(--font-mono); font-weight:700; font-size:10px; letter-spacing:.1em; padding:4px 9px; border-radius:2px; background:var(--paper); color:var(--mut); border:1px solid var(--line)}

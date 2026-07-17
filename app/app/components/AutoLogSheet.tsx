@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useAuth } from "@/app/lib/auth";
 import { useStore } from "@/app/lib/store";
+import { initials } from "@/app/lib/helpers";
 
 const SHEET_EASE: [number, number, number, number] = [0.3, 1.15, 0.35, 1];
 const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -17,6 +18,7 @@ const SOURCES: Source[] = [
   { key: "garmin", name: "Garmin", icon: "🧭" },
   { key: "whoop", name: "Whoop", icon: "🔴" },
 ];
+const SOURCE_BY_KEY: Record<string, Source> = Object.fromEntries(SOURCES.map((s) => [s.key, s]));
 
 // The ready-made shortcut (public iCloud link). It contains a single
 // "Get Contents of URL" action with a placeholder URL and NO real token, so
@@ -48,8 +50,9 @@ const INTROS: { ic: string; title: string; body: string }[] = [
 /** Bottom sheet: a tile menu of auto-log sources; Apple Watch opens the setup. */
 export default function AutoLogSheet() {
   const { supabase } = useAuth();
-  const { closeAutoLog, showToast } = useStore();
-  const [view, setView] = useState<"menu" | "apple">("menu");
+  const { closeAutoLog, showToast, requestsBySource, myRequests, toggleIntegrationRequest } = useStore();
+  const [view, setView] = useState<"menu" | "apple" | "request">("menu");
+  const [reqSource, setReqSource] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [err, setErr] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -110,22 +113,96 @@ export default function AutoLogSheet() {
               ✕
             </button>
           </div>
-          <div className="al-sheet-sub">Connect a tracker and your workouts log themselves.</div>
+          <div className="al-sheet-sub">Apple Watch is live. Tap any other to request it next.</div>
           <div className="al-grid">
-            {SOURCES.map((s) => (
-              <button
-                key={s.key}
-                className={`al-tile${s.live ? " live" : " soon"}`}
-                disabled={!s.live}
-                onClick={() => s.live && setView("apple")}
-              >
-                <span className="al-ico">{s.icon}</span>
-                <span className="al-name">{s.name}</span>
-                <span className="al-badge">{s.live ? "Set up ›" : "Soon"}</span>
-              </button>
-            ))}
+            {SOURCES.map((s) => {
+              const voters = requestsBySource[s.key] ?? [];
+              const mine = myRequests.has(s.key);
+              const n = voters.length;
+              // Top-right marker: a clear "Request" hint when untouched, and a
+              // quiet count once people are asking — never louder than the live tile.
+              const corner = s.live ? null : mine ? "✓ Requested" : n > 0 ? `${n} requested` : "Request";
+              return (
+                <button
+                  key={s.key}
+                  className={
+                    `al-tile${s.live ? " live" : " soon"}` +
+                    (!s.live && n > 0 ? " active" : "") +
+                    (mine ? " requested" : "")
+                  }
+                  onClick={() => {
+                    if (s.live) {
+                      setView("apple");
+                    } else {
+                      setReqSource(s.key);
+                      setView("request");
+                    }
+                  }}
+                >
+                  {corner && <span className={`al-corner${n > 0 ? " on" : ""}`}>{corner}</span>}
+                  <span className="al-ico">{s.icon}</span>
+                  <span className="al-name">{s.name}</span>
+                  <span className="al-badge">{s.live ? "Set up ›" : "Soon"}</span>
+                </button>
+              );
+            })}
           </div>
         </>
+      ) : view === "request" ? (
+        (() => {
+          const src = reqSource ? SOURCE_BY_KEY[reqSource] : null;
+          if (!src) return null;
+          const voters = requestsBySource[src.key] ?? [];
+          const mine = myRequests.has(src.key);
+          const n = voters.length;
+          return (
+            <>
+              <div className="shead al-head2">
+                <button className="al-back" onClick={() => { setView("menu"); setReqSource(null); }}>
+                  ‹ Back
+                </button>
+                <h2>{src.icon} {src.name}</h2>
+                <button className="al-x" onClick={closeAutoLog} aria-label="Close">
+                  ✕
+                </button>
+              </div>
+
+              <div className="al-intro al-req">
+                <div className="al-intro-main">
+                  <div className="al-intro-ic">{src.icon}</div>
+                  <div className="al-intro-title">{src.name} isn’t here yet</div>
+                  <div className="al-intro-sub">
+                    We build these in the order FRENS request them. Add your name and {src.name} moves up the list.
+                  </div>
+                </div>
+
+                {n > 0 && (
+                  <div className="al-req-who">
+                    <div className="al-req-wholabel">
+                      <span>Requested by</span>
+                      <span className="al-req-count">{n}</span>
+                    </div>
+                    <div className="al-req-voters">
+                      {voters.map((v) => (
+                        <div className={`al-req-voter${v.you ? " you" : ""}`} key={v.memberId}>
+                          <span className="al-req-ava">{initials(v.name)}</span>
+                          <span className="al-req-vname">{v.you ? "You" : v.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  className={`al-req-btn${mine ? " on" : ""}`}
+                  onClick={() => toggleIntegrationRequest(src.key, !mine)}
+                >
+                  {mine ? "✓ You requested this · tap to undo" : `Request ${src.name} →`}
+                </button>
+              </div>
+            </>
+          );
+        })()
       ) : (
         <>
           <div className="shead al-head2">

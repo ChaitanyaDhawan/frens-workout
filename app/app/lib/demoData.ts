@@ -2,7 +2,7 @@
 // CURRENT app for marketing/launch material without touching the live group.
 // Not imported anywhere in the normal auth'd flow.
 
-import type { DbMember, DbWorkout, DbReaction, DbComment, RawData } from "./db";
+import type { DbMember, DbWorkout, DbReaction, DbComment, DbIntegrationRequest, RawData } from "./db";
 
 const id = (p: string, n: number) => `demo-${p}-${n}`;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -101,7 +101,24 @@ function build(): RawData {
     }
   });
 
-  return { members, workouts, reactions, comments, photoUrls: {} };
+  // A little demand on two upcoming sources — Chaitanya (me) has already asked
+  // for Whoop, so the demo shows both the "you asked" and populated states.
+  const rq = (src: string, mi: number, mins: number): DbIntegrationRequest => ({
+    id: id(`ir-${src}`, mi),
+    source: src,
+    member_id: id("m", mi),
+    created_at: `2026-07-16T${pad(9 + (mi % 8))}:${pad(mins)}:00Z`,
+  });
+  const integrationRequests: DbIntegrationRequest[] = [
+    rq("whoop", 0, 10),
+    rq("whoop", 2, 22),
+    rq("whoop", ME_INDEX, 31),
+    rq("whoop", 8, 47),
+    rq("strava", 1, 15),
+    rq("strava", 3, 40),
+  ];
+
+  return { members, workouts, reactions, comments, integrationRequests, photoUrls: {} };
 }
 
 export const SAMPLE_RAW: RawData = build();

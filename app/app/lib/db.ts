@@ -38,14 +38,29 @@ export interface DbComment {
   body: string;
   created_at: string;
 }
+export interface DbIntegrationRequest {
+  id: string;
+  source: string; // 'strava' | 'fitbit' | 'google' | 'garmin' | 'whoop'
+  member_id: string;
+  created_at: string;
+}
 
 export interface RawData {
   members: DbMember[];
   workouts: DbWorkout[];
   reactions: DbReaction[];
   comments: DbComment[];
+  /** "bring it sooner" votes on not-yet-live auto-log sources. */
+  integrationRequests: DbIntegrationRequest[];
   /** signed URLs for proof photos, keyed by storage path. */
   photoUrls: Record<string, string>;
+}
+
+/** One person who has asked for an integration. */
+export interface RequestVoter {
+  memberId: string;
+  name: string;
+  you: boolean;
 }
 
 // ---- Date helpers (IST) ----
@@ -155,6 +170,10 @@ export interface Aggregate {
   dayData: Record<number, WorkoutDetail>;
   feed: FeedItem[];
   mineFeed: FeedItem[];
+  /** Everyone who asked for each not-yet-live source, earliest first. */
+  requestsBySource: Record<string, RequestVoter[]>;
+  /** Sources the signed-in member has personally asked for. */
+  myRequests: Set<string>;
 }
 
 /** Fold the raw tables into the UI view-model for the signed-in member. */
@@ -374,7 +393,21 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     ? sorted.filter((w) => w.member_id === myMemberId && w.source !== "sheet").map(toFeedItem)
     : [];
 
-  return { frens, meName, doneDoy, dayData, feed, mineFeed };
+  // Integration "bring it sooner" votes, grouped by source (earliest asker first).
+  const requestsBySource: Record<string, RequestVoter[]> = {};
+  const myRequests = new Set<string>();
+  for (const rq of [...(raw.integrationRequests ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+    const mem = memberById.get(rq.member_id);
+    if (!mem) continue; // vote from a member no longer in the roster
+    (requestsBySource[rq.source] ??= []).push({
+      memberId: rq.member_id,
+      name: mem.display_name,
+      you: !!myMemberId && rq.member_id === myMemberId,
+    });
+    if (myMemberId && rq.member_id === myMemberId) myRequests.add(rq.source);
+  }
+
+  return { frens, meName, doneDoy, dayData, feed, mineFeed, requestsBySource, myRequests };
 }
 
 /** Find the signed-in member's workout id for a given day-of-year (or null). */
@@ -389,7 +422,7 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
   // silently (reactions/workouts cross 1000 late in the year) and the result set
   // is deterministic.
   const CAP = 50000;
-  const [m, w, r, c] = await Promise.all([
+  const [m, w, r, c, ir] = await Promise.all([
     supabase.from("members").select("id, sheet_name, user_id, display_name, is_admin").order("id"),
     supabase
       .from("workouts")
@@ -398,11 +431,13 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
       .limit(CAP),
     supabase.from("reactions").select("id, workout_id, member_id, emoji").order("id").limit(CAP),
     supabase.from("comments").select("id, workout_id, member_id, body, created_at").order("id").limit(CAP),
+    supabase.from("integration_requests").select("id, source, member_id, created_at").order("id").limit(CAP),
   ]);
   if (m.error) throw m.error;
   if (w.error) throw w.error;
   if (r.error) throw r.error;
   if (c.error) throw c.error;
+  if (ir.error) throw ir.error;
 
   // Signed URLs for proof photos (private bucket).
   const photoUrls: Record<string, string> = {};
@@ -421,6 +456,7 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
     workouts: (w.data ?? []) as DbWorkout[],
     reactions: (r.data ?? []) as DbReaction[],
     comments: (c.data ?? []) as DbComment[],
+    integrationRequests: (ir.data ?? []) as DbIntegrationRequest[],
     photoUrls,
   };
 }
