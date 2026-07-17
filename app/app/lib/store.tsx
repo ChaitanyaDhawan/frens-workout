@@ -588,12 +588,14 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
         showToast(`Already logged ${m.n.slice(0, 3)} ${doy - m.off}`);
         return;
       }
+      // Same as a fresh log — ask for notifications from this tap, before await.
+      void maybeSubscribeAfterLog(supabase, myId);
       setBounceTick((t) => t + 1);
       showToast(`Backfilled ${m.n.slice(0, 3)} ${doy - m.off} — labeled in the feed`);
       const res = await insertWorkout(iso);
       if (!res.ok) showToast("Couldn't backfill — try again");
     },
-    [myId, insertWorkout, showToast],
+    [myId, supabase, insertWorkout, showToast],
   );
 
   // Undo-delete: re-insert the CAPTURED row with its details (not a blank one).
@@ -688,6 +690,10 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       const already = rawRef.current.workouts.some((w) => w.member_id === myId && w.workout_date === iso);
       const activity = detail.types[0] || "Workout";
       const photoUrl = file ? URL.createObjectURL(file) : undefined;
+      // Ask for notifications the instant a NEW workout is logged — fired here,
+      // synchronously from the save tap and BEFORE any await, so iOS still lets
+      // the native permission prompt show. No-ops if already on/blocked.
+      if (!already) void maybeSubscribeAfterLog(supabase, myId);
       setSheet(null);
 
       if (!already) {
@@ -794,7 +800,6 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
         const { error } = await supabase.from("workouts").update(update).eq("id", id);
         if (error) showToast("Couldn't save details");
       }
-      void maybeSubscribeAfterLog(supabase, myId);
       scheduleRefetch();
     },
     [sheet, myId, uid, supabase, patchRaw, markFresh, showToast, scheduleRefetch, computeCelebration],

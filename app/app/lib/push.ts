@@ -157,14 +157,16 @@ async function ensureSubscription(supabase: SupabaseClient, memberId: string): P
     .upsert({ member_id: memberId, endpoint, p256dh, auth }, { onConflict: "endpoint" });
 }
 
-let promptAttempted = false;
+let promptInFlight = false;
 
 /**
- * Idempotent, gesture-safe push opt-in. Call this from a real user gesture
- * right after a successful log. It no-ops when push is unsupported, already
- * denied, or (on iOS) when the app is not installed to the home screen, and it
- * only shows the native permission dialog once per session while permission is
- * still "default".
+ * Gesture-safe push opt-in. Call this synchronously from a real user gesture
+ * (e.g. the very start of a log's save handler, BEFORE any await) so the native
+ * permission dialog is still allowed to show. It no-ops when push is
+ * unsupported, already denied, or (on iOS) when the app isn't installed to the
+ * home screen. While permission is still "default" it re-asks on every log (only
+ * an in-flight guard stops a concurrent double-fire), so a fren who hasn't opted
+ * in yet keeps getting the native prompt until they choose.
  */
 export async function maybeSubscribeAfterLog(
   supabase: SupabaseClient,
@@ -192,15 +194,16 @@ export async function maybeSubscribeAfterLog(
     return;
   }
 
-  // permission === "default": prompt at most once per session.
-  if (promptAttempted) return;
-  promptAttempted = true;
+  // permission === "default": fire the native prompt (once at a time).
+  if (promptInFlight) return;
+  promptInFlight = true;
   let result: NotificationPermission;
   try {
     result = await Notification.requestPermission();
   } catch {
-    promptAttempted = false; // lost user activation — allow a later attempt
-    return;
+    return; // lost user activation — a later log tries again
+  } finally {
+    promptInFlight = false;
   }
   if (result !== "granted") return;
   try {
