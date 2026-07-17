@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useAuth } from "@/app/lib/auth";
 import { useStore } from "@/app/lib/store";
@@ -18,15 +18,11 @@ const SOURCES: Source[] = [
   { key: "whoop", name: "Whoop", icon: "🔴" },
 ];
 
-// iOS 17+ flow: the "run without asking" choice now appears right after the
-// trigger (it used to be "Ask Before Running" at the end), so it's its own step.
-const STEPS: { title: string; body: ReactNode }[] = [
-  { title: "Open Shortcuts", body: (<>Open <b>Shortcuts</b> → the <b>Automation</b> tab → tap <b>＋ New Automation</b>.</>) },
-  { title: "Pick the trigger", body: (<>Scroll to <b>Apple Watch Workout</b> → choose <b>Any</b> workout, <b>Ends</b> → <b>Next</b>. <i>(This trigger only appears when an Apple Watch is paired.)</i></>) },
-  { title: "Run it automatically", body: (<>Choose <b>Run Immediately</b> (not “After Confirmation”) so it never asks you each time → <b>Next</b>.</>) },
-  { title: "Add your link", body: (<>Add <b>Get Contents of URL</b> → tap the blue <b>URL</b> word on that action’s first line (not Headers) → paste your link (Copy above). Leave Method <b>GET</b>, add no headers → <b>Done</b>. 🎉</>) },
-];
-const REMAIN = ["~2 min left", "~1 min left", "~30 sec left", "almost done!"];
+// The ready-made shortcut (public iCloud link). It contains a single
+// "Get Contents of URL" action with a placeholder URL and NO real token, so
+// sharing it leaks nothing. Each fren imports it and pastes their own link over
+// the placeholder — no building actions by hand.
+const SHORTCUT_URL = "https://www.icloud.com/shortcuts/dbcef56d86394c5b9cbb83592f0f092e";
 
 /** Bottom sheet: a tile menu of auto-log sources; Apple Watch opens the setup. */
 export default function AutoLogSheet() {
@@ -37,7 +33,6 @@ export default function AutoLogSheet() {
   const [err, setErr] = useState(false);
   const [retry, setRetry] = useState(0);
   const [copied, setCopied] = useState(false);
-  const [step, setStep] = useState(1);
 
   useEffect(() => {
     if (view !== "apple" || token) return;
@@ -147,34 +142,24 @@ export default function AutoLogSheet() {
             </div>
           )}
 
-          <div className="al-step-label">2. Set it up in Shortcuts</div>
-          <div className="al-wiz">
-            <div className="al-wiz-top">
-              <span className="al-wiz-count">
-                Step {step} of {STEPS.length} · {REMAIN[step - 1]}
-              </span>
-              <div className="al-wiz-dots">
-                {STEPS.map((_, i) => (
-                  <span key={i} className={`al-dot${i < step ? " on" : ""}`} />
-                ))}
-              </div>
-            </div>
-            <div className="al-wiz-title">{STEPS[step - 1].title}</div>
-            <div className="al-wiz-body">{STEPS[step - 1].body}</div>
-            <div className="al-wiz-nav">
-              <button className="al-wiz-back" disabled={step === 1} onClick={() => setStep((s) => Math.max(1, s - 1))}>
-                Back
-              </button>
-              {step < STEPS.length ? (
-                <button className="al-wiz-next" onClick={() => setStep((s) => s + 1)}>
-                  Next →
-                </button>
-              ) : (
-                <button className="al-wiz-next" onClick={closeAutoLog}>
-                  Done ✓
-                </button>
-              )}
-            </div>
+          <div className="al-step-label">2. Install the ready-made shortcut</div>
+          <a className="al-install" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
+            ⚡ Get the shortcut →
+          </a>
+          <div className="al-hint">Tap <b>Add Shortcut</b> when iOS asks.</div>
+
+          <div className="al-step-label">3. Paste your link into it</div>
+          <div className="al-hint">
+            Open the shortcut, tap the <b>URL</b>, and paste your link (Copy above) over the placeholder. Tap the
+            shortcut once to test — it logs today ✓
+          </div>
+
+          <div className="al-step-label">
+            4. Hands-free on Apple Watch <span className="al-opt">optional</span>
+          </div>
+          <div className="al-hint">
+            Shortcuts → <b>Automation</b> → <b>New Automation</b> → <b>Apple Watch Workout</b> → Any, Ends → Run
+            Immediately → <b>Run Shortcut</b> → “Log my FRENS workout”.
           </div>
 
           <div className="al-adv">

@@ -877,6 +877,12 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 
 /* ===== Auto-log setup wizard ===== */
 .al-step-label{font-family:var(--font-mono); font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--mut); margin:14px 0 6px}
+.al-install{display:block; text-align:center; text-decoration:none; margin-top:2px; padding:13px; border-radius:3px;
+  background:var(--ink); color:var(--paper); font-family:var(--font-sans); font-weight:800; font-size:15px; letter-spacing:-.01em}
+.al-install:active{opacity:.85}
+.al-hint{font-size:13px; line-height:1.5; color:var(--ink); margin-top:6px}
+.al-hint b{font-weight:700}
+.al-opt{font-family:var(--font-mono); font-weight:600; font-size:9px; letter-spacing:.08em; color:var(--mut); background:var(--paper); border:1px solid var(--line); border-radius:2px; padding:2px 5px; margin-left:4px; text-transform:none; vertical-align:middle}
 .al-wiz{border:1px solid var(--line); border-radius:3px; padding:14px; background:var(--paper)}
 .al-wiz-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
 .al-wiz-count{font-family:var(--font-mono); font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ox)}
