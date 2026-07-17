@@ -24,7 +24,7 @@ const STEPS: { title: string; body: ReactNode }[] = [
   { title: "Open Shortcuts", body: (<>Open <b>Shortcuts</b> → the <b>Automation</b> tab → tap <b>＋ New Automation</b>.</>) },
   { title: "Pick the trigger", body: (<>Scroll to <b>Apple Watch Workout</b> → choose <b>Any</b> workout, <b>Ends</b> → <b>Next</b>. <i>(This trigger only appears when an Apple Watch is paired.)</i></>) },
   { title: "Run it automatically", body: (<>Choose <b>Run Immediately</b> (not “After Confirmation”) so it never asks you each time → <b>Next</b>.</>) },
-  { title: "Add your link", body: (<>Add <b>Get Contents of URL</b> → paste your link (Copy above) as the URL → <b>Done</b>. 🎉</>) },
+  { title: "Add your link", body: (<>Add <b>Get Contents of URL</b> → tap the blue <b>URL</b> word on that action’s first line (not Headers) → paste your link (Copy above). Leave Method <b>GET</b>, add no headers → <b>Done</b>. 🎉</>) },
 ];
 const REMAIN = ["~2 min left", "~1 min left", "~30 sec left", "almost done!"];
 
