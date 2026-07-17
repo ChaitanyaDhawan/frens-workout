@@ -38,6 +38,13 @@ const TITLES = [
 const REMAIN = ["~2 min left", "~90 sec left", "~75 sec left", "~1 min left", "~40 sec left", "~20 sec left", "almost done!"];
 const TOTAL = TITLES.length;
 
+// A short intro storyline shown before the setup steps — one beat per screen.
+const INTROS: { ic: string; title: string; body: string }[] = [
+  { ic: "⌚", title: "It logs your workouts for you", body: "Finish a workout on your Apple Watch and it shows up here on its own. You never have to open the app." },
+  { ic: "⏱️", title: "A 2-minute setup, just once", body: "Set it up one time and it runs by itself after that — on every workout, automatically." },
+  { ic: "💛", title: "This is what keeps FRENS free", body: "It runs on Apple’s own Shortcuts, right on your phone — not on paid servers watching you. Those 2 minutes are the trade that keeps the app free for everyone." },
+];
+
 /** Bottom sheet: a tile menu of auto-log sources; Apple Watch opens the setup. */
 export default function AutoLogSheet() {
   const { supabase } = useAuth();
@@ -47,7 +54,9 @@ export default function AutoLogSheet() {
   const [err, setErr] = useState(false);
   const [retry, setRetry] = useState(0);
   const [copied, setCopied] = useState(false);
-  const [step, setStep] = useState(0); // 0 = intro screen, 1..7 = setup steps
+  const [mode, setMode] = useState<"intro" | "setup">("intro");
+  const [introI, setIntroI] = useState(0); // which intro-story screen
+  const [step, setStep] = useState(1); // setup step 1..7
 
   useEffect(() => {
     if (view !== "apple" || token) return;
@@ -86,7 +95,7 @@ export default function AutoLogSheet() {
 
   return (
     <motion.div
-      className="sheet al-sheet"
+      className={`sheet al-sheet${view === "apple" ? " al-sheet-tall" : ""}`}
       style={{ x: "-50%" }}
       initial={{ y: "105%" }}
       animate={{ y: 0 }}
@@ -120,7 +129,10 @@ export default function AutoLogSheet() {
       ) : (
         <>
           <div className="shead al-head2">
-            <button className="al-back" onClick={() => { setView("menu"); setStep(0); }}>
+            <button
+              className="al-back"
+              onClick={() => { setView("menu"); setMode("intro"); setIntroI(0); setStep(1); }}
+            >
               ‹ Back
             </button>
             <h2>⌚ Apple Watch</h2>
@@ -129,143 +141,160 @@ export default function AutoLogSheet() {
             </button>
           </div>
 
-          {step === 0 ? (
+          {mode === "intro" ? (
             <div className="al-intro">
-              <div className="al-intro-ic">⌚</div>
-              <div className="al-intro-title">Auto-log every workout</div>
-              <div className="al-intro-sub">
-                Finish a workout on your Apple Watch and it logs itself here — you never have to open the app.
+              <div className="al-intro-main">
+                <div className="al-intro-ic">{INTROS[introI].ic}</div>
+                <div className="al-intro-title">{INTROS[introI].title}</div>
+                <div className="al-intro-sub">{INTROS[introI].body}</div>
               </div>
-              <div className="al-intro-facts">
-                <div className="al-fact">
-                  ⏱️ <b>~2 minutes, one time.</b> Set it up once and forget it.
-                </div>
-                <div className="al-fact">
-                  🆓 <b>Free forever.</b> It runs on Apple’s own <b>Shortcuts</b> app, right on your iPhone —
-                  nothing extra to install, sign up for, or pay.
-                </div>
+              <div className="al-intro-dots">
+                {INTROS.map((_, i) => (
+                  <span key={i} className={`al-dot${i <= introI ? " on" : ""}`} />
+                ))}
               </div>
-              <button className="al-wiz-next al-start" onClick={() => setStep(1)}>
-                Start setup →
-              </button>
+              <div className="al-wiz-nav">
+                <button
+                  className="al-wiz-back"
+                  onClick={() => (introI === 0 ? setView("menu") : setIntroI((i) => i - 1))}
+                >
+                  Back
+                </button>
+                {introI < INTROS.length - 1 ? (
+                  <button className="al-wiz-next" onClick={() => setIntroI((i) => i + 1)}>
+                    Next →
+                  </button>
+                ) : (
+                  <button className="al-wiz-next" onClick={() => setMode("setup")}>
+                    Start setup →
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
-            <>
-              <div className="al-wiz">
-                <div className="al-wiz-top">
-                  <span className="al-wiz-count">
-                    Step {step} of {TOTAL} · {REMAIN[step - 1]}
-                  </span>
-                  <div className="al-wiz-dots">
-                    {Array.from({ length: TOTAL }).map((_, i) => (
-                      <span key={i} className={`al-dot${i < step ? " on" : ""}`} />
-                    ))}
-                  </div>
+            <div className="al-wiz">
+              <div className="al-wiz-top">
+                <span className="al-wiz-count">
+                  Step {step} of {TOTAL} · {REMAIN[step - 1]}
+                </span>
+                <div className="al-wiz-dots">
+                  {Array.from({ length: TOTAL }).map((_, i) => (
+                    <span key={i} className={`al-dot${i < step ? " on" : ""}`} />
+                  ))}
                 </div>
-                <div className="al-wiz-title">{TITLES[step - 1]}</div>
-                <div className="al-wiz-body">
-                  {step === 1 && (
-                    <>
-                      <ol className="al-points">
-                        <li>Tap <b>Get the shortcut</b> below.</li>
-                        <li>When the <b>Shortcuts</b> app opens, tap <b>Add Shortcut</b>.</li>
-                      </ol>
-                      <a className="al-install" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
-                        ⚡ Get the shortcut →
-                      </a>
-                    </>
-                  )}
-                  {step === 2 && (
-                    <>
-                      <ol className="al-points">
-                        <li>Tap <b>Copy</b> to copy your private link.</li>
-                        <li>You’ll paste it into the shortcut in the next step.</li>
-                      </ol>
-                      {err ? (
-                        <div className="al-linkrow">
-                          <input className="al-link" readOnly value="Couldn’t load your link" />
-                          <button className="al-copy" onClick={() => { setErr(false); setRetry((r) => r + 1); }}>
-                            Retry
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="al-linkrow">
-                          <input
-                            className="al-link"
-                            readOnly
-                            value={token ? link : "Loading your link…"}
-                            onFocus={(e) => e.currentTarget.select()}
-                          />
-                          <button className="al-copy" onClick={copy} disabled={!token}>
-                            {copied ? "Copied ✓" : "Copy"}
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {step === 3 && (
+              </div>
+              <div className="al-wiz-title">{TITLES[step - 1]}</div>
+              <div className="al-wiz-body">
+                {step === 1 && (
+                  <>
                     <ol className="al-points">
-                      <li>Open the <b>Shortcuts</b> app.</li>
-                      <li>Find <b>Log my FRENS workout</b> → tap the <b>⋯</b> on it to edit.</li>
-                      <li>Tap the <b>URL</b> line and clear what’s there.</li>
-                      <li><b>Paste</b> your link, then tap <b>Done</b>.</li>
+                      <li>Tap <b>Get the shortcut</b> below.</li>
+                      <li>When the <b>Shortcuts</b> app opens, tap <b>Add Shortcut</b>.</li>
                     </ol>
-                  )}
-                  {step === 4 && (
+                    <a className="al-install" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
+                      ⚡ Get the shortcut →
+                    </a>
+                  </>
+                )}
+                {step === 2 && (
+                  <>
                     <ol className="al-points">
-                      <li>In <b>Shortcuts</b>, tap the <b>Automation</b> tab at the bottom.</li>
-                      <li>Tap <b>＋</b> at the top-right.</li>
-                      <li>Tap <b>New Automation</b>.</li>
+                      <li>Tap <b>Copy</b> to copy your private link.</li>
+                      <li>You’ll paste it into the shortcut in the next step.</li>
                     </ol>
-                  )}
-                  {step === 5 && (
-                    <>
-                      <ol className="al-points">
-                        <li>Scroll down and tap <b>Apple Watch Workout</b>.</li>
-                        <li>Set it to <b>Any</b> workout, <b>Ends</b>.</li>
-                        <li>Tap <b>Next</b>.</li>
-                      </ol>
-                      <div className="al-note">Only shows if an Apple Watch is paired to your iPhone.</div>
-                    </>
-                  )}
-                  {step === 6 && (
+                    {err ? (
+                      <div className="al-linkrow">
+                        <input className="al-link" readOnly value="Couldn’t load your link" />
+                        <button className="al-copy" onClick={() => { setErr(false); setRetry((r) => r + 1); }}>
+                          Retry
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="al-linkrow">
+                        <input
+                          className="al-link"
+                          readOnly
+                          value={token ? link : "Loading your link…"}
+                          onFocus={(e) => e.currentTarget.select()}
+                        />
+                        <button className="al-copy" onClick={copy} disabled={!token}>
+                          {copied ? "Copied ✓" : "Copy"}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+                {step === 3 && (
+                  <ol className="al-points">
+                    <li>Open the <b>Shortcuts</b> app.</li>
+                    <li>Find <b>Log my FRENS workout</b> → tap the <b>⋯</b> on it to edit.</li>
+                    <li>Tap the <b>URL</b> line and clear what’s there.</li>
+                    <li><b>Paste</b> your link, then tap <b>Done</b>.</li>
+                  </ol>
+                )}
+                {step === 4 && (
+                  <ol className="al-points">
+                    <li>In <b>Shortcuts</b>, tap the <b>Automation</b> tab at the bottom.</li>
+                    <li>Tap <b>＋</b> at the top-right.</li>
+                    <li>Tap <b>New Automation</b>.</li>
+                  </ol>
+                )}
+                {step === 5 && (
+                  <>
                     <ol className="al-points">
-                      <li>Choose <b>Run Immediately</b> — not “After Confirmation”.</li>
+                      <li>Scroll down and tap <b>Apple Watch Workout</b>.</li>
+                      <li>Set it to <b>Any</b> workout, <b>Ends</b>.</li>
                       <li>Tap <b>Next</b>.</li>
                     </ol>
-                  )}
-                  {step === 7 && (
-                    <>
-                      <ol className="al-points">
-                        <li>Tap <b>Add Action</b>.</li>
-                        <li>Search <b>Run Shortcut</b> and tap it.</li>
-                        <li>Tap the blue <b>Shortcut</b> → choose <b>Log my FRENS workout</b>.</li>
-                        <li>Tap <b>Done</b>.</li>
-                      </ol>
-                      <div className="al-done-note">🎉 That’s it — every Apple Watch workout now logs itself.</div>
-                    </>
-                  )}
-                </div>
-                <div className="al-wiz-nav">
-                  <button className="al-wiz-back" onClick={() => setStep((s) => Math.max(0, s - 1))}>
-                    Back
+                    <div className="al-note">Only shows if an Apple Watch is paired to your iPhone.</div>
+                  </>
+                )}
+                {step === 6 && (
+                  <ol className="al-points">
+                    <li>Choose <b>Run Immediately</b> — not “After Confirmation”.</li>
+                    <li>Tap <b>Next</b>.</li>
+                  </ol>
+                )}
+                {step === 7 && (
+                  <>
+                    <ol className="al-points">
+                      <li>Tap <b>Add Action</b>.</li>
+                      <li>Search <b>Run Shortcut</b> and tap it.</li>
+                      <li>Tap the blue <b>Shortcut</b> → choose <b>Log my FRENS workout</b>.</li>
+                      <li>Tap <b>Done</b>.</li>
+                    </ol>
+                    <div className="al-done">
+                      <div className="al-done-title">🎉 You’re all set — here’s what happens now</div>
+                      <ul className="al-done-list">
+                        <li>Finish any Apple Watch workout and it logs here on its own.</li>
+                        <li>You’ll get a notification each time one is auto-added.</li>
+                        <li>Want to set the activity type? Open the app and tap the entry.</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="al-wiz-nav">
+                <button
+                  className="al-wiz-back"
+                  onClick={() => (step === 1 ? setMode("intro") : setStep((s) => Math.max(1, s - 1)))}
+                >
+                  Back
+                </button>
+                {step < TOTAL ? (
+                  <button
+                    className={`al-wiz-next${step === 1 || step === 2 ? " secondary" : ""}`}
+                    onClick={() => setStep((s) => s + 1)}
+                  >
+                    Next →
                   </button>
-                  {step < TOTAL ? (
-                    <button className="al-wiz-next" onClick={() => setStep((s) => s + 1)}>
-                      Next →
-                    </button>
-                  ) : (
-                    <button className="al-wiz-next" onClick={closeAutoLog}>
-                      Done ✓
-                    </button>
-                  )}
-                </div>
+                ) : (
+                  <button className="al-wiz-next" onClick={closeAutoLog}>
+                    Done ✓
+                  </button>
+                )}
               </div>
-
-              <div className="al-adv">
-                Logs the day’s workout — open today’s entry in the app to add the activity or a note.
-              </div>
-            </>
+            </div>
           )}
         </>
       )}
