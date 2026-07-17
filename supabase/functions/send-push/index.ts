@@ -124,6 +124,9 @@ Deno.serve(async (req) => {
         await webpush.sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
           notification,
+          // urgency:high → Apple delivers promptly instead of batching/dropping;
+          // TTL 12h → retries if the phone is briefly offline, but no stale pileup.
+          { urgency: 'high', TTL: 43200 },
         );
       } catch (err: any) {
         if (err?.statusCode === 404 || err?.statusCode === 410) {

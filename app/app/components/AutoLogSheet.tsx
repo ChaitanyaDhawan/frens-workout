@@ -21,8 +21,8 @@ const SOURCES: Source[] = [
 // iOS 17+ flow: the "run without asking" choice now appears right after the
 // trigger (it used to be "Ask Before Running" at the end), so it's its own step.
 const STEPS: { title: string; body: ReactNode }[] = [
-  { title: "Open Shortcuts", body: (<>Open the <b>Shortcuts</b> app → tap the <b>Automation</b> tab → tap <b>＋</b>.</>) },
-  { title: "Choose the trigger", body: (<>Tap <b>Create Personal Automation</b> → <b>Workout</b> → <b>Any</b>, <b>Is Ended</b> → <b>Next</b>.</>) },
+  { title: "Open Shortcuts", body: (<>Open <b>Shortcuts</b> → the <b>Automation</b> tab → tap <b>＋ New Automation</b>.</>) },
+  { title: "Pick the trigger", body: (<>Scroll to <b>Apple Watch Workout</b> → choose <b>Any</b> workout, <b>Ends</b> → <b>Next</b>. <i>(This trigger only appears when an Apple Watch is paired.)</i></>) },
   { title: "Run it automatically", body: (<>Choose <b>Run Immediately</b> (not “After Confirmation”) so it never asks you each time → <b>Next</b>.</>) },
   { title: "Add your link", body: (<>Add <b>Get Contents of URL</b> → paste your link (Copy above) as the URL → <b>Done</b>. 🎉</>) },
 ];
