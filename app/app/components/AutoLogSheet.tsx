@@ -95,7 +95,7 @@ export default function AutoLogSheet() {
 
   return (
     <motion.div
-      className={`sheet al-sheet${view === "apple" ? " al-sheet-tall" : ""}`}
+      className="sheet al-sheet"
       style={{ x: "-50%" }}
       initial={{ y: "105%" }}
       animate={{ y: 0 }}
