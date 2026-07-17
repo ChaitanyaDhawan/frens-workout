@@ -932,10 +932,19 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .al-entry-arrow{flex:0 0 auto; font-size:17px; color:var(--mut)}
 .al-sheet{max-height:88vh; overflow-y:auto; padding-bottom:26px}
 .al-sheet-sub{font-size:12.5px; color:var(--mut); margin:-2px 0 14px; line-height:1.4}
+/* Reset the base .shead's 92px right pad (it's for an absolute ✕); this header
+   is a real flex row. Back sits in a left slot, an equal spacer balances the
+   right so the title stays truly centered under the corner ✕. */
+.sheet .al-head2{padding-right:0}
 .al-head2{display:flex; align-items:center; gap:8px}
 .al-head2 h2{flex:1; text-align:center; margin:0}
-.al-back{background:none; border:none; font-family:var(--font-sans); font-weight:700; font-size:14px; color:var(--ox); cursor:pointer; padding:0; flex:0 0 auto}
+.al-back{background:none; border:none; font-family:var(--font-sans); font-weight:700; font-size:14px; color:var(--ox); cursor:pointer; padding:0; flex:0 0 58px; text-align:left}
+.al-head2-sp{flex:0 0 58px}
 .al-x{background:none; border:none; font-size:16px; color:var(--mut); cursor:pointer; padding:0 2px; line-height:1; flex:0 0 auto}
+/* Standard close button — same top-right corner in every bottom sheet. */
+.sheet-x{position:absolute; top:15px; right:15px; z-index:6; background:none; border:none;
+  font-size:17px; line-height:1; color:var(--mut); cursor:pointer; padding:7px; margin:-7px}
+.sheet-x:active{color:var(--ink)}
 /* compact tiles so they never balloon on wide screens */
 .al-tile{padding:12px; gap:5px; min-height:84px; justify-content:center}
 .al-tile .al-ico{font-size:20px}
@@ -945,27 +954,27 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
    "in-progress" state. The top-right marker carries the request affordance. */
 .al-tile{position:relative}
 .al-tile.soon{opacity:1; cursor:pointer}
-.al-tile.soon .al-ico{filter:grayscale(1); opacity:.62}
-.al-tile.soon .al-name{color:var(--ink)}
+.al-tile.soon .al-ico{filter:grayscale(1); opacity:.42}
+.al-tile.soon .al-name{color:var(--mut)}
 .al-tile.soon .al-badge{color:var(--mut)}
 .al-tile.soon:active{background:var(--paper)}
 /* top-right marker — quiet, never a pill, never louder than the live tile.
    "Request" reads clearly clickable (dark), the count sits a touch softer. */
 .al-corner{position:absolute; top:10px; right:11px; font-family:var(--font-mono); font-weight:700;
   font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink)}
-.al-corner.on{color:var(--mut); font-weight:600}
+.al-corner.on{color:#B5544E; font-weight:600}
 /* a source people have asked for gets a soft active edge — below the live tile */
 .al-tile.soon.active{border-color:#CBBFA2}
 .al-tile.soon.requested{border-color:#CBBFA2}
 
 /* ===== Request an integration ("bring it sooner") — a compact utility sheet,
    not a full-screen onboarding moment, so the hero stays modest. ===== */
-.al-req{display:flex; flex-direction:column; min-height:52vh; padding-bottom:6px}
+.al-req{display:flex; flex-direction:column; padding-bottom:6px}
 .al-req .al-intro-main{padding:14px 8px 4px}
 .al-req .al-intro-ic{font-size:40px}
 .al-req .al-intro-title{font-size:19px; margin-top:12px}
 .al-req .al-intro-sub{font-size:13.5px; margin-top:8px; max-width:34ch}
-.al-req-btn{width:100%; margin-top:auto; padding:14px 16px; border-radius:3px; border:none;
+.al-req-btn{width:100%; margin-top:24px; padding:14px 16px; border-radius:3px; border:none;
   background:var(--ink); color:var(--paper); font-family:var(--font-sans); font-weight:700; font-size:14px;
   cursor:pointer; transition:transform .1s, opacity .15s}
 .al-req-btn:active{transform:scale(.98)}

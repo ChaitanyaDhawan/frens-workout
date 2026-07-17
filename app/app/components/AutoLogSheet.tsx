@@ -105,13 +105,13 @@ export default function AutoLogSheet() {
       exit={{ y: "105%" }}
       transition={{ duration: 0.4, ease: SHEET_EASE }}
     >
+      <button className="sheet-x" onClick={closeAutoLog} aria-label="Close">
+        ✕
+      </button>
       {view === "menu" ? (
         <>
           <div className="shead">
             <h2>⚡ Auto-logging</h2>
-            <button className="al-x" onClick={closeAutoLog} aria-label="Close">
-              ✕
-            </button>
           </div>
           <div className="al-sheet-sub">Apple Watch is live. Tap any other to request it next.</div>
           <div className="al-grid">
@@ -142,7 +142,7 @@ export default function AutoLogSheet() {
                   {corner && <span className={`al-corner${n > 0 ? " on" : ""}`}>{corner}</span>}
                   <span className="al-ico">{s.icon}</span>
                   <span className="al-name">{s.name}</span>
-                  <span className="al-badge">{s.live ? "Set up ›" : "Soon"}</span>
+                  <span className="al-badge">{s.live ? "Set up ›" : "Coming soon"}</span>
                 </button>
               );
             })}
@@ -162,15 +162,13 @@ export default function AutoLogSheet() {
                   ‹ Back
                 </button>
                 <h2>{src.icon} {src.name}</h2>
-                <button className="al-x" onClick={closeAutoLog} aria-label="Close">
-                  ✕
-                </button>
+                <span className="al-head2-sp" aria-hidden="true" />
               </div>
 
               <div className="al-intro al-req">
                 <div className="al-intro-main">
                   <div className="al-intro-ic">{src.icon}</div>
-                  <div className="al-intro-title">{src.name} isn’t here yet</div>
+                  <div className="al-intro-title">{src.name} integration isn’t here yet</div>
                   <div className="al-intro-sub">
                     We build these in the order FRENS request them. Add your name and {src.name} moves up the list.
                   </div>
@@ -213,9 +211,7 @@ export default function AutoLogSheet() {
               ‹ Back
             </button>
             <h2>⌚ Apple Watch</h2>
-            <button className="al-x" onClick={closeAutoLog} aria-label="Close">
-              ✕
-            </button>
+            <span className="al-head2-sp" aria-hidden="true" />
           </div>
 
           {mode === "intro" ? (
