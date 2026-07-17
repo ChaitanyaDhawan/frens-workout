@@ -897,6 +897,21 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .al-wiz-next{flex:1; font-family:var(--font-sans); font-weight:800; font-size:15px; padding:11px 16px; border-radius:3px; border:none; background:var(--ink); color:var(--paper); cursor:pointer}
 .al-adv-toggle{margin-top:14px; background:none; border:none; padding:0; font-family:var(--font-mono); font-weight:600; font-size:12.5px; color:var(--mut); cursor:pointer; text-align:left}
 .al-adv{margin-top:8px; padding:10px 12px; border-radius:3px; background:var(--paper); border:1px dashed var(--line); font-size:12.5px; line-height:1.5; color:var(--ink)}
+/* Auto-log onboarding intro screen */
+.al-intro{display:flex; flex-direction:column; align-items:center; text-align:center; padding:6px 2px 2px}
+.al-intro-ic{font-size:40px; line-height:1}
+.al-intro-title{font-family:var(--font-sans); font-weight:800; font-size:22px; letter-spacing:-.02em; color:var(--ink); margin-top:10px}
+.al-intro-sub{font-size:14px; line-height:1.5; color:#5A5346; margin-top:8px; max-width:32ch}
+.al-intro-facts{width:100%; margin-top:18px; display:flex; flex-direction:column; gap:10px}
+.al-fact{text-align:left; font-size:13.5px; line-height:1.5; color:var(--ink); border:1px solid var(--line); border-radius:3px; padding:12px 14px; background:var(--paper)}
+.al-fact b{color:var(--ox); font-weight:800}
+.al-start{width:100%; margin-top:20px}
+/* Numbered sub-points inside a wizard step */
+.al-points{list-style:none; counter-reset:alp; margin:0; padding:0; display:flex; flex-direction:column; gap:12px}
+.al-points li{counter-increment:alp; position:relative; padding-left:32px; font-size:14px; line-height:1.5; color:var(--ink)}
+.al-points li::before{content:counter(alp); position:absolute; left:0; top:0; width:22px; height:22px; border-radius:50%; background:var(--ink); color:var(--paper); font-family:var(--font-mono); font-weight:700; font-size:11px; display:grid; place-items:center}
+.al-note{margin-top:12px; font-size:12.5px; line-height:1.45; color:var(--mut); font-style:italic}
+.al-done-note{margin-top:14px; font-weight:700; font-size:14px; line-height:1.4; color:var(--green-d)}
 
 /* ===== Auto-log entry tile (You tab) + sheet ===== */
 .al-entry{display:flex; align-items:center; gap:11px; width:calc(100% - 44px); margin:18px 22px 0; padding:13px 15px; border-radius:2px; border:1px solid var(--line); background:var(--card); cursor:pointer; text-align:left}
