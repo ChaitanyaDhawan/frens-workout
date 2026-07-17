@@ -54,7 +54,7 @@ export default function AutoLogSheet() {
   const [err, setErr] = useState(false);
   const [retry, setRetry] = useState(0);
   const [copied, setCopied] = useState(false);
-  const [mode, setMode] = useState<"intro" | "setup">("intro");
+  const [mode, setMode] = useState<"intro" | "setup" | "done">("intro");
   const [introI, setIntroI] = useState(0); // which intro-story screen
   const [step, setStep] = useState(1); // setup step 1..7
 
@@ -171,6 +171,27 @@ export default function AutoLogSheet() {
                 )}
               </div>
             </div>
+          ) : mode === "done" ? (
+            <div className="al-intro al-done-screen">
+              <div className="al-intro-main">
+                <div className="al-intro-ic">🎉</div>
+                <div className="al-intro-title">You’re all set</div>
+                <div className="al-intro-sub">Here’s what happens now:</div>
+                <ul className="al-done-list">
+                  <li>Finish any Apple Watch workout and it logs here on its own.</li>
+                  <li>You’ll get a notification each time one is auto-added.</li>
+                  <li>Want to set the activity type? Just open the app and tap the entry.</li>
+                </ul>
+              </div>
+              <div className="al-wiz-nav">
+                <button className="al-wiz-back" onClick={() => setMode("setup")}>
+                  Back
+                </button>
+                <button className="al-wiz-next" onClick={closeAutoLog}>
+                  Got it ✓
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="al-wiz">
               <div className="al-wiz-top">
@@ -256,22 +277,12 @@ export default function AutoLogSheet() {
                   </ol>
                 )}
                 {step === 7 && (
-                  <>
-                    <ol className="al-points">
-                      <li>Tap <b>Add Action</b>.</li>
-                      <li>Search <b>Run Shortcut</b> and tap it.</li>
-                      <li>Tap the blue <b>Shortcut</b> → choose <b>Log my FRENS workout</b>.</li>
-                      <li>Tap <b>Done</b>.</li>
-                    </ol>
-                    <div className="al-done">
-                      <div className="al-done-title">🎉 You’re all set — here’s what happens now</div>
-                      <ul className="al-done-list">
-                        <li>Finish any Apple Watch workout and it logs here on its own.</li>
-                        <li>You’ll get a notification each time one is auto-added.</li>
-                        <li>Want to set the activity type? Open the app and tap the entry.</li>
-                      </ul>
-                    </div>
-                  </>
+                  <ol className="al-points">
+                    <li>Tap <b>Add Action</b>.</li>
+                    <li>Search <b>Run Shortcut</b> and tap it.</li>
+                    <li>Tap the blue <b>Shortcut</b> → choose <b>Log my FRENS workout</b>.</li>
+                    <li>Tap <b>Done</b>.</li>
+                  </ol>
                 )}
               </div>
               <div className="al-wiz-nav">
@@ -289,7 +300,7 @@ export default function AutoLogSheet() {
                     Next →
                   </button>
                 ) : (
-                  <button className="al-wiz-next" onClick={closeAutoLog}>
+                  <button className="al-wiz-next" onClick={() => setMode("done")}>
                     Done ✓
                   </button>
                 )}
