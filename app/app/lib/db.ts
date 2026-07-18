@@ -262,6 +262,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       q4 = 0,
       allTime = 0,
       untagged = 0,
+      preApp = 0,
       total2025 = 0;
     const maxByQ: Partial<Record<QuarterKey, string>> = {};
     const doys = new Set<number>();
@@ -270,15 +271,21 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       const { y, m, d } = parseDate(w.workout_date);
       const q = quarterOf(m);
       allTime++;
-      let tagged = false;
-      for (const t of w.types ?? []) {
-        const k = t.trim();
-        if (k) {
-          typeCounts[k] = (typeCounts[k] ?? 0) + 1;
-          tagged = true;
+      // Imported check-mark history has no activity type — keep it out of the
+      // activity mix (types + %) and tally it separately as "pre-app".
+      if (w.source === "sheet") {
+        preApp++;
+      } else {
+        let tagged = false;
+        for (const t of w.types ?? []) {
+          const k = t.trim();
+          if (k) {
+            typeCounts[k] = (typeCounts[k] ?? 0) + 1;
+            tagged = true;
+          }
         }
+        if (!tagged) untagged++;
       }
-      if (!tagged) untagged++;
       if (y === IST_YEAR - 1) total2025++;
       // Current-year quarters / streak / calendar only — 2025 rows never inflate these.
       if (y === IST_YEAR) {
@@ -316,6 +323,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       bestStreak: bestStreakOf(doys),
       typeCounts,
       untagged,
+      preApp,
       days: doys,
       last,
       you: myMemberId === mem.id,

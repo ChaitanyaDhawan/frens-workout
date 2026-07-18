@@ -31,9 +31,13 @@ export interface Member {
   /** Profile: longest streak this year, activity-type tally, and the set of
    *  this year's workout days (for the profile's 30-day strip). */
   bestStreak?: number;
+  /** Activity tallies from IN-APP workouts only (source ≠ 'sheet'). */
   typeCounts?: Record<string, number>;
-  /** Workouts with no activity type (mostly imported check-mark history). */
+  /** In-app workouts with no activity type (shown as "Workout"). */
   untagged?: number;
+  /** Pre-app imported history (source = 'sheet') — shown apart, excluded from
+   *  the activity-mix percentages. */
+  preApp?: number;
   days?: Set<number>;
   /** Last workout date per quarter, e.g. { q1: "Mar 30", q3: "Jul 13" }. */
   last: Partial<Record<QuarterKey, string>>;

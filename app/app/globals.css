@@ -1068,6 +1068,12 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .act-val{flex:0 0 auto; display:flex; align-items:baseline; gap:6px; font-family:var(--font-mono)}
 .act-val b{font-weight:700; font-size:13px; color:var(--ink)}
 .act-val .act-p{font-size:10px; color:var(--mut); width:32px; text-align:right}
+/* pre-app (imported) history — grayed, set apart from the in-app activity mix */
+.act-row.preapp{border-top:1px solid var(--line); background:var(--paper)}
+.act-row.preapp .act-name{flex:0 0 auto; color:var(--mut); font-weight:700}
+.act-note{flex:1; min-width:0; font-family:var(--font-mono); font-size:9px; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--mut); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.act-row.preapp .act-val b{color:var(--mut)}
 
 /* Give the shared profile/activity/rankings blocks the You-tab side inset. */
 .you-block{margin:0 22px}
