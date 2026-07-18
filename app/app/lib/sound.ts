@@ -13,6 +13,21 @@ let clipBroken = false;
 let fadeTimer = 0;
 let fadeRaf = 0;
 
+// iOS/Safari default web audio to the "playback" session, which INTERRUPTS the
+// user's music (Spotify / Apple Music) and never resumes it. Declaring an
+// "ambient" session makes our short kudos SFX mix over other audio instead of
+// pausing it. No-op where the API (Safari 16.4+) doesn't exist.
+type AudioSessionType = "auto" | "playback" | "transient" | "transient-solo" | "ambient" | "play-and-record";
+function setAmbientSession(): void {
+  if (typeof navigator === "undefined") return;
+  try {
+    const s = (navigator as Navigator & { audioSession?: { type: AudioSessionType } }).audioSession;
+    if (s && s.type !== "ambient") s.type = "ambient";
+  } catch {
+    /* unsupported — nothing to do */
+  }
+}
+
 // Per-device preference for the kudos applause. On by default; the Settings
 // drawer flips it. Stored in localStorage so it survives reloads. Gates every
 // kudos sound — giving, receiving, and the preview.
@@ -45,6 +60,7 @@ export function setKudosSoundOn(on: boolean): void {
  */
 export function initKudosAudio(): void {
   if (typeof window === "undefined") return;
+  setAmbientSession(); // declare "mix, don't interrupt" before any audio starts
   if (CLIP_SRC && !clip) {
     try {
       clip = new Audio(CLIP_SRC);
@@ -60,6 +76,7 @@ function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
     if (!ctx) {
+      setAmbientSession(); // set the session type before the context adopts it
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
@@ -190,6 +207,7 @@ function synthApplause(count: number) {
  */
 export function playKudos(count = 1) {
   if (!isKudosSoundOn()) return;
+  setAmbientSession(); // keep other apps' music playing under the clip
   const dur = scaledDurationMs(count);
   if (CLIP_SRC && !clipBroken) {
     try {
