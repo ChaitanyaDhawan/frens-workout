@@ -9,6 +9,7 @@ import WeekStrip from "./WeekStrip";
 import { FeedCard } from "./Feed";
 import ActivityBreakdown from "./ActivityBreakdown";
 import Rankings from "./Rankings";
+import { APP_VERSION } from "@/app/lib/version";
 
 /** My dispatches preview — just the latest entry; "Show all" opens the full page. */
 function MyDispatches() {
@@ -234,6 +235,7 @@ export default function You() {
       <div className="you-block">
         <Rankings member={me} frens={frens} />
       </div>
+      <div className="you-ver">FRENS · v{APP_VERSION}</div>
     </>
   );
 }

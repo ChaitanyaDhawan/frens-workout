@@ -18,7 +18,7 @@ export default function ActivityBreakdown({ member, title = "Activities" }: { me
   const preAppRow =
     preApp > 0 ? (
       <div className="act-row preapp" key="__preapp">
-        <span className="act-name">Before FRENS</span>
+        <span className="act-name">Before app</span>
         <span className="act-note">pre-app · not in the mix</span>
         <span className="act-val">
           <b>{preApp}</b>
@@ -44,9 +44,7 @@ export default function ActivityBreakdown({ member, title = "Activities" }: { me
 
   return (
     <>
-      <div className="prof-sec">
-        {title} <span className="sec-total">· {appTotal} in app</span>
-      </div>
+      <div className="prof-sec">{title}</div>
       <div className="act-list">
         {rows.map(([name, c]) => {
           const pct = Math.round((c / appTotal) * 100);
