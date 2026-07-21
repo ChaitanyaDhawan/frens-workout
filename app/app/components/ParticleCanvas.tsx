@@ -147,7 +147,9 @@ export default function ParticleCanvas() {
 
       // Spawns spread across the sound's window (last one ~75% in, so the
       // tail clears as the applause fades); a longer applause = a fuller stream.
-      const N = Math.max(10, Math.min(22, Math.round(durMs / 75)));
+      // Dense on purpose — sprite stamping is cheap, and a thick stream of
+      // claps is the moment. (~29 for a single kudos, up to 50 for a big haul.)
+      const N = Math.max(20, Math.min(50, Math.round(durMs / 35)));
       const spawnSpan = durMs * 0.75;
       const ps = Array.from({ length: N }, (_, i) => ({
         x: 20 + Math.random() * (W() - 40),
