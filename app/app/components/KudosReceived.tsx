@@ -52,7 +52,10 @@ export default function KudosReceived() {
 
   const playApplause = () => {
     if (!data) return;
-    playKudos(data.count); // length scales with how many kudos landed
+    // Applause length scales with how many kudos landed; the rising 👏 stream
+    // runs for the same window so sight and sound land together.
+    const dur = playKudos(data.count);
+    fx.emojiRain("👏", dur);
     fx.clap(window.innerWidth / 2, window.innerHeight * 0.34);
     navigator.vibrate?.(12);
   };

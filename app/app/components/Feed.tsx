@@ -39,7 +39,9 @@ export function FeedCard({
       const r = btnRef.current.getBoundingClientRect();
       fx.clap(r.left + r.width / 2, r.top + 4);
       setPopKey((k) => k + 1); // restart the "KUDOS!" pop + clap-icon bump
-      playKudos();
+      // Applause + a 👏 stream rising for exactly as long as it plays.
+      const dur = playKudos();
+      fx.emojiRain("👏", dur);
       navigator.vibrate?.([12, 24, 12]);
     }
     toggleLike(item.id, becoming);

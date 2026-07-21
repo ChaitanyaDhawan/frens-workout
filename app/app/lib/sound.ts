@@ -202,13 +202,15 @@ function synthApplause(count: number) {
 }
 
 /**
- * Play the kudos applause, its length scaled to `count`. No-ops when the user
+ * Play the kudos applause, its length scaled to `count`. Silent when the user
  * has muted kudos sounds. Prefers the bundled clip; falls back to synthesis.
+ * Returns the applause duration in ms (even when muted), so visuals — the 👏
+ * stream — can sync to the same window.
  */
-export function playKudos(count = 1) {
-  if (!isKudosSoundOn()) return;
-  setAmbientSession(); // keep other apps' music playing under the clip
+export function playKudos(count = 1): number {
   const dur = scaledDurationMs(count);
+  if (!isKudosSoundOn()) return dur;
+  setAmbientSession(); // keep other apps' music playing under the clip
   if (CLIP_SRC && !clipBroken) {
     try {
       if (!clip) {
@@ -227,11 +229,12 @@ export function playKudos(count = 1) {
           synthApplause(count);
         });
       }
-      return;
+      return dur;
     } catch {
       clipBroken = true;
       clearFade();
     }
   }
   synthApplause(count);
+  return dur;
 }

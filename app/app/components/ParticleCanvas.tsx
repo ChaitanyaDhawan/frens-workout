@@ -129,7 +129,7 @@ export default function ParticleCanvas() {
     // rasterized ONCE into a sprite (fillText of color emoji every frame is
     // what janks phones), motion is delta-time based (frame drops don't
     // stutter the speed), and each particle eases in (scale+fade) at spawn.
-    const emojiRain = (emoji: string) => {
+    const emojiRain = (emoji: string, durMs = 900) => {
       if (reduceMotion()) return;
       const W = () => window.innerWidth;
       const H = () => window.innerHeight;
@@ -145,15 +145,27 @@ export default function ParticleCanvas() {
       sctx.textBaseline = "middle";
       sctx.fillText(emoji, SPRITE / 2, SPRITE / 2 + 2);
 
-      const ps = Array.from({ length: 12 }, (_, i) => ({
+      // Spawns spread across the sound's window (last one ~75% in, so the
+      // tail clears as the applause fades); a longer applause = a fuller stream.
+      const N = Math.max(10, Math.min(22, Math.round(durMs / 75)));
+      const spawnSpan = durMs * 0.75;
+      const ps = Array.from({ length: N }, (_, i) => ({
         x: 20 + Math.random() * (W() - 40),
         y: H() + 30,
         v: 520 + Math.random() * 260, // px/sec, straight up
         sz: 26 + Math.random() * 18,
-        delayMs: i * 55 + Math.random() * 70, // staggered → a stream
-        bornAt: 0, // set when the delay elapses (for the spawn ease-in)
+        delayMs: (i / Math.max(1, N - 1)) * spawnSpan + Math.random() * 45,
+        bornAt: 0, // set when the delay elapses (for the spawn pop-in)
+        phase: Math.random() * Math.PI * 2,
+        swayAmp: 4 + Math.random() * 5, // gentle coherent sway — floaty, not random
         life: 1,
       }));
+      // Bouncy pop-in: overshoots ~1.1 then settles — reads as fun, not mechanical.
+      const backOut = (k: number) => {
+        const c = 1.70158;
+        const t = k - 1;
+        return 1 + (c + 1) * t * t * t + c * t * t;
+      };
       let last = performance.now();
       const tick = (now: number) => {
         const dt = Math.min(0.05, (now - last) / 1000);
@@ -170,15 +182,21 @@ export default function ParticleCanvas() {
           if (!p.bornAt) p.bornAt = now;
           alive = true;
           p.y -= p.v * dt;
-          // soft ease-in over the first 140ms, fade out over the top third
-          const inK = Math.min(1, (now - p.bornAt) / 140);
+          p.phase += dt * 4.2;
+          const inK = Math.min(1, (now - p.bornAt) / 200);
           if (p.y < H() * 0.36) p.life -= dt * 2.4;
           if (p.y < -60) p.life = 0;
           if (p.life <= 0) return;
-          const a = Math.min(inK, Math.max(0, p.life));
-          const s = p.sz * (0.6 + 0.4 * inK);
-          ctx.globalAlpha = a;
-          ctx.drawImage(sprite, p.x - s / 2, p.y - s / 2, s, s);
+          const sway = Math.sin(p.phase) * p.swayAmp;
+          const tilt = Math.sin(p.phase) * 0.13; // leans into the sway
+          const a = Math.min(inK * 1.6, Math.max(0, p.life));
+          const s = p.sz * (0.5 + 0.5 * backOut(inK));
+          ctx.save();
+          ctx.translate(p.x + sway, p.y);
+          ctx.rotate(tilt);
+          ctx.globalAlpha = Math.min(1, a);
+          ctx.drawImage(sprite, -s / 2, -s / 2, s, s);
+          ctx.restore();
         });
         ctx.globalAlpha = 1;
         if (alive) requestAnimationFrame(tick);
