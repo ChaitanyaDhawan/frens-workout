@@ -127,8 +127,8 @@ export default function ParticleCanvas() {
     // iMessage-echo-style celebration, built around three things the real one
     // does: DEPTH (mixed sizes; big foreground emoji launch faster than small
     // background ones — parallax), a dense wave SYNCED to the sound's attack,
-    // and DECELERATION into a readable hang before a staggered fade. Perf: the
-    // emoji rasterizes ONCE into a sprite; motion is delta-time based.
+    // and DECELERATION into a readable hang before an upward EVAPORATE. Perf:
+    // the emoji rasterizes ONCE into a sprite; motion is delta-time based.
     const emojiRain = (emoji: string, durMs = 900) => {
       if (reduceMotion()) return;
       const W = () => window.innerWidth;
@@ -185,8 +185,8 @@ export default function ParticleCanvas() {
           // (whoosh back up to speed while dissolving fast — no lingering crawl).
           const evap = age > EVAP_AT + p.depth * 220 || p.y < H() * 0.14;
           if (evap) {
-            p.v += (900 - p.v) * Math.min(1, 6 * dt); // re-accelerate upward
-            p.life -= dt * 4.2; // ~240ms dissolve
+            p.v += (1050 - p.v) * Math.min(1, 8 * dt); // re-accelerate upward
+            p.life -= dt * 6.5; // ~150ms dissolve — quick puff, gone
           } else {
             p.v += (p.vMin - p.v) * Math.min(1, DECAY * dt);
           }
