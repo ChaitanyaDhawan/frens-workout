@@ -17,13 +17,17 @@ export function FeedCard({
   item,
   mountDelay,
   spotlight,
+  priority,
 }: {
   item: FeedItem;
   mountDelay: number | null;
   spotlight?: boolean;
+  /** Above-the-fold card — load its photo eagerly at high priority. */
+  priority?: boolean;
 }) {
   const { toggleLike, openCommentSheet, openSheet, openKudosSheet, openProfile } = useStore();
   const [liked, setLiked] = useState(item.liked ?? false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [popKey, setPopKey] = useState(0);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -82,7 +86,15 @@ export function FeedCard({
       {item.note ? <div className="note">{item.note}</div> : null}
       {item.picUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img className="pic-img" src={item.picUrl} alt="Proof" loading="lazy" />
+        <img
+          className={`pic-img${imgLoaded ? " ld" : ""}`}
+          src={item.picUrl}
+          alt="Proof"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
+          decoding="async"
+          onLoad={() => setImgLoaded(true)}
+        />
       ) : item.pic ? (
         <div className="pic">PROOF ATTACHED</div>
       ) : null}
@@ -195,6 +207,7 @@ export default function Feed() {
           item={f}
           mountDelay={mountDelays.get(f.id) ?? null}
           spotlight={(spotlight && i === 0) || f.id === deepId}
+          priority={i < 2}
         />
       ))}
     </div>

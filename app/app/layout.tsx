@@ -66,6 +66,8 @@ export default function RootLayout({
       style={{ backgroundColor: "#F9F6EF", colorScheme: "light" }}
     >
       <body style={{ backgroundColor: "#F9F6EF" }}>
+        {/* Warm the storage origin early — saves DNS+TLS before the first proof photo. */}
+        <link rel="preconnect" href="https://guyrxmiltskqdrfkfjie.supabase.co" crossOrigin="anonymous" />
         {children}
         <PwaBootstrap />
       </body>

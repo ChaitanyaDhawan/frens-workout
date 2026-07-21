@@ -290,6 +290,10 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean; comment: boolean } | null>(null);
 
   const [freshIds, setFreshIds] = useState<Set<string>>(() => new Set());
+  // Object-URLs of photos attached THIS session, keyed by workout id — the
+  // just-logged card shows the local file instantly (already decoded) instead
+  // of "PROOF ATTACHED" → slow re-download of the same image.
+  const localPhotos = useRef<Map<string, string>>(new Map());
 
   // ---- derived view model ----
   const agg = useMemo(() => aggregate(raw, myId), [raw, myId]);
@@ -301,7 +305,12 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const doneDoy = agg.doneDoy;
   const dayData = agg.dayData;
   const feed = useMemo(
-    () => agg.feed.map((f) => (freshIds.has(f.id) ? { ...f, fresh: true } : f)),
+    () =>
+      agg.feed.map((f) => {
+        const local = f.pic && !f.picUrl ? localPhotos.current.get(f.id) : undefined;
+        const withPic = local ? { ...f, picUrl: local } : f;
+        return freshIds.has(f.id) ? { ...withPic, fresh: true } : withPic;
+      }),
     [agg.feed, freshIds],
   );
   const commentsByWorkout = useMemo(() => {
@@ -342,7 +351,14 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
     }
     return map;
   }, [raw, myId]);
-  const mineFeed = agg.mineFeed;
+  const mineFeed = useMemo(
+    () =>
+      agg.mineFeed.map((f) => {
+        const local = f.pic && !f.picUrl ? localPhotos.current.get(f.id) : undefined;
+        return local ? { ...f, picUrl: local } : f;
+      }),
+    [agg.mineFeed],
+  );
   const requestsBySource = agg.requestsBySource;
   const myRequests = agg.myRequests;
   const logged = doneDoy.has(TODAY_DOY);
@@ -742,6 +758,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
           note: detail.note || null,
           photo_path: detail.photo ? "pending" : null,
         };
+        if (photoUrl) localPhotos.current.set(optimistic.id, photoUrl);
         patchRaw((r) => ({ ...r, workouts: [...r.workouts, optimistic] }));
         markFresh(optimistic.id);
         setLogTick((t) => t + 1);
@@ -813,6 +830,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
         return;
       }
 
+      if (photoUrl) localPhotos.current.set(id, photoUrl); // survive the tmp→real id swap
       let photoPath: string | null = null;
       if (file && uid) {
         try {
@@ -822,6 +840,9 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
           const up = await supabase.storage.from("proof").upload(path, compressed, {
             upsert: true,
             contentType: compressed.type,
+            // Each path is unique (timestamped) → immutable; let browsers/CDN
+            // cache the bytes for a year instead of re-fetching.
+            cacheControl: "31536000",
           });
           if (up.error) showToast("Couldn't attach the photo — saved without it");
           else photoPath = path;

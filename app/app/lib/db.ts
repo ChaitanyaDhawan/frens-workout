@@ -458,6 +458,9 @@ export function myWorkoutId(raw: RawData, myMemberId: string, iso: string): stri
   return row?.id ?? null;
 }
 
+// Session-lived signed-URL cache — stable URLs keep the browser's image cache hot.
+const signedUrlCache = new Map<string, { url: string; exp: number }>();
+
 /** Pull all four tables in parallel. Requires a claimed session (RLS). */
 export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
   // Explicit order + high limit so we never hit PostgREST's default 1000-row cap
@@ -483,16 +486,28 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
   if (ir.error) throw ir.error;
   if (cr.error) throw cr.error;
 
-  // Signed URLs for proof photos (private bucket).
+  // Signed URLs for proof photos (private bucket). Cached per path for the
+  // session: regenerating on every refetch changes the URL, which busts the
+  // browser's image cache and re-downloads every photo on each realtime event.
   const photoUrls: Record<string, string> = {};
+  const now = Date.now();
   const paths = (w.data ?? [])
     .map((row) => (row as DbWorkout).photo_path)
     .filter((p): p is string => !!p && p !== "pending");
-  if (paths.length) {
-    const { data: signed } = await supabase.storage.from("proof").createSignedUrls(paths, 3600);
+  const missing = paths.filter((p) => {
+    const c = signedUrlCache.get(p);
+    return !c || c.exp - now < 15 * 60_000; // reuse until <15min of life left
+  });
+  if (missing.length) {
+    const TTL_S = 24 * 3600;
+    const { data: signed } = await supabase.storage.from("proof").createSignedUrls(missing, TTL_S);
     for (const s of signed ?? []) {
-      if (s.signedUrl && s.path) photoUrls[s.path] = s.signedUrl;
+      if (s.signedUrl && s.path) signedUrlCache.set(s.path, { url: s.signedUrl, exp: now + TTL_S * 1000 });
     }
+  }
+  for (const p of paths) {
+    const c = signedUrlCache.get(p);
+    if (c) photoUrls[p] = c.url;
   }
 
   return {

@@ -3,10 +3,12 @@
 // Downscales to a max long edge and re-encodes as WebP (≈30% smaller than JPEG
 // at equal quality), falling back to JPEG where WebP encoding isn't supported.
 
-const MAX_EDGE = 1600;
+// 1200px is still ~3x the card's rendered width, and ~45% fewer bytes than the
+// old 1600 — the single biggest lever on feed image load time.
+const MAX_EDGE = 1200;
 // 0.92 keeps proof photos visually indistinguishable from the original (0.85 was
 // dimming/softening them noticeably in the feed) while staying well within the
-// storage tier — a 1600px WebP at 0.92 is still only ~150–300 KB.
+// storage tier.
 const QUALITY = 0.92;
 
 function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
