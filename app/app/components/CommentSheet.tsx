@@ -164,13 +164,27 @@ function CommentRow({
                     {e}
                   </motion.button>
                 ))}
+                {/* A grid-picked reaction outside the base five shows here as a
+                    selected sixth chip — tapping it takes the tapback off. */}
+                {c.myEmoji && !TAPBACKS.includes(c.myEmoji) && (
+                  <motion.button
+                    key={c.myEmoji}
+                    className="sel"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 640, damping: 22, delay: 0.02 + TAPBACKS.length * 0.026 }}
+                    onClick={() => pick(c.myEmoji!)}
+                  >
+                    {c.myEmoji}
+                  </motion.button>
+                )}
                 <motion.button
                   key="plus"
                   className="plus"
                   aria-label="More emoji"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 640, damping: 22, delay: 0.02 + TAPBACKS.length * 0.026 }}
+                  transition={{ type: "spring", stiffness: 640, damping: 22, delay: 0.02 + (TAPBACKS.length + 1) * 0.026 }}
                   onClick={onOpenGrid}
                 >
                   ＋
@@ -328,6 +342,7 @@ export default function CommentSheet() {
       <AnimatePresence>
         {gridFor && (
           <EmojiPicker
+            selected={comments.find((x) => x.id === gridFor)?.myEmoji}
             onPick={(emoji) => {
               const target = comments.find((x) => x.id === gridFor);
               reactToComment(gridFor, emoji);

@@ -801,6 +801,7 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
   line-height:1.25; transition:transform .08s;
 }
 .emo-grid button:active{transform:scale(1.35)}
+.emo-grid button.on{background:#F3E9E7; outline:1.5px solid var(--ox)}
 /* Snug iMessage-style composer: rounded pill + circular ↑ send. */
 .cmt-composer{display:flex; gap:8px; margin-top:14px; align-items:flex-end}
 .cmt-input{

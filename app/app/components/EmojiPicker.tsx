@@ -40,7 +40,16 @@ const CATS: { ic: string; label: string; list: string }[] = [
 
 /** WhatsApp-style full emoji panel: slides up over the sheet's lower half,
  *  category tabs on top, scrollable grid below. */
-export default function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; onClose: () => void }) {
+export default function EmojiPicker({
+  onPick,
+  onClose,
+  selected,
+}: {
+  onPick: (e: string) => void;
+  onClose: () => void;
+  /** My current reaction, highlighted in the grid (tapping it removes). */
+  selected?: string | null;
+}) {
   const [cat, setCat] = useState(0);
   // Split the category string into individual emoji (grapheme-aware).
   let emojis: string[];
@@ -79,7 +88,7 @@ export default function EmojiPicker({ onPick, onClose }: { onPick: (e: string) =
       </div>
       <div className="emo-grid">
         {emojis.map((e) => (
-          <button key={e} onClick={() => onPick(e)}>
+          <button key={e} className={e === selected ? "on" : ""} onClick={() => onPick(e)}>
             {e}
           </button>
         ))}
