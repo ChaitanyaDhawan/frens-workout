@@ -149,13 +149,15 @@ export default function ParticleCanvas() {
       // tail clears as the applause fades); a longer applause = a fuller stream.
       // Dense on purpose — sprite stamping is cheap, and a thick stream of
       // claps is the moment. (~29 for a single kudos, up to 50 for a big haul.)
-      const N = Math.max(20, Math.min(50, Math.round(durMs / 35)));
+      const N = Math.max(18, Math.min(40, Math.round(durMs / 35)));
       const spawnSpan = durMs * 0.75;
       const ps = Array.from({ length: N }, (_, i) => ({
         x: 20 + Math.random() * (W() - 40),
         y: H() + 30,
-        v: 520 + Math.random() * 260, // px/sec, straight up
-        sz: 26 + Math.random() * 18,
+        // iMessage-style float: slow enough that each emoji actually READS —
+        // they drift up over ~2s instead of rocketing past the eye.
+        v: 170 + Math.random() * 130, // px/sec, straight up
+        sz: 30 + Math.random() * 24,
         delayMs: (i / Math.max(1, N - 1)) * spawnSpan + Math.random() * 45,
         bornAt: 0, // set when the delay elapses (for the spawn pop-in)
         phase: Math.random() * Math.PI * 2,
@@ -184,9 +186,10 @@ export default function ParticleCanvas() {
           if (!p.bornAt) p.bornAt = now;
           alive = true;
           p.y -= p.v * dt;
-          p.phase += dt * 4.2;
+          p.phase += dt * 2.8;
           const inK = Math.min(1, (now - p.bornAt) / 200);
-          if (p.y < H() * 0.36) p.life -= dt * 2.4;
+          // fade near the top OR after ~2.1s afloat, whichever comes first
+          if (p.y < H() * 0.3 || now - p.bornAt > 2100) p.life -= dt * 1.6;
           if (p.y < -60) p.life = 0;
           if (p.life <= 0) return;
           const sway = Math.sin(p.phase) * p.swayAmp;
