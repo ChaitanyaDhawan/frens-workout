@@ -284,11 +284,12 @@ header{padding:18px 22px 0}
 .card .bact{font-weight:800; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:3px 7px}
 .card .bstat{font-family:var(--font-archivo); font-size:9.5px; font-weight:600; letter-spacing:.16em; color:var(--green-d); text-transform:uppercase}
 .card .note{margin-top:10px; font-size:13.5px; line-height:1.5; color:#453F33; padding-left:10px; border-left:2px solid var(--brass)}
-/* Most proof photos are full-height vertical phone shots — NEVER crop them.
-   Natural aspect up to 560px; beyond that (9:16 portraits) the photo scales to
-   fit whole with slim paper side-edges instead of cut heads/feet. Shimmer box
-   while loading, fade-in when fully decoded (kills the progressive banding). */
-.pic-img{margin-top:10px; width:100%; height:auto; max-height:560px; object-fit:contain; background:#EFEAE0; border:1px solid var(--line); display:block; border-radius:2px; opacity:0; transition:opacity .28s ease}
+/* Instagram-style 4:5 cap: shorter photos (landscape, 4:3) keep their natural
+   aspect untouched; anything taller crops lightly into a 4:5 window so one
+   photo card never swallows a whole screen — the feed stays scannable.
+   (photo width = viewport − 44px side margins − 28px card padding, ≤430 frame.)
+   Shimmer while loading, fade-in when fully decoded. */
+.pic-img{margin-top:10px; width:100%; height:auto; max-height:min(calc((100vw - 72px) * 1.25), 448px); object-fit:cover; background:#EFEAE0; border:1px solid var(--line); display:block; border-radius:2px; opacity:0; transition:opacity .28s ease}
 .pic-img.ld{opacity:1}
 .pic-img:not(.ld){min-height:190px; background:linear-gradient(120deg,#EFEAE0,#E6E0D2,#EFEAE0)}
 .card .pic{margin-top:10px; height:120px; background:linear-gradient(135deg,#E4DDCB,#D5CBB4); border:1px solid var(--line);
