@@ -124,17 +124,17 @@ export default function ParticleCanvas() {
       tick();
     };
 
-    // iMessage-style tapback celebration: a staggered stream of one emoji
-    // rising straight up from the bottom. Smoothness notes: the emoji is
-    // rasterized ONCE into a sprite (fillText of color emoji every frame is
-    // what janks phones), motion is delta-time based (frame drops don't
-    // stutter the speed), and each particle eases in (scale+fade) at spawn.
+    // iMessage-echo-style celebration, built around three things the real one
+    // does: DEPTH (mixed sizes; big foreground emoji launch faster than small
+    // background ones — parallax), a dense wave SYNCED to the sound's attack,
+    // and DECELERATION into a readable hang before a staggered fade. Perf: the
+    // emoji rasterizes ONCE into a sprite; motion is delta-time based.
     const emojiRain = (emoji: string, durMs = 900) => {
       if (reduceMotion()) return;
       const W = () => window.innerWidth;
       const H = () => window.innerHeight;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const SPRITE = 64;
+      const SPRITE = 96;
       const sprite = document.createElement("canvas");
       sprite.width = sprite.height = SPRITE * dpr;
       const sctx = sprite.getContext("2d");
@@ -143,66 +143,60 @@ export default function ParticleCanvas() {
       sctx.font = `${SPRITE * 0.82}px serif`;
       sctx.textAlign = "center";
       sctx.textBaseline = "middle";
-      sctx.fillText(emoji, SPRITE / 2, SPRITE / 2 + 2);
+      sctx.fillText(emoji, SPRITE / 2, SPRITE / 2 + 3);
 
-      // Spawns spread across the sound's window (last one ~75% in, so the
-      // tail clears as the applause fades); a longer applause = a fuller stream.
-      // Dense on purpose — sprite stamping is cheap, and a thick stream of
-      // claps is the moment. (~29 for a single kudos, up to 50 for a big haul.)
-      const N = Math.max(18, Math.min(40, Math.round(durMs / 35)));
-      const spawnSpan = durMs * 0.75;
-      const ps = Array.from({ length: N }, (_, i) => ({
-        x: 20 + Math.random() * (W() - 40),
-        y: H() + 30,
-        // iMessage-style float: slow enough that each emoji actually READS —
-        // they drift up over ~2s instead of rocketing past the eye.
-        v: 170 + Math.random() * 130, // px/sec, straight up
-        sz: 30 + Math.random() * 24,
-        delayMs: (i / Math.max(1, N - 1)) * spawnSpan + Math.random() * 45,
-        bornAt: 0, // set when the delay elapses (for the spawn pop-in)
-        phase: Math.random() * Math.PI * 2,
-        swayAmp: 4 + Math.random() * 5, // gentle coherent sway — floaty, not random
-        life: 1,
-      }));
-      // Bouncy pop-in: overshoots ~1.1 then settles — reads as fun, not mechanical.
-      const backOut = (k: number) => {
-        const c = 1.70158;
-        const t = k - 1;
-        return 1 + (c + 1) * t * t * t + c * t * t;
-      };
+      const N = Math.max(24, Math.min(52, Math.round(durMs / 28)));
+      const spawnSpan = durMs * 0.5; // the whole wave launches with the sound's attack
+      const ps = Array.from({ length: N }, (_, i) => {
+        const depth = Math.random(); // 0 = far background, 1 = foreground
+        return {
+          x: 14 + Math.random() * (W() - 28),
+          y: H() + 40,
+          v: 480 + depth * 640 + Math.random() * 80, // foreground launches faster
+          vMin: 55 + depth * 65, // and hangs a touch livelier
+          depth,
+          sz: 20 + depth * 42, // 20px (far) → 62px (near)
+          tilt: (Math.random() - 0.5) * 0.3, // static organic tilt, no spin
+          delayMs: (i / Math.max(1, N - 1)) * spawnSpan + Math.random() * 36,
+          bornAt: 0,
+          life: 1,
+        };
+      });
+      const DECAY = 2.7; // 1/sec — launch speed bleeds into the hang
+      const FADE_AT = 1050; // ms afloat before fading (foreground lingers longer)
       let last = performance.now();
       const tick = (now: number) => {
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
         ctx.clearRect(0, 0, W(), H());
         let alive = false;
-        ps.forEach((p) => {
-          if (p.life <= 0) return;
+        // background first so foreground draws over it — cheap painter's sort
+        for (const p of ps) {
+          if (p.life <= 0) continue;
           if (p.delayMs > 0) {
             p.delayMs -= dt * 1000;
             alive = true;
-            return;
+            continue;
           }
           if (!p.bornAt) p.bornAt = now;
           alive = true;
+          const age = now - p.bornAt;
+          // exponential decel: rockets off the bottom, hangs near the apex
+          p.v += (p.vMin - p.v) * Math.min(1, DECAY * dt);
           p.y -= p.v * dt;
-          p.phase += dt * 2.8;
-          const inK = Math.min(1, (now - p.bornAt) / 200);
-          // fade near the top OR after ~2.1s afloat, whichever comes first
-          if (p.y < H() * 0.3 || now - p.bornAt > 2100) p.life -= dt * 1.6;
-          if (p.y < -60) p.life = 0;
-          if (p.life <= 0) return;
-          const sway = Math.sin(p.phase) * p.swayAmp;
-          const tilt = Math.sin(p.phase) * 0.13; // leans into the sway
-          const a = Math.min(inK * 1.6, Math.max(0, p.life));
-          const s = p.sz * (0.5 + 0.5 * backOut(inK));
+          if (age > FADE_AT + p.depth * 350 || p.y < H() * 0.16) p.life -= dt * 2.6;
+          if (p.y < -70) p.life = 0;
+          if (p.life <= 0) continue;
+          const inK = Math.min(1, age / 130);
+          const pop = inK < 1 ? 0.55 + 0.45 * (1 + 2.2 * (inK - 1) * (inK - 1) * (inK - 1) + 2.2 * (inK - 1) * (inK - 1)) : 1;
+          const s = p.sz * pop;
           ctx.save();
-          ctx.translate(p.x + sway, p.y);
-          ctx.rotate(tilt);
-          ctx.globalAlpha = Math.min(1, a);
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.tilt);
+          ctx.globalAlpha = Math.min(1, Math.min(inK * 1.8, Math.max(0, p.life)) * (0.55 + 0.45 * p.depth));
           ctx.drawImage(sprite, -s / 2, -s / 2, s, s);
           ctx.restore();
-        });
+        }
         ctx.globalAlpha = 1;
         if (alive) requestAnimationFrame(tick);
         else ctx.clearRect(0, 0, W(), H());
