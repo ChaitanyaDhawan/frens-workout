@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRENS — Comment reactions mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F9F6EF; --card:#FFFFFF; --ink:#1B1812; --mut:#8A8375;
+    --line:#DCD5C6; --ox:#9E2B25; --flame:#E8590C; --green:#27AE52;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#8f8b81;font-family:'Archivo',sans-serif;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:34px;padding:30px 0 80px}
+  .lab{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:#fff;background:var(--ink);padding:7px 14px;border-radius:2px}
+  .lab i{font-style:normal;color:#F2C063}
+  .sub-lab{font-size:12.5px;color:#EFEDE6;margin-top:-24px;max-width:340px;text-align:center;line-height:1.5}
+
+  /* ===== the comment sheet, as in the app ===== */
+  .sheet{width:390px;background:var(--paper);border-top:2px solid var(--ink);
+    padding:18px 22px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+  .sheet h2{font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .cmt-sub{font-family:'IBM Plex Mono',monospace;color:var(--mut);font-size:9px;margin-top:5px;
+    letter-spacing:.16em;text-transform:uppercase}
+  .cmt-list{margin-top:16px;display:flex;flex-direction:column;gap:16px}
+  .cmt{display:flex;gap:10px;align-items:flex-start}
+  .cmt-ava{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--paper);
+    display:grid;place-items:center;font-weight:700;font-size:11px}
+  .cmt.mine .cmt-ava{background:var(--ox)}
+  .cmt-b{flex:1;min-width:0}
+  .cmt-name{font-weight:700;font-size:13px}
+  .cmt-text{font-size:13.5px;line-height:1.5;color:#33302A;margin-top:2px}
+  .composer{display:flex;gap:8px;margin-top:18px;align-items:flex-end}
+  .cmp-in{flex:1;border:1px solid var(--line);background:var(--card);border-radius:4px;
+    padding:11px 12px;font-family:'Archivo';font-size:14px;color:var(--mut)}
+  .cmp-send{border:1.5px solid var(--ox);background:var(--ox);color:#fff;border-radius:4px;
+    padding:11px 15px;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+
+  /* ===== A: single heart ===== */
+  .heart{flex:none;align-self:flex-start;margin-top:2px;display:flex;flex-direction:column;align-items:center;
+    gap:1px;background:none;border:none;cursor:pointer;padding:2px 0 0 6px}
+  .heart .h-ic{font-size:14px;line-height:1;filter:grayscale(1);opacity:.45;transition:transform .12s}
+  .heart .h-n{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:var(--mut)}
+  .heart.on .h-ic{filter:none;opacity:1}
+  .heart.on .h-n{color:var(--ox);font-weight:700}
+  .heart:active .h-ic{transform:scale(1.35)}
+
+  /* ===== B: reaction chips + picker ===== */
+  .rx-row{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap}
+  .rx-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);
+    border-radius:20px;padding:3px 9px 3px 7px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    font-weight:600;color:var(--ink);cursor:pointer;line-height:1}
+  .rx-chip .e{font-size:12.5px}
+  .rx-chip.on{border-color:var(--ox);background:#FBF1EF;color:var(--ox);font-weight:700}
+  .rx-add{display:inline-grid;place-items:center;width:24px;height:24px;border:1px dashed var(--line);
+    border-radius:50%;background:none;color:var(--mut);font-size:12px;cursor:pointer;line-height:1}
+  .picker{display:flex;gap:2px;margin-top:8px;background:var(--card);border:1.5px solid var(--ink);
+    border-radius:22px;padding:5px 8px;width:max-content;box-shadow:0 4px 14px rgba(27,24,18,.18)}
+  .picker button{background:none;border:none;font-size:19px;padding:3px 6px;cursor:pointer;border-radius:50%;transition:transform .1s}
+  .picker button:active{transform:scale(1.4)}
+
+  /* ===== C: tapback bubbles ===== */
+  .cmt-c{position:relative}
+  .cmt-c .cmt-text{background:var(--card);border:1px solid var(--line);border-radius:3px 12px 12px 12px;
+    padding:8px 12px;margin-top:4px;width:max-content;max-width:100%}
+  .tapback{position:absolute;top:-9px;right:-2px;display:flex}
+  .tapback span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;
+    background:var(--ink);border:1.5px solid var(--paper);font-size:11px;margin-left:-7px;
+    box-shadow:0 2px 6px rgba(27,24,18,.25)}
+  .tapback .tb-n{background:var(--ox);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700}
+  .hint-lp{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--mut);margin-top:6px}
+</style>
+</head>
+<body>
+
+  <div class="lab">A · <i>quiet heart</i> — one tap, one like</div>
+  <div class="sub-lab">A small heart on every comment. Tap to like — fills oxblood with a count. Nothing else.</div>
+  <div class="sheet">
+    <h2>Comments</h2>
+    <div class="cmt-sub">Mugdha · Yoga</div>
+    <div class="cmt-list">
+      <div class="cmt">
+        <div class="cmt-ava">S</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Saksham</div>
+          <div class="cmt-text">morning yoga is a personality trait now 😄</div>
+        </div>
+        <button class="heart on"><span class="h-ic">❤️</span><span class="h-n">3</span></button>
+      </div>
+      <div class="cmt mine">
+        <div class="cmt-ava">C</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Chaitanya</div>
+          <div class="cmt-text">teach me the headstand thing</div>
+        </div>
+        <button class="heart"><span class="h-ic">❤️</span><span class="h-n"></span></button>
+      </div>
+      <div class="cmt">
+        <div class="cmt-ava">M</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Mugdha</div>
+          <div class="cmt-text">@Chaitanya come to SF and find out 🧘‍♀️</div>
+        </div>
+        <button class="heart on"><span class="h-ic">❤️</span><span class="h-n">1</span></button>
+      </div>
+    </div>
+    <div class="composer"><div class="cmp-in">Add a comment…</div><div class="cmp-send">Send</div></div>
+  </div>
+
+  <div class="lab">B · <i>reaction chips</i> — small emoji set</div>
+  <div class="sub-lab">A dashed ＋ next to each comment opens a 5-emoji picker. Reactions collect as chips under the comment; your own glows oxblood. Tap a chip to join / leave it.</div>
+  <div class="sheet">
+    <h2>Comments</h2>
+    <div class="cmt-sub">Mugdha · Yoga</div>
+    <div class="cmt-list">
+      <div class="cmt">
+        <div class="cmt-ava">S</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Saksham</div>
+          <div class="cmt-text">morning yoga is a personality trait now 😄</div>
+          <div class="rx-row">
+            <span class="rx-chip on"><span class="e">😂</span>2</span>
+            <span class="rx-chip"><span class="e">👏</span>1</span>
+            <button class="rx-add">＋</button>
+          </div>
+        </div>
+      </div>
+      <div class="cmt mine">
+        <div class="cmt-ava">C</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Chaitanya</div>
+          <div class="cmt-text">teach me the headstand thing</div>
+          <div class="rx-row"><button class="rx-add">＋</button></div>
+          <div class="picker">
+            <button>👏</button><button>❤️</button><button>😂</button><button>💪</button><button>🔥</button>
+          </div>
+        </div>
+      </div>
+      <div class="cmt">
+        <div class="cmt-ava">M</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Mugdha</div>
+          <div class="cmt-text">@Chaitanya come to SF and find out 🧘‍♀️</div>
+          <div class="rx-row">
+            <span class="rx-chip on"><span class="e">❤️</span>4</span>
+            <button class="rx-add">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="composer"><div class="cmp-in">Add a comment…</div><div class="cmp-send">Send</div></div>
+  </div>
+
+  <div class="lab">C · <i>tapbacks</i> — iMessage bubbles</div>
+  <div class="sub-lab">Comments become little cards; long-press one to react. Reactions sit as overlapping bubbles on the card's corner, iMessage-style.</div>
+  <div class="sheet">
+    <h2>Comments</h2>
+    <div class="cmt-sub">Mugdha · Yoga</div>
+    <div class="cmt-list">
+      <div class="cmt cmt-c">
+        <div class="cmt-ava">S</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Saksham</div>
+          <div style="position:relative;width:max-content;max-width:100%">
+            <div class="cmt-text">morning yoga is a personality trait now 😄</div>
+            <div class="tapback"><span>😂</span><span>👏</span><span class="tb-n">3</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cmt cmt-c mine">
+        <div class="cmt-ava">C</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Chaitanya</div>
+          <div style="position:relative;width:max-content;max-width:100%">
+            <div class="cmt-text">teach me the headstand thing</div>
+          </div>
+          <div class="hint-lp">Hold a comment to react</div>
+        </div>
+      </div>
+      <div class="cmt cmt-c">
+        <div class="cmt-ava">M</div>
+        <div class="cmt-b">
+          <div class="cmt-name">Mugdha</div>
+          <div style="position:relative;width:max-content;max-width:100%">
+            <div class="cmt-text">@Chaitanya come to SF and find out 🧘‍♀️</div>
+            <div class="tapback"><span>❤️</span><span class="tb-n">4</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="composer"><div class="cmp-in">Add a comment…</div><div class="cmp-send">Send</div></div>
+  </div>
+
+</body>
+</html>

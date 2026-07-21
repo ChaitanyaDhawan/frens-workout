@@ -2,7 +2,7 @@
 // CURRENT app for marketing/launch material without touching the live group.
 // Not imported anywhere in the normal auth'd flow.
 
-import type { DbMember, DbWorkout, DbReaction, DbComment, DbIntegrationRequest, RawData } from "./db";
+import type { DbMember, DbWorkout, DbReaction, DbComment, DbCommentReaction, DbIntegrationRequest, RawData } from "./db";
 
 const id = (p: string, n: number) => `demo-${p}-${n}`;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -102,6 +102,18 @@ function build(): RawData {
     }
   });
 
+  // Tapbacks on some demo comments so the thread sheet shows the bubbles.
+  const commentReactions: DbCommentReaction[] = comments.slice(0, 4).flatMap((c, i) => {
+    const emojis = ["😂", "👏", "❤️"];
+    const k = 1 + (i % 2); // 1-2 reactions per commented thread
+    return Array.from({ length: k }, (_, j) => ({
+      id: id(`crx-${i}`, j),
+      comment_id: c.id,
+      member_id: id("m", (i + j + 2) % SPECS.length),
+      emoji: emojis[(i + j) % emojis.length],
+    }));
+  });
+
   // A little demand on two upcoming sources — Chaitanya (me) has already asked
   // for Whoop, so the demo shows both the "you asked" and populated states.
   const rq = (src: string, mi: number, mins: number): DbIntegrationRequest => ({
@@ -119,7 +131,7 @@ function build(): RawData {
     rq("strava", 3, 40),
   ];
 
-  return { members, workouts, reactions, comments, integrationRequests, photoUrls: {} };
+  return { members, workouts, reactions, comments, commentReactions, integrationRequests, photoUrls: {} };
 }
 
 export const SAMPLE_RAW: RawData = build();

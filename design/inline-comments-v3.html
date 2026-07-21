@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRENS — Inline comments, separate units</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F9F6EF; --card:#FFFFFF; --ink:#1B1812; --mut:#8A8375;
+    --line:#DCD5C6; --ox:#9E2B25; --brass:#A98A2F;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#8f8b81;font-family:'Archivo',sans-serif;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:30px;padding:30px 0 90px}
+  .lab{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:#fff;background:var(--ink);padding:7px 14px;border-radius:2px}
+  .lab i{font-style:normal;color:#F2C063}
+  .sub-lab{font-size:12.5px;color:#EFEDE6;margin-top:-20px;max-width:346px;text-align:center;line-height:1.5}
+
+  .wrap{width:390px;background:var(--paper);padding:16px 0 20px}
+  .card{margin:0 22px 10px;background:var(--card);border:1px solid var(--line);padding:13px 14px 12px}
+  .top{display:flex;align-items:center;gap:10px}
+  .ava{width:34px;height:34px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;
+    font-weight:800;font-size:12px;background:var(--card)}
+  .cnm{font-weight:800;font-size:14.5px;letter-spacing:-.01em}
+  .tm{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-top:1px}
+  .brag{display:flex;align-items:center;gap:8px;margin-top:11px}
+  .bact{font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:3px 7px}
+  .bdur{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--mut)}
+  .bstat{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#2E7D46;margin-left:auto}
+  .note{margin-top:10px;font-size:13.5px;line-height:1.5;color:#453F33;padding-left:10px;border-left:2px solid var(--brass)}
+  .kudos-from{display:flex;align-items:center;gap:7px;margin-top:11px}
+  .kf-ava{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--ink);
+    color:var(--paper);font-size:7.5px;font-weight:800;border:1.5px solid var(--card);margin-left:-5px}
+  .kf-ava:first-child{margin-left:0}
+  .kf-tx{font-size:11px;color:var(--mut)}
+  .acts{display:flex;gap:8px;margin-top:11px}
+  .act{border:1px solid var(--line);background:var(--paper);padding:8px 11px;font-family:'Archivo';
+    font-weight:600;font-size:12px;color:var(--ink);cursor:pointer}
+  .act.liked{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  /* shared quiet composer + view-all */
+  .q-more{font-size:11.5px;color:var(--mut);cursor:pointer}
+  .q-add{font-size:12.5px;color:var(--mut);cursor:text}
+
+  /* ===== A · bubbles — one small bubble per comment ===== */
+  .bb-wrap{margin-top:11px;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+  .bb{position:relative;background:var(--paper);border-radius:2px 10px 10px 10px;padding:6px 11px 7px;max-width:88%}
+  .bb .b-nm{font-weight:700;font-size:11px;color:var(--ox)}
+  .bb .b-tx{font-size:12.5px;line-height:1.45;color:#33302A;margin-top:1px}
+  .bb .tapback{position:absolute;top:-8px;right:-6px;display:flex}
+  .tapback span{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);
+    border:1.5px solid var(--card);font-size:9.5px;margin-left:-6px;box-shadow:0 1px 4px rgba(27,24,18,.25)}
+  .tapback .n{background:var(--ox);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700}
+
+  /* ===== B · ledger — hairline-ruled rows ===== */
+  .lg{margin-top:11px}
+  .lg-row{display:flex;align-items:baseline;gap:7px;padding:7px 0;border-top:1px solid #EEE9DC}
+  .lg-row:first-child{border-top:none;padding-top:2px}
+  .lg-nm{flex:none;font-weight:700;font-size:12px}
+  .lg-tx{flex:1;font-size:12.5px;line-height:1.45;color:#4A4437;min-width:0}
+  .lg-rx{flex:none;font-size:10.5px;color:var(--ox);font-family:'IBM Plex Mono',monospace;font-weight:700}
+  .lg-rx .e{font-size:11px;margin-right:1px}
+</style>
+</head>
+<body>
+
+  <div class="lab">A · <i>bubbles</i> — one per comment</div>
+  <div class="sub-lab">Each comment is its own small chat bubble (name in oxblood, tapbacks on the corner) — clearly separate, like a mini group chat under the workout. Composer is a quiet line. Zero-comment cards unchanged.</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="top"><div class="ava">M</div><div><div class="cnm">Mugdha</div><div class="tm">Today · 09:43</div></div></div>
+      <div class="brag"><span class="bact">Yoga</span><span class="bdur">45 min</span><span class="bstat">5th this quarter</span></div>
+      <div class="note">Morning yoga, felt unreal.</div>
+      <div class="kudos-from"><span><span class="kf-ava">S</span><span class="kf-ava">V</span><span class="kf-ava">R</span></span><span class="kf-tx">Saksham, Vareni + 2 gave kudos</span></div>
+      <div class="acts"><button class="act liked">👏 5 kudos</button><button class="act">💬 4</button></div>
+      <div class="bb-wrap">
+        <div class="q-more">View all 4 comments</div>
+        <div class="bb">
+          <div class="b-nm">Saksham</div>
+          <div class="b-tx">morning yoga is a personality trait now 😄</div>
+          <div class="tapback"><span>😂</span><span class="n">2</span></div>
+        </div>
+        <div class="bb">
+          <div class="b-nm">Vareni</div>
+          <div class="b-tx">+1 waiting for the tutorial</div>
+        </div>
+        <div class="bb">
+          <div class="b-nm">Mugdha</div>
+          <div class="b-tx">@Chaitanya come to SF and find out 🧘‍♀️</div>
+          <div class="tapback"><span>❤️</span><span class="n">3</span></div>
+        </div>
+        <div class="q-add">Add a comment…</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="top"><div class="ava">R</div><div><div class="cnm">Rahul</div><div class="tm">Today · 07:02</div></div></div>
+      <div class="brag"><span class="bact">Run</span><span class="bdur">30 min</span><span class="bstat">9th this quarter</span></div>
+      <div class="acts"><button class="act">👏 2 kudos</button><button class="act">💬 Comment</button></div>
+    </div>
+  </div>
+
+  <div class="lab">B · <i>ledger</i> — hairline-ruled rows</div>
+  <div class="sub-lab">Each comment is its own row separated by a faint rule — like entries in a record book. Reactions sit at the row's end as a tiny emoji + count. Flattest possible while still separate.</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="top"><div class="ava">M</div><div><div class="cnm">Mugdha</div><div class="tm">Today · 09:43</div></div></div>
+      <div class="brag"><span class="bact">Yoga</span><span class="bdur">45 min</span><span class="bstat">5th this quarter</span></div>
+      <div class="note">Morning yoga, felt unreal.</div>
+      <div class="kudos-from"><span><span class="kf-ava">S</span><span class="kf-ava">V</span><span class="kf-ava">R</span></span><span class="kf-tx">Saksham, Vareni + 2 gave kudos</span></div>
+      <div class="acts"><button class="act liked">👏 5 kudos</button><button class="act">💬 4</button></div>
+      <div class="lg">
+        <div class="lg-row"><span class="q-more">View all 4 comments</span></div>
+        <div class="lg-row"><span class="lg-nm">Saksham</span><span class="lg-tx">morning yoga is a personality trait now 😄</span><span class="lg-rx"><span class="e">😂</span>2</span></div>
+        <div class="lg-row"><span class="lg-nm">Vareni</span><span class="lg-tx">+1 waiting for the tutorial</span></div>
+        <div class="lg-row"><span class="lg-nm">Mugdha</span><span class="lg-tx">@Chaitanya come to SF and find out 🧘‍♀️</span><span class="lg-rx"><span class="e">❤️</span>3</span></div>
+        <div class="lg-row"><span class="q-add">Add a comment…</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="top"><div class="ava">R</div><div><div class="cnm">Rahul</div><div class="tm">Today · 07:02</div></div></div>
+      <div class="brag"><span class="bact">Run</span><span class="bdur">30 min</span><span class="bstat">9th this quarter</span></div>
+      <div class="acts"><button class="act">👏 2 kudos</button><button class="act">💬 Comment</button></div>
+    </div>
+  </div>
+
+</body>
+</html>

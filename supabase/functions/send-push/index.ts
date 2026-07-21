@@ -97,6 +97,19 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
     const name = await nameOf(record.member_id);
     return [{ recipients: [w.member_id], title: `${name} gave you kudos 👏`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` }];
   }
+  if (table === 'comment_reactions') {
+    // Tapback on a comment → tell the comment's author (skip self-reactions).
+    const { data: c } = await db.from('comments')
+      .select('member_id, workout_id, body').eq('id', record.comment_id).single();
+    if (!c || c.member_id === record.member_id) return [];
+    const name = await nameOf(record.member_id);
+    return [{
+      recipients: [c.member_id],
+      title: `${name} reacted ${record.emoji} to your comment`,
+      body: String(c.body ?? '').slice(0, 140),
+      url: `/?w=${c.workout_id}`,
+    }];
+  }
   if (table === 'comments') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
     if (!w) return [];

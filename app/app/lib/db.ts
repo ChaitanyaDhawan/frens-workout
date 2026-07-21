@@ -47,12 +47,20 @@ export interface DbIntegrationRequest {
   member_id: string;
   created_at: string;
 }
+/** Tapback on a comment — one per member per comment (emoji replaceable). */
+export interface DbCommentReaction {
+  id: string;
+  comment_id: string;
+  member_id: string;
+  emoji: string;
+}
 
 export interface RawData {
   members: DbMember[];
   workouts: DbWorkout[];
   reactions: DbReaction[];
   comments: DbComment[];
+  commentReactions: DbCommentReaction[];
   /** "bring it sooner" votes on not-yet-live auto-log sources. */
   integrationRequests: DbIntegrationRequest[];
   /** signed URLs for proof photos, keyed by storage path. */
@@ -456,7 +464,7 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
   // silently (reactions/workouts cross 1000 late in the year) and the result set
   // is deterministic.
   const CAP = 50000;
-  const [m, w, r, c, ir] = await Promise.all([
+  const [m, w, r, c, ir, cr] = await Promise.all([
     supabase.from("members").select("id, sheet_name, user_id, display_name, is_admin, timezone").order("id"),
     supabase
       .from("workouts")
@@ -466,12 +474,14 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
     supabase.from("reactions").select("id, workout_id, member_id, emoji").order("id").limit(CAP),
     supabase.from("comments").select("id, workout_id, member_id, body, created_at").order("id").limit(CAP),
     supabase.from("integration_requests").select("id, source, member_id, created_at").order("id").limit(CAP),
+    supabase.from("comment_reactions").select("id, comment_id, member_id, emoji").order("id").limit(CAP),
   ]);
   if (m.error) throw m.error;
   if (w.error) throw w.error;
   if (r.error) throw r.error;
   if (c.error) throw c.error;
   if (ir.error) throw ir.error;
+  if (cr.error) throw cr.error;
 
   // Signed URLs for proof photos (private bucket).
   const photoUrls: Record<string, string> = {};
@@ -490,6 +500,7 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
     workouts: (w.data ?? []) as DbWorkout[],
     reactions: (r.data ?? []) as DbReaction[],
     comments: (c.data ?? []) as DbComment[],
+    commentReactions: (cr.data ?? []) as DbCommentReaction[],
     integrationRequests: (ir.data ?? []) as DbIntegrationRequest[],
     photoUrls,
   };

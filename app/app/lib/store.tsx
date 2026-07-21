@@ -108,6 +108,8 @@ interface Store {
   toggleLike: (workoutId: string, liked: boolean) => void;
   /** Post a comment on a workout. */
   addComment: (workoutId: string, body: string) => void;
+  /** Set/replace my tapback on a comment; same emoji again removes it. */
+  reactToComment: (commentId: string, emoji: string) => void;
   openCommentSheet: (workoutId: string) => void;
   closeCommentSheet: () => void;
   openKudosSheet: (workoutId: string) => void;
@@ -133,7 +135,7 @@ const SHOW_CELEBRATION = false;
 
 const StoreContext = createContext<Store | null>(null);
 
-const EMPTY_RAW: RawData = { members: [], workouts: [], reactions: [], comments: [], integrationRequests: [], photoUrls: {} };
+const EMPTY_RAW: RawData = { members: [], workouts: [], reactions: [], comments: [], commentReactions: [], integrationRequests: [], photoUrls: {} };
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const tmpId = () => "tmp-" + Math.random().toString(36).slice(2);
 
@@ -186,12 +188,23 @@ export interface CelebrationData {
   key: number;
 }
 
+/** One emoji's tapback state on a comment (grouped, count-desc). */
+export interface CommentReactionGroup {
+  emoji: string;
+  count: number;
+  mine: boolean;
+  names: string[];
+}
+
 export interface CommentThreadItem {
   id: string;
   name: string;
   body: string;
   tm: string;
   mine: boolean;
+  reactions: CommentReactionGroup[];
+  /** The emoji I put on this comment, if any (tapbacks: one per person). */
+  myEmoji: string | null;
 }
 
 function relTime(iso: string): string {
@@ -292,6 +305,26 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   );
   const commentsByWorkout = useMemo(() => {
     const nameById = new Map(raw.members.map((m) => [m.id, m.display_name]));
+    // Group tapbacks per comment → per emoji (count desc), tracking mine.
+    const rxByComment = new Map<string, CommentReactionGroup[]>();
+    const myEmojiByComment = new Map<string, string>();
+    for (const rx of raw.commentReactions) {
+      const groups = rxByComment.get(rx.comment_id) ?? [];
+      let g = groups.find((x) => x.emoji === rx.emoji);
+      if (!g) {
+        g = { emoji: rx.emoji, count: 0, mine: false, names: [] };
+        groups.push(g);
+      }
+      g.count += 1;
+      g.names.push(nameById.get(rx.member_id) ?? "—");
+      if (rx.member_id === myId) {
+        g.mine = true;
+        myEmojiByComment.set(rx.comment_id, rx.emoji);
+      }
+      rxByComment.set(rx.comment_id, groups);
+    }
+    for (const groups of rxByComment.values()) groups.sort((a, b) => b.count - a.count);
+
     const map = new Map<string, CommentThreadItem[]>();
     for (const c of [...raw.comments].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
       const arr = map.get(c.workout_id) ?? [];
@@ -301,6 +334,8 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
         body: c.body,
         tm: relTime(c.created_at),
         mine: c.member_id === myId,
+        reactions: rxByComment.get(c.id) ?? [],
+        myEmoji: myEmojiByComment.get(c.id) ?? null,
       });
       map.set(c.workout_id, arr);
     }
@@ -401,6 +436,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
         )
         .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, onAux)
         .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, onAux)
+        .on("postgres_changes", { event: "*", schema: "public", table: "comment_reactions" }, onAux)
         .on("postgres_changes", { event: "*", schema: "public", table: "integration_requests" }, onAux)
         .subscribe((status: string) => {
           if (
@@ -849,6 +885,49 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
     [myId, supabase, patchRaw, showToast, scheduleRefetch],
   );
 
+  const reactToComment = useCallback(
+    async (commentId: string, emoji: string) => {
+      if (!myId) return;
+      const existing = rawRef.current.commentReactions.find(
+        (x) => x.comment_id === commentId && x.member_id === myId,
+      );
+      if (existing && existing.emoji === emoji) {
+        // Same emoji again → take the tapback off.
+        patchRaw((r) => ({
+          ...r,
+          commentReactions: r.commentReactions.filter((x) => x.id !== existing.id),
+        }));
+        if (demo) return;
+        await supabase.from("comment_reactions").delete().eq("comment_id", commentId).eq("member_id", myId);
+        scheduleRefetch();
+        return;
+      }
+      // New or changed emoji → replace mine (tapbacks: one per person per comment).
+      patchRaw((r) => ({
+        ...r,
+        commentReactions: [
+          ...r.commentReactions.filter((x) => !(x.comment_id === commentId && x.member_id === myId)),
+          { id: tmpId(), comment_id: commentId, member_id: myId, emoji },
+        ],
+      }));
+      if (demo) return;
+      const { error } = await supabase
+        .from("comment_reactions")
+        .upsert({ comment_id: commentId, member_id: myId, emoji }, { onConflict: "comment_id,member_id" });
+      if (error) {
+        patchRaw((r) => ({
+          ...r,
+          commentReactions: r.commentReactions.filter(
+            (x) => !(x.comment_id === commentId && x.member_id === myId && x.id.startsWith("tmp-")),
+          ),
+        }));
+        showToast("Couldn't react — try again");
+      }
+      scheduleRefetch();
+    },
+    [myId, demo, supabase, patchRaw, showToast, scheduleRefetch],
+  );
+
   const openCommentSheet = useCallback((workoutId: string) => setCommentSheet(workoutId), []);
   const closeCommentSheet = useCallback(() => setCommentSheet(null), []);
   const openKudosSheet = useCallback((workoutId: string) => setKudosSheet(workoutId), []);
@@ -997,6 +1076,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       clearToast,
       toggleLike,
       addComment,
+      reactToComment,
       openCommentSheet,
       closeCommentSheet,
       openKudosSheet,
@@ -1024,7 +1104,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       logTick, otherTick, periodTick, toast, sheet, daySheet, celebration, commentSheet, commentsByWorkout, logFocusKey,
       refetch, setPeriod, prevMonth, nextMonth,
       logToday, backfillDay, removeDay, saveDetails, openSheet, closeSheet, openDaySheet,
-      closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment,
+      closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment, reactToComment,
       openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink,
       autoLog, openAutoLog, closeAutoLog, requestsBySource, myRequests, toggleIntegrationRequest,
       profileMember, openProfile, closeProfile,

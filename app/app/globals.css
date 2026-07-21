@@ -726,6 +726,46 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
 .cmt-name{font-weight:700; font-size:13px}
 .cmt-time{font-family:var(--font-archivo); font-size:9px; letter-spacing:.1em; color:var(--mut); text-transform:uppercase}
 .cmt-text{font-size:13.5px; line-height:1.5; color:#33302A; margin-top:2px; word-wrap:break-word}
+
+/* ---- comment tapbacks (hold a comment card to react) ---- */
+.cmt-hint{color:var(--mut); letter-spacing:.08em}
+.cmt-cardwrap{position:relative; margin-top:4px; width:max-content; max-width:100%}
+.cmt-card{
+  background:var(--card); border:1px solid var(--line); border-radius:3px 12px 12px 12px;
+  padding:8px 12px; font-size:13.5px; line-height:1.5; color:#33302A; word-wrap:break-word;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.cmt-card.held{transform:scale(.97); box-shadow:0 4px 14px rgba(27,24,18,.14)}
+.cmt.mine .cmt-card{border-color:#E4C9C5; background:#FDF8F6}
+.cmt-tapback{
+  position:absolute; top:-10px; right:-6px; display:flex; background:none; border:none;
+  padding:0; cursor:pointer;
+}
+.cmt-tapback .tb-e{
+  display:grid; place-items:center; width:22px; height:22px; border-radius:50%;
+  background:var(--ink); border:1.5px solid var(--paper); font-size:10.5px; margin-left:-6px;
+  box-shadow:0 2px 6px rgba(27,24,18,.22);
+}
+.cmt-tapback .tb-e.me{background:var(--ox)}
+.cmt-tapback .tb-n{
+  display:grid; place-items:center; min-width:22px; height:22px; padding:0 4px; border-radius:11px;
+  background:var(--ox); color:#fff; border:1.5px solid var(--paper); margin-left:-6px;
+  font-family:var(--font-mono); font-size:9.5px; font-weight:700;
+  box-shadow:0 2px 6px rgba(27,24,18,.22);
+}
+.cmt-picker{
+  display:flex; gap:2px; margin-top:8px; background:var(--card); border:1.5px solid var(--ink);
+  border-radius:22px; padding:5px 8px; width:max-content; box-shadow:0 6px 18px rgba(27,24,18,.2);
+  animation:pickerin .16s ease;
+}
+@keyframes pickerin{from{opacity:0; transform:translateY(4px) scale(.94)} to{opacity:1; transform:none}}
+.cmt-picker button{
+  background:none; border:none; font-size:20px; padding:3px 6px; cursor:pointer; border-radius:50%;
+  line-height:1; transition:transform .1s;
+}
+.cmt-picker button:active{transform:scale(1.35)}
+.cmt-picker button.sel{background:#F3E9E7; outline:1.5px solid var(--ox)}
 .cmt-composer{display:flex; gap:8px; margin-top:16px; align-items:flex-end}
 .cmt-input{
   flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:4px;

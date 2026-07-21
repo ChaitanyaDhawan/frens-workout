@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRENS — Inline comments, quiet pass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F9F6EF; --card:#FFFFFF; --ink:#1B1812; --mut:#8A8375;
+    --line:#DCD5C6; --ox:#9E2B25; --brass:#A98A2F;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#8f8b81;font-family:'Archivo',sans-serif;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:30px;padding:30px 0 90px}
+  .lab{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:#fff;background:var(--ink);padding:7px 14px;border-radius:2px}
+  .lab i{font-style:normal;color:#F2C063}
+  .sub-lab{font-size:12.5px;color:#EFEDE6;margin-top:-20px;max-width:346px;text-align:center;line-height:1.5}
+
+  .wrap{width:390px;background:var(--paper);padding:16px 0 20px}
+  .card{margin:0 22px 10px;background:var(--card);border:1px solid var(--line);padding:13px 14px 12px}
+  .top{display:flex;align-items:center;gap:10px}
+  .ava{width:34px;height:34px;border-radius:50%;border:1px solid var(--ink);display:grid;place-items:center;
+    font-weight:800;font-size:12px;background:var(--card)}
+  .cnm{font-weight:800;font-size:14.5px;letter-spacing:-.01em}
+  .tm{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-top:1px}
+  .brag{display:flex;align-items:center;gap:8px;margin-top:11px}
+  .bact{font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:3px 7px}
+  .bdur{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--mut)}
+  .bstat{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#2E7D46;margin-left:auto}
+  .note{margin-top:10px;font-size:13.5px;line-height:1.5;color:#453F33;padding-left:10px;border-left:2px solid var(--brass)}
+  .kudos-from{display:flex;align-items:center;gap:7px;margin-top:11px}
+  .kf-ava{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--ink);
+    color:var(--paper);font-size:7.5px;font-weight:800;border:1.5px solid var(--card);margin-left:-5px}
+  .kf-ava:first-child{margin-left:0}
+  .kf-tx{font-size:11px;color:var(--mut)}
+  .acts{display:flex;gap:8px;margin-top:11px}
+  .act{border:1px solid var(--line);background:var(--paper);padding:8px 11px;font-family:'Archivo';
+    font-weight:600;font-size:12px;color:var(--ink);cursor:pointer}
+  .act.liked{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  /* ===== A · whisper — comments as quiet plain lines ===== */
+  .wc{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+  .wc-l{font-size:12.5px;line-height:1.5;color:#5A5346}
+  .wc-l b{font-weight:700;color:var(--ink);margin-right:2px}
+  .wc-l .rx{font-size:10.5px;letter-spacing:-1px;margin-left:4px}
+  .wc-l .rxn{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;color:var(--ox);margin-left:2px}
+  .wc-more{font-size:11.5px;color:var(--mut);cursor:pointer}
+  .wc-add{font-size:12.5px;color:var(--mut);margin-top:2px;cursor:text}
+
+  /* ===== B · inset — one soft paper block holds it all ===== */
+  .ic{margin-top:11px;background:var(--paper);border-radius:4px;padding:9px 11px 8px;display:flex;flex-direction:column;gap:6px}
+  .ic-l{font-size:12.5px;line-height:1.5;color:#4A4437}
+  .ic-l b{font-weight:700;color:var(--ink);margin-right:2px}
+  .ic-l .rx{font-size:10.5px;letter-spacing:-1px;margin-left:4px}
+  .ic-l .rxn{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;color:var(--ox);margin-left:2px}
+  .ic-more{font-size:11.5px;color:var(--mut);cursor:pointer}
+  .ic-in{display:flex;align-items:center;gap:6px;border-top:1px solid #ECE7DA;padding-top:7px;margin-top:2px}
+  .ic-in input{flex:1;border:none;background:none;font-family:'Archivo';font-size:12.5px;color:var(--mut);outline:none}
+  .ic-in .go{font-weight:800;font-size:11.5px;color:var(--line);background:none;border:none}
+</style>
+</head>
+<body>
+
+  <div class="lab">A · <i>whisper</i> — plain quiet lines</div>
+  <div class="sub-lab">No box, no borders, no avatars — comments are two quiet lines under the actions; reactions ride inline as tiny emoji + count. "Add a comment…" is just a muted line (tap → keyboard). Zero-comment cards show none of this.</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="top"><div class="ava">M</div><div><div class="cnm">Mugdha</div><div class="tm">Today · 09:43</div></div></div>
+      <div class="brag"><span class="bact">Yoga</span><span class="bdur">45 min</span><span class="bstat">5th this quarter</span></div>
+      <div class="note">Morning yoga, felt unreal.</div>
+      <div class="kudos-from"><span><span class="kf-ava">S</span><span class="kf-ava">V</span><span class="kf-ava">R</span></span><span class="kf-tx">Saksham, Vareni + 2 gave kudos</span></div>
+      <div class="acts"><button class="act liked">👏 5 kudos</button><button class="act">💬 4</button></div>
+      <div class="wc">
+        <div class="wc-more">View all 4 comments</div>
+        <div class="wc-l"><b>Saksham</b> morning yoga is a personality trait now 😄<span class="rx">😂</span><span class="rxn">2</span></div>
+        <div class="wc-l"><b>Vareni</b> +1 waiting for the tutorial</div>
+        <div class="wc-l"><b>Mugdha</b> @Chaitanya come to SF and find out 🧘‍♀️<span class="rx">❤️</span><span class="rxn">3</span></div>
+        <div class="wc-add">Add a comment…</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="top"><div class="ava">R</div><div><div class="cnm">Rahul</div><div class="tm">Today · 07:02</div></div></div>
+      <div class="brag"><span class="bact">Run</span><span class="bdur">30 min</span><span class="bstat">9th this quarter</span></div>
+      <div class="acts"><button class="act">👏 2 kudos</button><button class="act">💬 Comment</button></div>
+    </div>
+  </div>
+
+  <div class="lab">B · <i>inset</i> — one soft block</div>
+  <div class="sub-lab">Same content, but held in a single soft paper inset so the card reads as two clean layers: the workout, then the chatter. Composer is a hairline row inside the block.</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="top"><div class="ava">M</div><div><div class="cnm">Mugdha</div><div class="tm">Today · 09:43</div></div></div>
+      <div class="brag"><span class="bact">Yoga</span><span class="bdur">45 min</span><span class="bstat">5th this quarter</span></div>
+      <div class="note">Morning yoga, felt unreal.</div>
+      <div class="kudos-from"><span><span class="kf-ava">S</span><span class="kf-ava">V</span><span class="kf-ava">R</span></span><span class="kf-tx">Saksham, Vareni + 2 gave kudos</span></div>
+      <div class="acts"><button class="act liked">👏 5 kudos</button><button class="act">💬 4</button></div>
+      <div class="ic">
+        <div class="ic-more">View all 4 comments</div>
+        <div class="ic-l"><b>Saksham</b> morning yoga is a personality trait now 😄<span class="rx">😂</span><span class="rxn">2</span></div>
+        <div class="ic-l"><b>Vareni</b> +1 waiting for the tutorial</div>
+        <div class="ic-l"><b>Mugdha</b> @Chaitanya come to SF and find out 🧘‍♀️<span class="rx">❤️</span><span class="rxn">3</span></div>
+        <div class="ic-in"><input placeholder="Add a comment…"><button class="go">Post</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="top"><div class="ava">R</div><div><div class="cnm">Rahul</div><div class="tm">Today · 07:02</div></div></div>
+      <div class="brag"><span class="bact">Run</span><span class="bdur">30 min</span><span class="bstat">9th this quarter</span></div>
+      <div class="acts"><button class="act">👏 2 kudos</button><button class="act">💬 Comment</button></div>
+    </div>
+  </div>
+
+</body>
+</html>
