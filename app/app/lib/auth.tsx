@@ -47,11 +47,11 @@ function syncTimezone(supabase: SupabaseClient, stored: string | undefined) {
       .rpc("set_my_timezone", { tz: device })
       .then(({ error }: { error: { message: string } | null }) => {
         if (error) {
-          // A zone name Postgres doesn't know (browser/pg tzdata skew) — the
-          // member keeps the stored zone; remember the rejection so we don't
-          // refire the RPC on every visibility refresh.
           console.warn("timezone sync failed:", error.message);
-          tzRejected = device;
+          // Only a genuine zone rejection (bad_timezone from the RPC — pg's
+          // tzdata doesn't know this browser zone) is permanent; a transient
+          // failure (network blip, token lag) should retry on the next open.
+          if (/bad_timezone/i.test(error.message)) tzRejected = device;
           tzSynced = null;
         }
       });

@@ -84,7 +84,7 @@ export default function ProfileSheet() {
       <ActivityBreakdown member={m} />
 
       <div className="prof-sec">Last 30 days</div>
-      <HistoryStrip doneDoy={m.days ?? new Set<number>()} />
+      <HistoryStrip doneDoy={m.days ?? new Set<number>()} end={m.today} />
 
       <Rankings member={m} frens={frens} />
     </>,
