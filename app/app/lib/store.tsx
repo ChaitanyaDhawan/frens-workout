@@ -83,6 +83,8 @@ interface Store {
   /** Notification deep-link target (workout to scroll to; kudos = also burst;
    *  comment = open that workout's thread sheet after landing). */
   deepLink: { id: string; kudos: boolean; comment: boolean } | null;
+  /** Full-screen photo viewer state (proof photo tapped in the feed). */
+  photoView: { url: string; caption?: string } | null;
 
   // ---- actions ----
   /** Re-pull all data from Supabase (drives pull-to-refresh). */
@@ -128,6 +130,8 @@ interface Store {
   /** Feed reads this once after a log to scroll+spotlight the new card. */
   consumeLogFocus: () => boolean;
   clearDeepLink: () => void;
+  openPhoto: (url: string, caption?: string) => void;
+  closePhoto: () => void;
 }
 
 // The full-screen celebration is kept in the codebase but pulled out of the log
@@ -288,6 +292,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const [logFocusKey, setLogFocusKey] = useState(0);
   const focusConsumed = useRef(0);
   const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean; comment: boolean } | null>(null);
+  const [photoView, setPhotoView] = useState<{ url: string; caption?: string } | null>(null);
 
   const [freshIds, setFreshIds] = useState<Set<string>>(() => new Set());
   // Object-URLs of photos attached THIS session, keyed by workout id — the
@@ -1013,6 +1018,8 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
     return false;
   }, [logFocusKey]);
   const clearDeepLink = useCallback(() => setDeepLink(null), []);
+  const openPhoto = useCallback((url: string, caption?: string) => setPhotoView({ url, caption }), []);
+  const closePhoto = useCallback(() => setPhotoView(null), []);
 
   // Notification deep-link — from the ?w= param (cold open) or a service-worker
   // postMessage (app already running; more reliable than SW navigate in PWAs).
@@ -1120,6 +1127,9 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       closeDispatches,
       consumeLogFocus,
       clearDeepLink,
+      photoView,
+      openPhoto,
+      closePhoto,
     }),
     [
       tab, frens, me, period, calM, doneDoy, dayData, feed, mineFeed, recents, logged, bounceTick,
@@ -1127,7 +1137,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       refetch, setPeriod, prevMonth, nextMonth,
       logToday, backfillDay, removeDay, saveDetails, openSheet, closeSheet, openDaySheet,
       closeDaySheet, closeCelebration, editCelebration, demoLog, addRecent, showToast, clearToast, toggleLike, addComment, reactToComment,
-      openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink,
+      openCommentSheet, closeCommentSheet, openKudosSheet, closeKudosSheet, kudosSheet, consumeLogFocus, deepLink, clearDeepLink, photoView, openPhoto, closePhoto,
       autoLog, openAutoLog, closeAutoLog, requestsBySource, myRequests, toggleIntegrationRequest,
       profileMember, openProfile, closeProfile,
       settings, dispatchesOpen, openSettings, closeSettings, openDispatches, closeDispatches,

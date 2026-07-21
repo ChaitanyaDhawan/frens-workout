@@ -25,7 +25,7 @@ export function FeedCard({
   /** Above-the-fold card — load its photo eagerly at high priority. */
   priority?: boolean;
 }) {
-  const { toggleLike, openCommentSheet, openSheet, openKudosSheet, openProfile } = useStore();
+  const { toggleLike, openCommentSheet, openSheet, openKudosSheet, openProfile, openPhoto } = useStore();
   const [liked, setLiked] = useState(item.liked ?? false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [popKey, setPopKey] = useState(0);
@@ -94,6 +94,8 @@ export function FeedCard({
           fetchPriority={priority ? "high" : undefined}
           decoding="async"
           onLoad={() => setImgLoaded(true)}
+          onClick={() => openPhoto(item.picUrl!, `${item.n} · ${item.act ?? "Workout"}`)}
+          style={{ cursor: "zoom-in" }}
         />
       ) : item.pic ? (
         <div className="pic">PROOF ATTACHED</div>

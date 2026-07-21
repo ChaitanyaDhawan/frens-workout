@@ -28,6 +28,7 @@ import KudosReceived from "@/app/components/KudosReceived";
 import ParticleCanvas from "@/app/components/ParticleCanvas";
 import InstallGuide from "@/app/components/InstallGuide";
 import BackgroundPicker from "@/app/components/BackgroundPicker";
+import PhotoViewer from "@/app/components/PhotoViewer";
 import Splash from "@/app/components/Splash";
 import NotificationPrompt from "@/app/components/NotificationPrompt";
 import { initKudosAudio } from "@/app/lib/sound";
@@ -46,7 +47,7 @@ function Home() {
 }
 
 function Shell() {
-  const { tab, sheet, daySheet, commentSheet, kudosSheet, autoLog, profileMember, settings, dispatchesOpen, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet, closeAutoLog, closeProfile, closeSettings, closeDispatches } =
+  const { tab, sheet, daySheet, commentSheet, kudosSheet, autoLog, profileMember, settings, dispatchesOpen, photoView, closeSheet, closeDaySheet, closeCommentSheet, closeKudosSheet, closeAutoLog, closeProfile, closeSettings, closeDispatches } =
     useStore();
   const overlayOpen = !!sheet || !!daySheet || !!commentSheet || !!kudosSheet || autoLog || !!profileMember || settings || dispatchesOpen;
 
@@ -116,6 +117,7 @@ function Shell() {
       <Celebration />
       <KudosReceived />
 
+      <AnimatePresence>{photoView && <PhotoViewer key="photo-view" />}</AnimatePresence>
       <ParticleCanvas />
     </>
   );

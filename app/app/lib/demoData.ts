@@ -131,7 +131,19 @@ function build(): RawData {
     rq("strava", 3, 40),
   ];
 
-  return { members, workouts, reactions, comments, commentReactions, integrationRequests, photoUrls: {} };
+  // One demo proof photo (inline SVG) so the feed image + full-screen viewer
+  // are testable without live storage.
+  const firstApp = workouts.find((w) => w.source === "app");
+  if (firstApp) firstApp.photo_path = "demo-pic";
+  const photoUrls: Record<string, string> = {
+    "demo-pic":
+      "data:image/svg+xml," +
+      encodeURIComponent(
+        `<svg xmlns='http://www.w3.org/2000/svg' width='900' height='1125'><rect width='900' height='1125' fill='#D5CBB4'/><rect x='40' y='40' width='820' height='1045' fill='#E4DDCB'/><text x='450' y='580' font-family='monospace' font-size='64' fill='#8A8375' text-anchor='middle'>PROOF</text></svg>`,
+      ),
+  };
+
+  return { members, workouts, reactions, comments, commentReactions, integrationRequests, photoUrls };
 }
 
 export const SAMPLE_RAW: RawData = build();
