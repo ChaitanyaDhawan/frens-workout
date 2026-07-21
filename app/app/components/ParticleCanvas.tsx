@@ -124,7 +124,62 @@ export default function ParticleCanvas() {
       tick();
     };
 
-    registerFx({ scraps, clap });
+    // iMessage-style tapback celebration: a staggered stream of one emoji
+    // erupting from the bottom edge and floating up across the whole screen.
+    const emojiRain = (emoji: string) => {
+      if (reduceMotion()) return;
+      const W = () => window.innerWidth;
+      const H = () => window.innerHeight;
+      const ps = Array.from({ length: 22 }, (_, i) => ({
+        x: Math.random() * W(),
+        y: H() + 30 + Math.random() * 40,
+        vy: -(3.2 + Math.random() * 3.4),
+        drift: (Math.random() - 0.5) * 1.1,
+        wob: Math.random() * Math.PI * 2,
+        wobV: 0.05 + Math.random() * 0.05,
+        rot: (Math.random() - 0.5) * 0.5,
+        vr: (Math.random() - 0.5) * 0.03,
+        sz: 22 + Math.random() * 22,
+        delay: i * 2.2 + Math.random() * 6, // staggered spawn → a stream, not a wall
+        life: 1,
+      }));
+      const tick = () => {
+        ctx.clearRect(0, 0, W(), H());
+        let alive = false;
+        ps.forEach((p) => {
+          if (p.life <= 0) return;
+          if (p.delay > 0) {
+            p.delay -= 1;
+            alive = true;
+            return;
+          }
+          alive = true;
+          p.wob += p.wobV;
+          p.x += p.drift + Math.sin(p.wob) * 1.3;
+          p.y += p.vy;
+          p.rot += p.vr;
+          // fade out over the top third of the screen
+          if (p.y < H() * 0.38) p.life -= 0.025;
+          if (p.y < -60) p.life = 0;
+          if (p.life <= 0) return;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+          ctx.font = `${p.sz}px serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(emoji, 0, 0);
+          ctx.restore();
+        });
+        ctx.globalAlpha = 1;
+        if (alive) requestAnimationFrame(tick);
+        else ctx.clearRect(0, 0, W(), H());
+      };
+      tick();
+    };
+
+    registerFx({ scraps, clap, emojiRain });
     return () => window.removeEventListener("resize", fit);
   }, []);
 

@@ -1,33 +1,61 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useStore, type CommentThreadItem } from "@/app/lib/store";
 import { initials } from "@/app/lib/helpers";
+import { fx } from "@/app/lib/fx";
 
 const SHEET_EASE: [number, number, number, number] = [0.3, 1.15, 0.35, 1];
 const TAPBACKS = ["👏", "❤️", "😂", "💪", "🔥"];
-const HOLD_MS = 420;
+const HOLD_MS = 350;
 
-/** One comment as a tapback-able card: hold to open the emoji picker; existing
- *  reactions ride the card's corner as overlapping bubbles (iMessage-style). */
+/** First grapheme of a string, if it's an emoji (for the ＋ free-pick input). */
+function firstEmoji(v: string): string | null {
+  let g = "";
+  try {
+    const Seg = (Intl as unknown as { Segmenter?: new (l?: string, o?: { granularity: string }) => { segment: (s: string) => Iterable<{ segment: string }> } }).Segmenter;
+    g = Seg ? ([...new Seg(undefined, { granularity: "grapheme" }).segment(v)][0]?.segment ?? "") : ([...v][0] ?? "");
+  } catch {
+    g = [...v][0] ?? "";
+  }
+  return g && /\p{Extended_Pictographic}/u.test(g) ? g : null;
+}
+
+/** One comment as a tapback-able chat card. Tap (or hold) → the card lifts,
+ *  the sheet dims, and the emoji picker springs in anchored to the card —
+ *  the WhatsApp/iMessage pattern. */
 function CommentRow({
   c,
-  pickerOpen,
+  picker,
   onOpenPicker,
   onClosePicker,
 }: {
   c: CommentThreadItem;
-  pickerOpen: boolean;
-  onOpenPicker: () => void;
+  picker: { dir: "up" | "down" } | null;
+  onOpenPicker: (dir: "up" | "down") => void;
   onClosePicker: () => void;
 }) {
   const { reactToComment, showToast } = useStore();
   const holdTimer = useRef<number | null>(null);
   const startPos = useRef<{ x: number; y: number } | null>(null);
-  // The release after a successful hold also fires a click, which would bubble
-  // to the sheet's tap-outside-dismiss and close the picker it just opened.
   const heldFired = useRef(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [plus, setPlus] = useState(false);
+  useEffect(() => {
+    if (!picker) setPlus(false);
+  }, [picker]);
+
+  const openHere = () => {
+    // Anchor the picker ABOVE the card, flipping below only when the card is
+    // too close to the list's top edge for it to fit.
+    let dir: "up" | "down" = "up";
+    const el = wrapRef.current;
+    const list = el?.closest(".cmt-list");
+    if (el && list && el.getBoundingClientRect().top - list.getBoundingClientRect().top < 66) dir = "down";
+    navigator.vibrate?.(10);
+    onOpenPicker(dir);
+  };
 
   const cancelHold = () => {
     if (holdTimer.current != null) {
@@ -41,44 +69,57 @@ function CommentRow({
     holdTimer.current = window.setTimeout(() => {
       holdTimer.current = null;
       heldFired.current = true;
-      navigator.vibrate?.(10);
-      onOpenPicker();
+      openHere();
     }, HOLD_MS);
   };
-  const swallowHoldClick = (e: React.MouseEvent) => {
+  const onPointerMove = (e: React.PointerEvent) => {
+    const s = startPos.current;
+    if (s && Math.hypot(e.clientX - s.x, e.clientY - s.y) > 8) cancelHold();
+  };
+  const onCardClick = (e: React.MouseEvent) => {
+    // The release of a completed hold also fires a click — swallow it.
     if (heldFired.current) {
       heldFired.current = false;
       e.preventDefault();
       e.stopPropagation();
+      return;
     }
+    if (picker) onClosePicker();
+    else openHere();
   };
-  const onPointerMove = (e: React.PointerEvent) => {
-    // A scroll gesture isn't a hold — bail once the finger drifts.
-    const s = startPos.current;
-    if (s && Math.hypot(e.clientX - s.x, e.clientY - s.y) > 8) cancelHold();
+
+  const pick = (emoji: string) => {
+    const removing = c.myEmoji === emoji;
+    reactToComment(c.id, emoji);
+    navigator.vibrate?.(8);
+    // Adding/changing a reaction fills the screen with it, iMessage-style.
+    if (!removing) fx.emojiRain(emoji);
+    onClosePicker();
   };
 
   const total = c.reactions.reduce((n, g) => n + g.count, 0);
-  const whoReacted = () =>
+  const whoReacted = (e: React.MouseEvent) => {
+    e.stopPropagation();
     showToast(c.reactions.map((g) => `${g.emoji} ${g.names.join(", ")}`).join(" · "));
+  };
 
   return (
-    <div className={`cmt${c.mine ? " mine" : ""}`}>
+    <div className={`cmt${c.mine ? " mine" : ""}${picker ? " held-row" : ""}`}>
       <div className="cmt-ava">{initials(c.name)}</div>
       <div className="cmt-b">
         <div className="cmt-h">
           <span className="cmt-name">{c.mine ? "You" : c.name}</span>
           <span className="cmt-time">{c.tm}</span>
         </div>
-        <div className="cmt-cardwrap">
+        <div className="cmt-cardwrap" ref={wrapRef}>
           <div
-            className={`cmt-card${pickerOpen ? " held" : ""}`}
+            className={`cmt-card${picker ? " held" : ""}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={cancelHold}
             onPointerCancel={cancelHold}
             onPointerLeave={cancelHold}
-            onClick={swallowHoldClick}
+            onClick={onCardClick}
             onContextMenu={(e) => e.preventDefault()}
           >
             {c.body}
@@ -86,31 +127,75 @@ function CommentRow({
           {c.reactions.length > 0 && (
             <button className="cmt-tapback" onClick={whoReacted} aria-label="Who reacted">
               {c.reactions.slice(0, 3).map((g) => (
-                <span className={`tb-e${g.mine ? " me" : ""}`} key={g.emoji}>
+                <motion.span
+                  className={`tb-e${g.mine ? " me" : ""}`}
+                  key={g.emoji}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 520, damping: 22 }}
+                >
                   {g.emoji}
-                </span>
+                </motion.span>
               ))}
               {total > 1 && <span className="tb-n">{total}</span>}
             </button>
           )}
-        </div>
-        {pickerOpen && (
-          <div className="cmt-picker">
-            {TAPBACKS.map((e) => (
-              <button
-                key={e}
-                className={c.myEmoji === e ? "sel" : ""}
-                onClick={() => {
-                  reactToComment(c.id, e);
-                  navigator.vibrate?.(8);
-                  onClosePicker();
-                }}
+          <AnimatePresence>
+            {picker && (
+              <motion.div
+                className={`cmt-picker ${picker.dir}`}
+                style={{ transformOrigin: picker.dir === "up" ? "bottom left" : "top left" }}
+                initial={{ opacity: 0, scale: 0.55, y: picker.dir === "up" ? 10 : -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.6, y: picker.dir === "up" ? 6 : -6, transition: { duration: 0.12 } }}
+                transition={{ type: "spring", stiffness: 520, damping: 30 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                {e}
-              </button>
-            ))}
-          </div>
-        )}
+                {!plus ? (
+                  <>
+                    {TAPBACKS.map((e, i) => (
+                      <motion.button
+                        key={e}
+                        className={c.myEmoji === e ? "sel" : ""}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 640, damping: 22, delay: 0.02 + i * 0.026 }}
+                        onClick={() => pick(e)}
+                      >
+                        {e}
+                      </motion.button>
+                    ))}
+                    <motion.button
+                      key="plus"
+                      className="plus"
+                      aria-label="Any emoji"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 640, damping: 22, delay: 0.02 + TAPBACKS.length * 0.026 }}
+                      onClick={() => setPlus(true)}
+                    >
+                      ＋
+                    </motion.button>
+                  </>
+                ) : (
+                  <input
+                    className="cmt-emoji-in"
+                    autoFocus
+                    placeholder="Type any emoji…"
+                    onInput={(e) => {
+                      const g = firstEmoji((e.target as HTMLInputElement).value);
+                      if (g) pick(g);
+                      else (e.target as HTMLInputElement).value = "";
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") onClosePicker();
+                    }}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
@@ -124,15 +209,13 @@ export default function CommentSheet() {
   if (commentSheet) snap.current = commentSheet;
   const workoutId = snap.current;
   const [text, setText] = useState("");
-  const [pickerFor, setPickerFor] = useState<string | null>(null);
-  // The finger-release that COMPLETED the long-press produces a click (whose
-  // target can be an ancestor once the held card transforms), which would
-  // instantly dismiss the picker it just opened — ignore dismissals that
-  // arrive within a beat of opening.
+  const [pickerFor, setPickerFor] = useState<{ id: string; dir: "up" | "down" } | null>(null);
+  // The finger-release that completed the long-press also produces a click —
+  // ignore backdrop dismissals within a beat of the picker opening.
   const pickerOpenedAt = useRef(0);
-  const openPicker = (id: string) => {
+  const openPicker = (id: string, dir: "up" | "down") => {
     pickerOpenedAt.current = Date.now();
-    setPickerFor(id);
+    setPickerFor({ id, dir });
   };
 
   const comments = workoutId ? commentsByWorkout.get(workoutId) ?? [] : [];
@@ -153,17 +236,6 @@ export default function CommentSheet() {
       animate={{ y: 0 }}
       exit={{ y: "105%" }}
       transition={{ duration: 0.4, ease: SHEET_EASE }}
-      onClick={(e) => {
-        // Tap anywhere outside the picker dismisses it (but not the release-
-        // click of the long-press that opened it).
-        if (
-          pickerFor &&
-          Date.now() - pickerOpenedAt.current > 400 &&
-          !(e.target as HTMLElement).closest(".cmt-picker")
-        ) {
-          setPickerFor(null);
-        }
-      }}
     >
       <div className="shead">
         <h2>Comments</h2>
@@ -171,7 +243,7 @@ export default function CommentSheet() {
       {item && (
         <div className="cmt-sub">
           {`${item.n} · ${item.act ?? "Workout"}`}
-          {comments.length > 0 && <span className="cmt-hint"> · hold a comment to react</span>}
+          {comments.length > 0 && <span className="cmt-hint"> · tap a comment to react</span>}
         </div>
       )}
 
@@ -183,8 +255,8 @@ export default function CommentSheet() {
             <CommentRow
               key={c.id}
               c={c}
-              pickerOpen={pickerFor === c.id}
-              onOpenPicker={() => openPicker(c.id)}
+              picker={pickerFor?.id === c.id ? { dir: pickerFor.dir } : null}
+              onOpenPicker={(dir) => openPicker(c.id, dir)}
               onClosePicker={() => setPickerFor(null)}
             />
           ))
@@ -206,10 +278,28 @@ export default function CommentSheet() {
             }
           }}
         />
-        <button className="cmt-send" onClick={send} disabled={!text.trim()}>
-          Post
+        <button className="cmt-send" onClick={send} disabled={!text.trim()} aria-label="Post comment">
+          ↑
         </button>
       </div>
+
+      {/* WhatsApp-style dim layer while a picker is up — everything else fades
+          back; tapping it dismisses. Fixed inside the transformed sheet, so it
+          covers exactly the sheet's visible frame regardless of scroll. */}
+      <AnimatePresence>
+        {pickerFor && (
+          <motion.div
+            className="cmt-dim"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            onClick={() => {
+              if (Date.now() - pickerOpenedAt.current > 400) setPickerFor(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
