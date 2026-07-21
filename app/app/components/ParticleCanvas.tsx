@@ -125,51 +125,66 @@ export default function ParticleCanvas() {
     };
 
     // iMessage-style tapback celebration: a staggered stream of one emoji
-    // erupting from the bottom edge and floating up across the whole screen.
+    // rising straight up from the bottom. Smoothness notes: the emoji is
+    // rasterized ONCE into a sprite (fillText of color emoji every frame is
+    // what janks phones), motion is delta-time based (frame drops don't
+    // stutter the speed), and each particle eases in (scale+fade) at spawn.
     const emojiRain = (emoji: string) => {
       if (reduceMotion()) return;
       const W = () => window.innerWidth;
       const H = () => window.innerHeight;
-      // Straight vertical columns rising FAST from the bottom (iMessage-style) —
-      // no wobble/drift; variety comes from size, speed, and spawn stagger only.
-      const ps = Array.from({ length: 24 }, (_, i) => ({
-        x: Math.random() * W(),
-        y: H() + 30 + Math.random() * 30,
-        vy: -(8 + Math.random() * 5),
-        sz: 24 + Math.random() * 22,
-        delay: i * 1.6 + Math.random() * 4, // staggered spawn → a stream, not a wall
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const SPRITE = 64;
+      const sprite = document.createElement("canvas");
+      sprite.width = sprite.height = SPRITE * dpr;
+      const sctx = sprite.getContext("2d");
+      if (!sctx) return;
+      sctx.scale(dpr, dpr);
+      sctx.font = `${SPRITE * 0.82}px serif`;
+      sctx.textAlign = "center";
+      sctx.textBaseline = "middle";
+      sctx.fillText(emoji, SPRITE / 2, SPRITE / 2 + 2);
+
+      const ps = Array.from({ length: 12 }, (_, i) => ({
+        x: 20 + Math.random() * (W() - 40),
+        y: H() + 30,
+        v: 520 + Math.random() * 260, // px/sec, straight up
+        sz: 26 + Math.random() * 18,
+        delayMs: i * 55 + Math.random() * 70, // staggered → a stream
+        bornAt: 0, // set when the delay elapses (for the spawn ease-in)
         life: 1,
       }));
-      const tick = () => {
+      let last = performance.now();
+      const tick = (now: number) => {
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
         ctx.clearRect(0, 0, W(), H());
         let alive = false;
         ps.forEach((p) => {
           if (p.life <= 0) return;
-          if (p.delay > 0) {
-            p.delay -= 1;
+          if (p.delayMs > 0) {
+            p.delayMs -= dt * 1000;
             alive = true;
             return;
           }
+          if (!p.bornAt) p.bornAt = now;
           alive = true;
-          p.y += p.vy;
-          // fade out over the top third of the screen
-          if (p.y < H() * 0.38) p.life -= 0.03;
+          p.y -= p.v * dt;
+          // soft ease-in over the first 140ms, fade out over the top third
+          const inK = Math.min(1, (now - p.bornAt) / 140);
+          if (p.y < H() * 0.36) p.life -= dt * 2.4;
           if (p.y < -60) p.life = 0;
           if (p.life <= 0) return;
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
-          ctx.font = `${p.sz}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(emoji, 0, 0);
-          ctx.restore();
+          const a = Math.min(inK, Math.max(0, p.life));
+          const s = p.sz * (0.6 + 0.4 * inK);
+          ctx.globalAlpha = a;
+          ctx.drawImage(sprite, p.x - s / 2, p.y - s / 2, s, s);
         });
         ctx.globalAlpha = 1;
         if (alive) requestAnimationFrame(tick);
         else ctx.clearRect(0, 0, W(), H());
       };
-      tick();
+      requestAnimationFrame(tick);
     };
 
     registerFx({ scraps, clap, emojiRain });

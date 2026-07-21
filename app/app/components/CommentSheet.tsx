@@ -19,12 +19,16 @@ function CommentRow({
   picker,
   onOpenPicker,
   onClosePicker,
+  onDismissPicker,
   onOpenGrid,
 }: {
   c: CommentThreadItem;
   picker: { dir: "up" | "down" } | null;
   onOpenPicker: (dir: "up" | "down", fromHold: boolean) => void;
+  /** Unguarded close — for deliberate actions (picking, card tap). */
   onClosePicker: () => void;
+  /** Guarded close — for ambient clicks that might be a hold's release. */
+  onDismissPicker: () => void;
   onOpenGrid: () => void;
 }) {
   const { reactToComment, showToast } = useStore();
@@ -91,7 +95,16 @@ function CommentRow({
   };
 
   return (
-    <div className={`cmt${c.mine ? " mine" : ""}${picker ? " held-row" : ""}`}>
+    // The held row floats ABOVE the dim layer, so a tap landing inside the row
+    // but beside the bubble (avatar, name, the empty space right of a short
+    // card) never reaches the dim — close from the row itself. The card /
+    // picker / pill handle (and stop) their own clicks.
+    <div
+      className={`cmt${c.mine ? " mine" : ""}${picker ? " held-row" : ""}`}
+      onClick={() => {
+        if (picker) onDismissPicker();
+      }}
+    >
       <div className="cmt-ava">{initials(c.name)}</div>
       <div className="cmt-b">
         <div className="cmt-h">
@@ -185,6 +198,9 @@ export default function CommentSheet() {
   // The finger-release that completed the long-press also produces a click —
   // ignore backdrop dismissals within a beat of the picker opening.
   const pickerOpenedAt = useRef(0);
+  const dismissPicker = () => {
+    if (Date.now() - pickerOpenedAt.current > 400) setPickerFor(null);
+  };
   const openPicker = (id: string, dir: "up" | "down", guarded: boolean) => {
     // Only a HOLD-open needs the release-click guard; a tap-open has already
     // consumed its click, so outside taps may dismiss immediately.
@@ -259,6 +275,7 @@ export default function CommentSheet() {
               picker={pickerFor?.id === c.id ? { dir: pickerFor.dir } : null}
               onOpenPicker={(dir, fromHold) => openPicker(c.id, dir, fromHold)}
               onClosePicker={() => setPickerFor(null)}
+              onDismissPicker={dismissPicker}
               onOpenGrid={() => {
                 setPickerFor(null);
                 setGridFor(c.id);
@@ -301,7 +318,7 @@ export default function CommentSheet() {
             transition={{ duration: 0.16 }}
             onClick={() => {
               if (gridFor) setGridFor(null);
-              else if (Date.now() - pickerOpenedAt.current > 400) setPickerFor(null);
+              else dismissPicker();
             }}
           />
         )}
