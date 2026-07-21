@@ -22,6 +22,10 @@ export interface Member {
   last7?: number;
   last30?: number;
   lastDoy?: number;
+  /** "Today" as a day-of-year in THIS member's own timezone — the frame their
+   *  streak/hot/last7 were computed in. Consumers judging "today/yesterday"
+   *  for this member must use this, never the viewer's TODAY_DOY. */
+  today?: number;
   /** Kudos RECEIVED (reactions on my workouts) this quarter and all-time. */
   kudosQ3?: number;
   kudosAll?: number;

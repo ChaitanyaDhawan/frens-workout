@@ -100,6 +100,16 @@ function localParts(dt: Date): { y: number; m: number; d: number } {
 function localTime(dt: Date): string {
   return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(dt);
 }
+/** Calendar parts of an instant in a specific IANA zone (viewer-local on a bad zone). */
+function partsInZone(dt: Date, tz: string | undefined): { y: number; m: number; d: number } {
+  try {
+    const s = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(dt);
+    const [y, m, d] = s.split("-").map(Number);
+    return { y, m: m - 1, d };
+  } catch {
+    return localParts(dt);
+  }
+}
 
 /** Feed timestamp label ("Today · 07:02", "Yesterday · …", "Sunday · …", "Jul 9 · …"). */
 export function feedTime(loggedAt: string): string {
@@ -325,6 +335,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       last7: Array.from({ length: 7 }, (_, k) => k).reduce((n, k) => n + (doys.has(memToday - k) ? 1 : 0), 0),
       last30: Array.from({ length: 30 }, (_, k) => k).reduce((n, k) => n + (doys.has(memToday - k) ? 1 : 0), 0),
       lastDoy: doys.size ? Math.max(...doys) : undefined,
+      today: memToday,
       kudosQ3: kudosQ3By.get(mem.id) ?? 0,
       kudosAll: kudosAllBy.get(mem.id) ?? 0,
       total2025,
@@ -372,10 +383,10 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     const wLabel = `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
     // App entries show when they were logged; a real backfill (workout day
     // BEFORE the day it was entered) shows the workout day AND when it was
-    // logged. Strictly "before", not "≠": with per-logger local days, an India
-    // fren's morning workout is dated AHEAD of a US viewer's local logged-day —
-    // labeling that would read as a bizarre future-dated backfill.
-    const lp = localParts(new Date(w.logged_at));
+    // logged. Backfill-ness is judged in the LOGGER's own zone — comparing
+    // against the viewer's day would mislabel every cross-timezone live log
+    // as a backfill in one direction or the other.
+    const lp = partsInZone(new Date(w.logged_at), mem?.timezone);
     const loggedIso = `${lp.y}-${String(lp.m + 1).padStart(2, "0")}-${String(lp.d).padStart(2, "0")}`;
     const tm =
       w.source !== "sheet"
@@ -397,7 +408,10 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       picUrl: w.photo_path ? raw.photoUrls[w.photo_path] : undefined,
       liked: myLiked.has(w.id),
       mine: !!myMemberId && w.member_id === myMemberId,
-      doy: isoDoy(w.workout_date),
+      // Only current-year rows get a doy — the day-sheet model is single-year,
+      // and a prior-year doy goes negative (garbage edit sheet that can blank
+      // the old row). No doy → FeedCard hides the edit icon.
+      doy: w.workout_date.startsWith(`${THIS_YEAR}-`) ? isoDoy(w.workout_date) : undefined,
       likers: likersBy.get(w.id) ?? [],
     };
   };

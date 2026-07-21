@@ -17,9 +17,12 @@ function coolFact(f: Member): { text: string; flame: boolean } | null {
   const streak = f.streak ?? 0;
   const last7 = f.last7 ?? 0;
   const last30 = f.last30 ?? 0;
+  // "Today/yesterday" in the MEMBER's own timezone (the frame streak/last7 were
+  // computed in) — the viewer's today would contradict those numbers.
+  const today = f.today ?? TODAY_DOY;
   if (streak >= 2) return { text: `${streak}-day streak`, flame: true };
-  if (f.lastDoy === TODAY_DOY) return { text: last7 >= 3 ? `${last7} days this week` : "On the board today", flame: true };
-  if (f.lastDoy === TODAY_DOY - 1) return { text: last7 >= 2 ? `${last7} days this week` : "Back at it yesterday", flame: last7 >= 2 };
+  if (f.lastDoy === today) return { text: last7 >= 3 ? `${last7} days this week` : "On the board today", flame: true };
+  if (f.lastDoy === today - 1) return { text: last7 >= 2 ? `${last7} days this week` : "Back at it yesterday", flame: last7 >= 2 };
   if (last30 >= 10) return { text: `${last30} in the last 30`, flame: false };
   if (last7 >= 1) return { text: `${last7} this week`, flame: false };
   if (last30 >= 1) return { text: `${last30} in the last 30`, flame: false };

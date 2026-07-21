@@ -37,24 +37,32 @@ export interface ClaimedMember {
  *  load (installed PWAs stay signed in for months, so hooking sign-in alone
  *  would never catch a fren who moved or is travelling). */
 let tzSynced: string | null = null;
+let tzRejected: string | null = null; // a zone Postgres refused — don't retry it
 function syncTimezone(supabase: SupabaseClient, stored: string | undefined) {
   try {
     const device = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (!device || device === stored || tzSynced === device) return;
+    if (!device || device === stored || tzSynced === device || tzRejected === device) return;
     tzSynced = device;
     void supabase
       .rpc("set_my_timezone", { tz: device })
       .then(({ error }: { error: { message: string } | null }) => {
         if (error) {
-          // e.g. a zone name Postgres doesn't know — the member just stays on
-          // the stored zone; nothing user-visible breaks.
+          // A zone name Postgres doesn't know (browser/pg tzdata skew) — the
+          // member keeps the stored zone; remember the rejection so we don't
+          // refire the RPC on every visibility refresh.
           console.warn("timezone sync failed:", error.message);
+          tzRejected = device;
           tzSynced = null;
         }
       });
   } catch {
     /* Intl unavailable — keep the stored zone */
   }
+}
+
+/** Reset the sync guard on sign-out so the next account on this tab re-syncs. */
+function resetTzSync() {
+  tzSynced = null;
 }
 
 /** loading → checking session; signedOut → no Google session; unclaimed →
@@ -173,10 +181,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refresh();
     };
     document.addEventListener("visibilitychange", onVis);
+    // The visibility handler never fires if the app sits in the FOREGROUND
+    // across midnight (screen on at 11:59pm) — the stale date constants would
+    // then credit a 12:05am log to yesterday, or block logging entirely
+    // ("already on the record"). A minute tick catches that rollover too.
+    const dayTick = window.setInterval(() => {
+      if (localNowIso() !== TODAY_ISO) window.location.reload();
+    }, 60_000);
     return () => {
       active = false;
       sub.subscription.unsubscribe();
       document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(dayTick);
     };
   }, [supabase, loadMember, refresh]);
 
@@ -221,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    resetTzSync(); // next account on this tab must sync its own zone
     setMember(null);
     setSession(null);
     setPhase("signedOut");
