@@ -13,10 +13,10 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "./supabase";
 import { TODAY_ISO } from "./data";
 
-/** Current IST calendar date as YYYY-MM-DD (to detect an overnight rollover). */
-function istNowIso(): string {
+/** Current DEVICE-local calendar date as YYYY-MM-DD (to detect a day rollover —
+ *  also catches the date jumping when the device changes timezone). */
+function localNowIso(): string {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -28,6 +28,33 @@ export interface ClaimedMember {
   display_name: string;
   is_admin: boolean;
   sheet_name: string;
+  /** IANA zone stored for this member (synced from the device on every open). */
+  timezone: string;
+}
+
+/** Keep the member's stored timezone in sync with the device — fire-and-forget,
+ *  at most once per zone value per session. Runs on every successful member
+ *  load (installed PWAs stay signed in for months, so hooking sign-in alone
+ *  would never catch a fren who moved or is travelling). */
+let tzSynced: string | null = null;
+function syncTimezone(supabase: SupabaseClient, stored: string | undefined) {
+  try {
+    const device = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!device || device === stored || tzSynced === device) return;
+    tzSynced = device;
+    void supabase
+      .rpc("set_my_timezone", { tz: device })
+      .then(({ error }: { error: { message: string } | null }) => {
+        if (error) {
+          // e.g. a zone name Postgres doesn't know — the member just stays on
+          // the stored zone; nothing user-visible breaks.
+          console.warn("timezone sync failed:", error.message);
+          tzSynced = null;
+        }
+      });
+  } catch {
+    /* Intl unavailable — keep the stored zone */
+  }
 }
 
 /** loading → checking session; signedOut → no Google session; unclaimed →
@@ -73,12 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       for (let attempt = 0; attempt < 3; attempt++) {
         const { data, error } = await supabase
           .from("members")
-          .select("id, display_name, is_admin, sheet_name")
+          .select("id, display_name, is_admin, sheet_name, timezone")
           .eq("user_id", s.user.id)
           .maybeSingle();
         if (data) {
           setMember(data as ClaimedMember);
           setPhase("ready");
+          syncTimezone(supabase, (data as ClaimedMember).timezone);
           return;
         }
         lastError = error;
@@ -134,10 +162,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
-      // The date constants are computed once at module load; if the IST day
-      // rolled over while the PWA was backgrounded, they're stale — a full
-      // reload recomputes them so "today" is correct and logs land right.
-      if (istNowIso() !== TODAY_ISO) {
+      // The date constants are computed once at module load; if the local day
+      // rolled over while the PWA was backgrounded (midnight, or the device's
+      // timezone changed in flight), they're stale — a full reload recomputes
+      // them so "today" is correct and logs land right.
+      if (localNowIso() !== TODAY_ISO) {
         window.location.reload();
         return;
       }

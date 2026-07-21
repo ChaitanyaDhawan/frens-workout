@@ -3,7 +3,7 @@
 // WorkoutDetail + the day-of-year set). Nothing here touches React or the DOM.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { CURRENT_Q, IST_YEAR, TODAY_DOY, type FeedItem, type Member, type QuarterKey, type WorkoutDetail } from "./data";
+import { CURRENT_Q, THIS_YEAR, TODAY_DOY, todayDoyInZone, type FeedItem, type Member, type QuarterKey, type WorkoutDetail } from "./data";
 import { nth } from "./helpers";
 
 // ---- Raw row shapes ----
@@ -13,11 +13,14 @@ export interface DbMember {
   user_id: string | null;
   display_name: string;
   is_admin: boolean;
+  /** IANA zone the member lives in (written by their app on open) — their
+   *  streak/"today" is computed against THEIR now, not the viewer's. */
+  timezone: string;
 }
 export interface DbWorkout {
   id: string;
   member_id: string;
-  workout_date: string; // YYYY-MM-DD (IST calendar date)
+  workout_date: string; // YYYY-MM-DD (the LOGGER's local calendar day)
   types: string[] | null;
   duration_min: number | null;
   note: string | null;
@@ -63,8 +66,7 @@ export interface RequestVoter {
   you: boolean;
 }
 
-// ---- Date helpers (IST) ----
-const IST_TZ = "Asia/Kolkata";
+// ---- Date helpers (viewer-local) ----
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -88,24 +90,26 @@ export function lastLabel(iso: string): string {
   return `${MON[m]} ${d}`;
 }
 
-function istParts(dt: Date): { y: number; m: number; d: number } {
-  const s = new Intl.DateTimeFormat("en-CA", { timeZone: IST_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(dt);
+// The VIEWER's local rendering of an instant — everyone reads clock times and
+// Today/Yesterday in their own zone.
+function localParts(dt: Date): { y: number; m: number; d: number } {
+  const s = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(dt);
   const [y, m, d] = s.split("-").map(Number);
   return { y, m: m - 1, d };
 }
-function istTime(dt: Date): string {
-  return new Intl.DateTimeFormat("en-GB", { timeZone: IST_TZ, hour: "2-digit", minute: "2-digit", hour12: false }).format(dt);
+function localTime(dt: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(dt);
 }
 
 /** Feed timestamp label ("Today · 07:02", "Yesterday · …", "Sunday · …", "Jul 9 · …"). */
 export function feedTime(loggedAt: string): string {
   const dt = new Date(loggedAt);
-  const p = istParts(dt);
+  const p = localParts(dt);
   const doy = dayOfYear(p.y, p.m, p.d);
-  const time = istTime(dt);
-  if (p.y === IST_YEAR && doy === TODAY_DOY) return `Today · ${time}`;
-  if (p.y === IST_YEAR && doy === TODAY_DOY - 1) return `Yesterday · ${time}`;
-  if (p.y === IST_YEAR && doy < TODAY_DOY && doy >= TODAY_DOY - 6) {
+  const time = localTime(dt);
+  if (p.y === THIS_YEAR && doy === TODAY_DOY) return `Today · ${time}`;
+  if (p.y === THIS_YEAR && doy === TODAY_DOY - 1) return `Yesterday · ${time}`;
+  if (p.y === THIS_YEAR && doy < TODAY_DOY && doy >= TODAY_DOY - 6) {
     const dow = DOW[new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay()];
     return `${dow} · ${time}`;
   }
@@ -115,7 +119,7 @@ export function feedTime(loggedAt: string): string {
 // ---- Duration <-> label mapping (the sheet offers 30/45/60/90+) ----
 /** Day-of-year (1-based) for a YYYY-MM-DD string in the app's calendar year. */
 function isoDoy(iso: string): number {
-  return Math.floor((Date.parse(iso + "T00:00:00Z") - Date.UTC(IST_YEAR, 0, 1)) / 86400000) + 1;
+  return Math.floor((Date.parse(iso + "T00:00:00Z") - Date.UTC(THIS_YEAR, 0, 1)) / 86400000) + 1;
 }
 
 export function minutesToLabel(min: number | null): string | null {
@@ -235,7 +239,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
   const wOwnerQ = new Map<string, { owner: string; cur: boolean }>();
   for (const w of raw.workouts) {
     const { y, m } = parseDate(w.workout_date);
-    wOwnerQ.set(w.id, { owner: w.member_id, cur: y === IST_YEAR && quarterOf(m) === CURRENT_Q });
+    wOwnerQ.set(w.id, { owner: w.member_id, cur: y === THIS_YEAR && quarterOf(m) === CURRENT_Q });
   }
   const kudosAllBy = new Map<string, number>();
   const kudosQ3By = new Map<string, number>();
@@ -286,9 +290,9 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
         }
         if (!tagged) untagged++;
       }
-      if (y === IST_YEAR - 1) total2025++;
+      if (y === THIS_YEAR - 1) total2025++;
       // Current-year quarters / streak / calendar only — 2025 rows never inflate these.
-      if (y === IST_YEAR) {
+      if (y === THIS_YEAR) {
         if (q === "q1") q1++;
         else if (q === "q2") q2++;
         else if (q === "q3") q3++;
@@ -303,18 +307,23 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
       const iso = maxByQ[q];
       if (iso) last[q] = lastLabel(iso);
     });
+    // Streak/hot/rolling windows are judged against the MEMBER's own today (their
+    // stored zone), so a US fren's flame doesn't die at India's midnight. For the
+    // signed-in member use the device's today directly — the stored zone can lag
+    // one open behind, and their own screens must all agree.
+    const memToday = myMemberId === mem.id ? TODAY_DOY : todayDoyInZone(mem.timezone || "Asia/Kolkata");
     return {
       name: mem.display_name,
       q1,
       q2,
       q3,
       q4,
-      streak: streakFromDoys(doys, TODAY_DOY),
+      streak: streakFromDoys(doys, memToday),
       // "On fire" = worked out in the last 3 days — gap-tolerant, unlike a strict
       // streak, so alternate-day regulars still light up.
-      hot: [0, 1, 2].some((k) => doys.has(TODAY_DOY - k)),
-      last7: Array.from({ length: 7 }, (_, k) => k).reduce((n, k) => n + (doys.has(TODAY_DOY - k) ? 1 : 0), 0),
-      last30: Array.from({ length: 30 }, (_, k) => k).reduce((n, k) => n + (doys.has(TODAY_DOY - k) ? 1 : 0), 0),
+      hot: [0, 1, 2].some((k) => doys.has(memToday - k)),
+      last7: Array.from({ length: 7 }, (_, k) => k).reduce((n, k) => n + (doys.has(memToday - k) ? 1 : 0), 0),
+      last30: Array.from({ length: 30 }, (_, k) => k).reduce((n, k) => n + (doys.has(memToday - k) ? 1 : 0), 0),
       lastDoy: doys.size ? Math.max(...doys) : undefined,
       kudosQ3: kudosQ3By.get(mem.id) ?? 0,
       kudosAll: kudosAllBy.get(mem.id) ?? 0,
@@ -340,7 +349,7 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     meName = memberById.get(myMemberId)?.display_name ?? "";
     for (const w of wByMember.get(myMemberId) ?? []) {
       const { y } = parseDate(w.workout_date);
-      if (y !== IST_YEAR) continue;
+      if (y !== THIS_YEAR) continue;
       const doy = doyOfDate(w.workout_date);
       doneDoy.add(doy);
       dayData[doy] = {
@@ -361,13 +370,16 @@ export function aggregate(raw: RawData, myMemberId: string | null): Aggregate {
     const mt = meta.get(w.id) ?? { qCount: 0, yrCount: 0, isLatest: false };
     const act = w.types && w.types.length ? w.types.join(" · ") : "Workout";
     const wLabel = `${MON[+w.workout_date.slice(5, 7) - 1]} ${+w.workout_date.slice(8, 10)}`;
-    // App entries show when they were logged; a backfill (workout day ≠ the day
-    // it was entered) shows the workout day AND when it was logged.
-    const lp = istParts(new Date(w.logged_at));
+    // App entries show when they were logged; a real backfill (workout day
+    // BEFORE the day it was entered) shows the workout day AND when it was
+    // logged. Strictly "before", not "≠": with per-logger local days, an India
+    // fren's morning workout is dated AHEAD of a US viewer's local logged-day —
+    // labeling that would read as a bizarre future-dated backfill.
+    const lp = localParts(new Date(w.logged_at));
     const loggedIso = `${lp.y}-${String(lp.m + 1).padStart(2, "0")}-${String(lp.d).padStart(2, "0")}`;
     const tm =
       w.source !== "sheet"
-        ? w.workout_date === loggedIso
+        ? w.workout_date >= loggedIso
           ? feedTime(w.logged_at)
           : `${wLabel} · logged ${feedTime(w.logged_at)}`
         : wLabel;
@@ -431,7 +443,7 @@ export async function fetchRaw(supabase: SupabaseClient): Promise<RawData> {
   // is deterministic.
   const CAP = 50000;
   const [m, w, r, c, ir] = await Promise.all([
-    supabase.from("members").select("id, sheet_name, user_id, display_name, is_admin").order("id"),
+    supabase.from("members").select("id, sheet_name, user_id, display_name, is_admin, timezone").order("id"),
     supabase
       .from("workouts")
       .select("id, member_id, workout_date, types, duration_min, note, photo_path, source, logged_at")

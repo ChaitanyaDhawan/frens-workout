@@ -54,8 +54,20 @@ function mapType(raw: string | null): string | null {
   return t.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function istToday(): string {
-  return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+// "Today" in the member's own timezone (members.timezone, synced from their
+// app). A Watch workout finished at 9pm in Philly must credit to the Philly
+// day, not the IST day. Falls back to IST on a missing/invalid zone.
+function todayInZone(tz: string | null | undefined): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz || "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+  } catch {
+    return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+  }
 }
 
 function toMinutes(minRaw: unknown, secRaw: unknown): number | null {
@@ -103,7 +115,7 @@ Deno.serve(async (req) => {
 
   const { data: row, error: lookupErr } = await db
     .from("member_log_tokens")
-    .select("member_id")
+    .select("member_id, members(timezone)")
     .eq("token", token)
     .maybeSingle();
   if (lookupErr) {
@@ -124,9 +136,10 @@ Deno.serve(async (req) => {
   }
 
   const mappedType = mapType(type);
+  const memberTz = (row as { members?: { timezone?: string } | null }).members?.timezone;
   const insert: Record<string, unknown> = {
     member_id: row.member_id,
-    workout_date: istToday(),
+    workout_date: todayInZone(memberTz),
     // 'auto' (vs 'app' for in-app logs) so the push webhook knows to also send
     // the logger a "your workout was logged" self-notification.
     source: "auto",

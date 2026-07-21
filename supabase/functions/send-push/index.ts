@@ -36,11 +36,22 @@ const nameOf = async (memberId: string): Promise<string> => {
   return data?.display_name ?? 'Someone';
 };
 
-// current-quarter workout-day count for a member (IST)
-const quarterCount = async (memberId: string): Promise<number> => {
-  const now = new Date(Date.now() + 5.5 * 3600 * 1000); // IST
-  const q = Math.floor(now.getUTCMonth() / 3);
-  const start = new Date(Date.UTC(now.getUTCFullYear(), q * 3, 1)).toISOString().slice(0, 10);
+// current-quarter workout-day count for a member, framed in THEIR timezone so
+// the push copy matches the ordinal they see on their own board.
+const quarterCount = async (memberId: string, tz?: string | null): Promise<number> => {
+  let y: number, m: number;
+  try {
+    const s = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz || 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+    [y, m] = s.split('-').map(Number);
+  } catch {
+    const now = new Date(Date.now() + 5.5 * 3600 * 1000); // bad zone → IST
+    y = now.getUTCFullYear();
+    m = now.getUTCMonth() + 1;
+  }
+  const q = Math.floor((m - 1) / 3);
+  const start = new Date(Date.UTC(y, q * 3, 1)).toISOString().slice(0, 10);
   const { count } = await db.from('workouts')
     .select('id', { count: 'exact', head: true })
     .eq('member_id', memberId).gte('workout_date', start);
@@ -60,14 +71,14 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
     // group; 'sheet' (imported history) notifies no one.
     if (record.source !== 'app' && record.source !== 'auto') return [];
     const { data: mem } = await db.from('members')
-      .select('display_name, notify_quiet_until').eq('id', record.member_id).single();
+      .select('display_name, notify_quiet_until, timezone').eq('id', record.member_id).single();
     const name = mem?.display_name ?? 'Someone';
     // Testing mute: while notify_quiet_until is in the future, skip the group ping.
     const muted = mem?.notify_quiet_until != null && new Date(mem.notify_quiet_until).getTime() > Date.now();
     const groups: Group[] = [];
     // Everyone else hears about it — same as a manual log (unless muted for testing).
     if (!muted) {
-      const n = await quarterCount(record.member_id);
+      const n = await quarterCount(record.member_id, mem?.timezone);
       const { data: all } = await db.from('members').select('id').not('user_id', 'is', null);
       const others = (all ?? []).map(m => m.id).filter(id => id !== record.member_id);
       if (others.length) {

@@ -54,6 +54,7 @@ function build(): RawData {
     user_id: i === ME_INDEX ? "demo-user" : null,
     display_name: s.name,
     is_admin: !!s.admin,
+    timezone: "Asia/Kolkata",
   }));
 
   const workouts: DbWorkout[] = [];

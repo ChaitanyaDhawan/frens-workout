@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { useStore } from "@/app/lib/store";
-import { initials, streakNow, val } from "@/app/lib/helpers";
+import { initials, val } from "@/app/lib/helpers";
 import { CURRENT_Q } from "@/app/lib/data";
 import HistoryStrip from "./HistoryStrip";
 import ActivityBreakdown from "./ActivityBreakdown";
@@ -40,7 +40,9 @@ export default function ProfileSheet() {
   if (!m) return shell(<div className="prof-empty">No profile yet.</div>);
 
   const allTime = m.allTime ?? 0;
-  const streak = streakNow(m.days ?? new Set<number>());
+  // m.streak is computed against the MEMBER's own timezone in the aggregate —
+  // never re-derive it here with the viewer's today.
+  const streak = m.streak;
   const stats: { v: string; k: string; fire?: boolean }[] = [
     { v: String(val(m, CURRENT_Q)), k: `This ${CURRENT_Q.toUpperCase()}` },
     { v: String(allTime), k: "All-time" },

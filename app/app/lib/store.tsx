@@ -13,7 +13,7 @@ import {
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   CURRENT_Q,
-  IST_YEAR,
+  THIS_YEAR,
   MONTHS,
   RECENTS,
   TODAY_DOY,
@@ -138,7 +138,7 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 const tmpId = () => "tmp-" + Math.random().toString(36).slice(2);
 
 function doyToIso(doy: number): string {
-  const dt = new Date(Date.UTC(IST_YEAR, 0, doy));
+  const dt = new Date(Date.UTC(THIS_YEAR, 0, doy));
   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
 }
 function blankWorkout(memberId: string, iso: string): DbWorkout {
@@ -155,7 +155,7 @@ function blankWorkout(memberId: string, iso: string): DbWorkout {
   };
 }
 function isoToDoy(iso: string): number {
-  return Math.floor((Date.parse(iso + "T00:00:00Z") - Date.UTC(IST_YEAR, 0, 1)) / 86400000) + 1;
+  return Math.floor((Date.parse(iso + "T00:00:00Z") - Date.UTC(THIS_YEAR, 0, 1)) / 86400000) + 1;
 }
 function streakOf(doys: Set<number>, today: number): number {
   let s = 0;

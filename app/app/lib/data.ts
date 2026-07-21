@@ -143,14 +143,14 @@ export const MONTHS: MonthModel[] = [
   { n: "December", days: 31, start: 1, off: 334 },
 ];
 
-// "Today" in India Standard Time, computed at module load so the app follows
-// the real calendar date instead of a frozen constant. Deterministic across
-// server render + client hydration because it reads the same instant through
-// the Asia/Kolkata zone on both.
+// "Today" in the DEVICE's local timezone, computed at module load. FRENS live
+// in India and the US now, so each viewer's calendar day (and each logger's
+// credited day) follows their own zone — never a hardcoded IST day. Hydration
+// note: the prerendered HTML only ever contains the auth splash (no dates), so
+// these client-evaluated constants can't mismatch server markup.
 const pad2 = (n: number) => String(n).padStart(2, "0");
-function istToday(): { y: number; m: number; d: number } {
+function localToday(): { y: number; m: number; d: number } {
   const s = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -158,24 +158,45 @@ function istToday(): { y: number; m: number; d: number } {
   const [y, m, d] = s.split("-").map(Number);
   return { y, m: m - 1, d };
 }
-const _ist = istToday();
-/** Calendar year in IST (the tracker models a single year). */
-export const IST_YEAR = _ist.y;
-/** Day-of-year for today, IST (Jan 1 = 1). */
+const _now = localToday();
+/** Calendar year, viewer-local (the tracker models a single year). */
+export const THIS_YEAR = _now.y;
+/** Day-of-year for today, viewer-local (Jan 1 = 1). */
 export const TODAY_DOY =
-  Math.floor((Date.UTC(_ist.y, _ist.m, _ist.d) - Date.UTC(_ist.y, 0, 1)) / 86400000) + 1;
-/** Month index (0 = Jan) for today, IST. */
-export const TODAY_M = _ist.m;
-/** Day-of-month for today, IST. */
-export const TODAY_D = _ist.d;
-/** Today as an ISO calendar date (YYYY-MM-DD), IST. */
-export const TODAY_ISO = `${_ist.y}-${pad2(_ist.m + 1)}-${pad2(_ist.d)}`;
+  Math.floor((Date.UTC(_now.y, _now.m, _now.d) - Date.UTC(_now.y, 0, 1)) / 86400000) + 1;
+/** Month index (0 = Jan) for today, viewer-local. */
+export const TODAY_M = _now.m;
+/** Day-of-month for today, viewer-local. */
+export const TODAY_D = _now.d;
+/** Today as an ISO calendar date (YYYY-MM-DD), viewer-local. */
+export const TODAY_ISO = `${_now.y}-${pad2(_now.m + 1)}-${pad2(_now.d)}`;
+
+/** Day-of-year of "today" in an arbitrary IANA zone, clamped to THIS_YEAR:
+ *  a member already in Jan of next year reads as day 366 (so a streak through
+ *  Dec 31 still counts), one still in last year reads as 0. Falls back to the
+ *  viewer's today if the zone string is invalid. */
+export function todayDoyInZone(tz: string): number {
+  try {
+    const s = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const [y, m, d] = s.split("-").map(Number);
+    if (y > THIS_YEAR) return 366;
+    if (y < THIS_YEAR) return 0;
+    return Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 86400000) + 1;
+  } catch {
+    return TODAY_DOY; // bad stored zone — never crash the fold
+  }
+}
 
 /** Quarter (q1..q4) for a 0-based month index. */
 export function quarterOfMonth(m: number): QuarterKey {
   return m < 3 ? "q1" : m < 6 ? "q2" : m < 9 ? "q3" : "q4";
 }
-/** The quarter currently in progress (IST). Drives the live board + default tab. */
+/** The quarter currently in progress (viewer-local). Drives the live board + default tab. */
 export const CURRENT_Q = quarterOfMonth(TODAY_M);
 /** Inclusive day-of-year bounds [start, end] for each quarter (2026, non-leap). */
 export const Q_BOUNDS: Record<QuarterKey, [number, number]> = {
