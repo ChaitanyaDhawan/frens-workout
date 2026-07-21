@@ -38,12 +38,13 @@ export default function PhotoViewer() {
       <div className="pv-top">
         <button
           className="pv-back"
+          aria-label="Back"
           onClick={(e) => {
             e.stopPropagation();
             closePhoto();
           }}
         >
-          ‹ Back
+          ‹
         </button>
         {photoView.caption && <span className="pv-cap">{photoView.caption}</span>}
       </div>

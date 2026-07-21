@@ -1093,10 +1093,12 @@ canvas.fx{position:fixed; inset:0; pointer-events:none; z-index:70}
   padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
   background:linear-gradient(rgba(18,16,12,.75), transparent);
 }
-/* Square-cornered, hairline-bordered — The Record's button language, on dark. */
+/* Square-cornered, hairline-bordered — The Record's button language, on dark.
+   Icon-only: the chevron says it. */
 .pv-back{
   background:none; border:1px solid rgba(249,246,239,.45); color:#F9F6EF;
-  font-family:var(--font-archivo); font-weight:700; font-size:13px; padding:8px 14px;
+  font-family:var(--font-archivo); font-weight:700; font-size:22px; line-height:1;
+  width:38px; height:38px; display:grid; place-items:center; padding:0 0 3px;
   border-radius:2px; cursor:pointer;
 }
 .pv-back:active{background:rgba(249,246,239,.16)}
