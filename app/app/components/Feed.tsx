@@ -131,7 +131,7 @@ export function FeedCard({
 
 /** Home "Dispatches" feed. First 6 cards stagger in on mount; fresh cards pop. */
 export default function Feed() {
-  const { feed, logFocusKey, consumeLogFocus, deepLink, clearDeepLink } = useStore();
+  const { feed, logFocusKey, consumeLogFocus, deepLink, clearDeepLink, openCommentSheet } = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const [spotlight, setSpotlight] = useState(false);
   const [deepId, setDeepId] = useState<string | null>(null);
@@ -140,8 +140,17 @@ export default function Feed() {
   // kudos tap also fires the 👏 burst on it.
   useEffect(() => {
     if (!deepLink) return;
+    // A comment notification opens the thread sheet directly — it doesn't need
+    // the card to be within the top-24 feed. (If the collect-kudos screen is
+    // up, it overlays the sheet; dismissing it lands you in the thread.)
+    if (deepLink.comment) {
+      openCommentSheet(deepLink.id);
+    }
     const el = containerRef.current?.querySelector(`[data-fid="${deepLink.id}"]`);
-    if (!el) return; // card not in the feed yet — re-runs when feed loads
+    if (!el) {
+      if (deepLink.comment) clearDeepLink(); // sheet opened; nothing to scroll to
+      return; // card not in the feed yet — re-runs when feed loads
+    }
     const isKudos = deepLink.kudos;
     requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
     setDeepId(deepLink.id);
@@ -154,7 +163,7 @@ export default function Feed() {
       }, 650);
     }
     clearDeepLink();
-  }, [deepLink, feed, clearDeepLink]);
+  }, [deepLink, feed, clearDeepLink, openCommentSheet]);
 
   // Fixed per-card delays captured at mount — stable across prepends so the
   // stagger plays once and never re-triggers when the feed changes.

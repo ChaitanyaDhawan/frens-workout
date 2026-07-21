@@ -80,8 +80,9 @@ interface Store {
   dispatchesOpen: boolean;
   /** Bumps after a log so the feed can scroll+spotlight the new card. */
   logFocusKey: number;
-  /** Notification deep-link target (workout to scroll to; kudos = also burst). */
-  deepLink: { id: string; kudos: boolean } | null;
+  /** Notification deep-link target (workout to scroll to; kudos = also burst;
+   *  comment = open that workout's thread sheet after landing). */
+  deepLink: { id: string; kudos: boolean; comment: boolean } | null;
 
   // ---- actions ----
   /** Re-pull all data from Supabase (drives pull-to-refresh). */
@@ -286,7 +287,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
   const [dispatchesOpen, setDispatchesOpen] = useState(false);
   const [logFocusKey, setLogFocusKey] = useState(0);
   const focusConsumed = useRef(0);
-  const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean } | null>(null);
+  const [deepLink, setDeepLink] = useState<{ id: string; kudos: boolean; comment: boolean } | null>(null);
 
   const [freshIds, setFreshIds] = useState<Set<string>>(() => new Set());
 
@@ -1000,7 +1001,7 @@ export function StoreProvider({ children, demo = false }: { children: ReactNode;
       const p = new URLSearchParams(search);
       const w = p.get("w");
       if (!w) return;
-      setDeepLink({ id: w, kudos: p.get("kudos") === "1" });
+      setDeepLink({ id: w, kudos: p.get("kudos") === "1", comment: p.get("c") === "1" });
       setTab("home");
       window.history.replaceState(null, "", window.location.pathname);
     };

@@ -163,7 +163,7 @@ export default function ParticleCanvas() {
         };
       });
       const DECAY = 2.7; // 1/sec — launch speed bleeds into the hang
-      const FADE_AT = 1050; // ms afloat before fading (foreground lingers longer)
+      const EVAP_AT = 820; // ms afloat before evaporating (staggered by depth)
       let last = performance.now();
       const tick = (now: number) => {
         const dt = Math.min(0.05, (now - last) / 1000);
@@ -181,15 +181,22 @@ export default function ParticleCanvas() {
           if (!p.bornAt) p.bornAt = now;
           alive = true;
           const age = now - p.bornAt;
-          // exponential decel: rockets off the bottom, hangs near the apex
-          p.v += (p.vMin - p.v) * Math.min(1, DECAY * dt);
+          // Three beats: rocket launch → decelerated readable hang → EVAPORATE
+          // (whoosh back up to speed while dissolving fast — no lingering crawl).
+          const evap = age > EVAP_AT + p.depth * 220 || p.y < H() * 0.14;
+          if (evap) {
+            p.v += (900 - p.v) * Math.min(1, 6 * dt); // re-accelerate upward
+            p.life -= dt * 4.2; // ~240ms dissolve
+          } else {
+            p.v += (p.vMin - p.v) * Math.min(1, DECAY * dt);
+          }
           p.y -= p.v * dt;
-          if (age > FADE_AT + p.depth * 350 || p.y < H() * 0.16) p.life -= dt * 2.6;
-          if (p.y < -70) p.life = 0;
+          if (p.y < -80) p.life = 0;
           if (p.life <= 0) continue;
           const inK = Math.min(1, age / 130);
           const pop = inK < 1 ? 0.55 + 0.45 * (1 + 2.2 * (inK - 1) * (inK - 1) * (inK - 1) + 2.2 * (inK - 1) * (inK - 1)) : 1;
-          const s = p.sz * pop;
+          // evaporating emoji puff slightly larger as they dissolve
+          const s = p.sz * pop * (evap ? 1 + (1 - Math.max(0, p.life)) * 0.35 : 1);
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.tilt);

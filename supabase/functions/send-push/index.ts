@@ -112,7 +112,7 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
         recipients: [c.member_id],
         title: `${name} reacted ${record.emoji} to your comment`,
         body: snippet,
-        url: `/?w=${c.workout_id}`,
+        url: `/?w=${c.workout_id}&c=1`,
       });
     }
     const { data: w } = await db.from('workouts').select('member_id').eq('id', c.workout_id).single();
@@ -122,7 +122,7 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
         recipients: [w.member_id],
         title: `${name} reacted ${record.emoji} on your workout's thread`,
         body: `${authorName}: ${snippet}`,
-        url: `/?w=${c.workout_id}`,
+        url: `/?w=${c.workout_id}&c=1`,
       });
     }
     return groups;
@@ -140,7 +140,7 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
     const title = w.member_id === record.member_id
       ? `${name} commented 💬`
       : isReply ? `${name} replied on ${ownerName}'s workout 💬` : `${name} commented on your workout 💬`;
-    return [{ recipients: [...set], title, body: String(record.body ?? '').slice(0, 140), url: `/?w=${record.workout_id}` }];
+    return [{ recipients: [...set], title, body: String(record.body ?? '').slice(0, 140), url: `/?w=${record.workout_id}&c=1` }];
   }
   return [];
 }
