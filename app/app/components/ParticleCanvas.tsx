@@ -130,17 +130,14 @@ export default function ParticleCanvas() {
       if (reduceMotion()) return;
       const W = () => window.innerWidth;
       const H = () => window.innerHeight;
-      const ps = Array.from({ length: 22 }, (_, i) => ({
+      // Straight vertical columns rising FAST from the bottom (iMessage-style) —
+      // no wobble/drift; variety comes from size, speed, and spawn stagger only.
+      const ps = Array.from({ length: 24 }, (_, i) => ({
         x: Math.random() * W(),
-        y: H() + 30 + Math.random() * 40,
-        vy: -(3.2 + Math.random() * 3.4),
-        drift: (Math.random() - 0.5) * 1.1,
-        wob: Math.random() * Math.PI * 2,
-        wobV: 0.05 + Math.random() * 0.05,
-        rot: (Math.random() - 0.5) * 0.5,
-        vr: (Math.random() - 0.5) * 0.03,
-        sz: 22 + Math.random() * 22,
-        delay: i * 2.2 + Math.random() * 6, // staggered spawn → a stream, not a wall
+        y: H() + 30 + Math.random() * 30,
+        vy: -(8 + Math.random() * 5),
+        sz: 24 + Math.random() * 22,
+        delay: i * 1.6 + Math.random() * 4, // staggered spawn → a stream, not a wall
         life: 1,
       }));
       const tick = () => {
@@ -154,17 +151,13 @@ export default function ParticleCanvas() {
             return;
           }
           alive = true;
-          p.wob += p.wobV;
-          p.x += p.drift + Math.sin(p.wob) * 1.3;
           p.y += p.vy;
-          p.rot += p.vr;
           // fade out over the top third of the screen
-          if (p.y < H() * 0.38) p.life -= 0.025;
+          if (p.y < H() * 0.38) p.life -= 0.03;
           if (p.y < -60) p.life = 0;
           if (p.life <= 0) return;
           ctx.save();
           ctx.translate(p.x, p.y);
-          ctx.rotate(p.rot);
           ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
           ctx.font = `${p.sz}px serif`;
           ctx.textAlign = "center";

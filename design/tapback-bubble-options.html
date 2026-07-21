@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRENS — Tapback bubble options</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F9F6EF; --card:#FFFFFF; --ink:#1B1812; --mut:#8A8375; --line:#DCD5C6; --ox:#9E2B25}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#8f8b81;font-family:'Archivo',sans-serif;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:26px;padding:30px 0 80px}
+  .lab{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:#fff;background:var(--ink);padding:7px 14px;border-radius:2px}
+  .lab i{font-style:normal;color:#F2C063}
+  .sub-lab{font-size:12.5px;color:#EFEDE6;margin-top:-16px;max-width:340px;text-align:center;line-height:1.5}
+  .stage{width:390px;background:var(--paper);padding:34px 22px 26px;display:flex;flex-direction:column;gap:30px}
+  .row{display:flex;gap:10px}
+  .ava{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--paper);
+    display:grid;place-items:center;font-weight:700;font-size:11px}
+  .cardwrap{position:relative;width:max-content;max-width:100%}
+  .ccard{background:var(--card);border:1px solid var(--line);border-radius:3px 12px 12px 12px;
+    padding:8px 12px;font-size:13.5px;line-height:1.5;color:#33302A;min-width:56px}
+  .cap{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:-20px 0 0 40px}
+
+  /* A — paper chips: light circles, mine gets an oxblood RING */
+  .tbA{position:absolute;top:-10px;right:-6px;display:flex}
+  .tbA span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+    background:var(--card);border:1px solid var(--line);font-size:11px;margin-left:-6px;
+    box-shadow:0 2px 6px rgba(27,24,18,.14)}
+  .tbA .me{border:1.5px solid var(--ox)}
+  .tbA .n{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--ink)}
+
+  /* B — bare emoji, no circles at all; count as tiny ink text */
+  .tbB{position:absolute;top:-11px;right:-2px;display:flex;align-items:center;gap:1px;
+    filter:drop-shadow(0 2px 3px rgba(27,24,18,.25))}
+  .tbB .e{font-size:15px;line-height:1;margin-left:-4px}
+  .tbB .n{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;color:var(--ink);
+    background:var(--paper);border-radius:8px;padding:1px 4px;margin-left:1px}
+
+  /* C — WhatsApp pill: one white pill under the card's corner */
+  .tbC{position:absolute;bottom:-11px;left:8px;display:flex;align-items:center;gap:3px;
+    background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 7px;
+    box-shadow:0 2px 6px rgba(27,24,18,.16)}
+  .tbC .e{font-size:11.5px;line-height:1}
+  .tbC .n{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;color:var(--mut)}
+  .tbC.mine{border-color:var(--ox)}
+  .tbC.mine .n{color:var(--ox)}
+
+  /* D — ink for everyone (no red fill); mine = thin oxblood outer ring */
+  .tbD{position:absolute;top:-10px;right:-6px;display:flex}
+  .tbD span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+    background:var(--ink);border:1.5px solid var(--paper);font-size:10.5px;margin-left:-6px;
+    box-shadow:0 2px 6px rgba(27,24,18,.22)}
+  .tbD .me{outline:1.5px solid var(--ox);outline-offset:1px}
+  .tbD .n{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;color:var(--paper)}
+</style>
+</head>
+<body>
+
+  <div class="lab">A · <i>paper chips</i></div>
+  <div class="sub-lab">Light circles that match the card — emoji reads clearly on white; YOUR reaction gets a thin oxblood ring. Count is a plain ink number chip.</div>
+  <div class="stage">
+    <div class="row"><div class="ava">B</div>
+      <div class="cardwrap"><div class="ccard">Inspiring 🔥</div>
+        <div class="tbA"><span>🥶</span><span>😂</span><span class="me">❤️</span><span class="n">4</span></div>
+      </div></div>
+    <div class="row"><div class="ava">S</div>
+      <div class="cardwrap"><div class="ccard">morning yoga is a personality trait</div>
+        <div class="tbA"><span class="me">👏</span></div>
+      </div></div>
+  </div>
+
+  <div class="lab">B · <i>bare emoji</i></div>
+  <div class="sub-lab">No circles at all — the emoji themselves perch on the corner (like stickers), tiny paper count chip. Yours isn't marked visually; the picker highlight tells you.</div>
+  <div class="stage">
+    <div class="row"><div class="ava">B</div>
+      <div class="cardwrap"><div class="ccard">Inspiring 🔥</div>
+        <div class="tbB"><span class="e">🥶</span><span class="e">😂</span><span class="e">❤️</span><span class="n">4</span></div>
+      </div></div>
+    <div class="row"><div class="ava">S</div>
+      <div class="cardwrap"><div class="ccard">morning yoga is a personality trait</div>
+        <div class="tbB"><span class="e">👏</span></div>
+      </div></div>
+  </div>
+
+  <div class="lab">C · <i>whatsapp pill</i></div>
+  <div class="sub-lab">One small white pill tucked under the card's bottom edge with emoji + count — the WhatsApp pattern. Oxblood border/count only when you're in it.</div>
+  <div class="stage">
+    <div class="row"><div class="ava">B</div>
+      <div class="cardwrap"><div class="ccard">Inspiring 🔥</div>
+        <div class="tbC mine"><span class="e">🥶</span><span class="e">😂</span><span class="e">❤️</span><span class="n">4</span></div>
+      </div></div>
+    <div class="row" style="margin-top:6px"><div class="ava">S</div>
+      <div class="cardwrap"><div class="ccard">morning yoga is a personality trait</div>
+        <div class="tbC"><span class="e">👏</span><span class="n">1</span></div>
+      </div></div>
+  </div>
+
+  <div class="lab">D · <i>ink, ringed</i></div>
+  <div class="sub-lab">Like today but NO red fill anywhere — dark ink circles for everyone; your reaction is marked by a thin oxblood ring around its circle.</div>
+  <div class="stage">
+    <div class="row"><div class="ava">B</div>
+      <div class="cardwrap"><div class="ccard">Inspiring 🔥</div>
+        <div class="tbD"><span>🥶</span><span>😂</span><span class="me">❤️</span><span class="n">4</span></div>
+      </div></div>
+    <div class="row"><div class="ava">S</div>
+      <div class="cardwrap"><div class="ccard">morning yoga is a personality trait</div>
+        <div class="tbD"><span class="me">👏</span></div>
+      </div></div>
+  </div>
+
+</body>
+</html>

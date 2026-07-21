@@ -98,17 +98,34 @@ async function groupsFor(table: string, record: any): Promise<Group[]> {
     return [{ recipients: [w.member_id], title: `${name} gave you kudos 👏`, body: 'on your workout', url: `/?w=${record.workout_id}&kudos=1` }];
   }
   if (table === 'comment_reactions') {
-    // Tapback on a comment → tell the comment's author (skip self-reactions).
+    // Tapback on a comment → tell the comment's author AND the owner of the
+    // workout the thread is on, each with their own copy (never the actor;
+    // author copy wins if they're the same person).
     const { data: c } = await db.from('comments')
       .select('member_id, workout_id, body').eq('id', record.comment_id).single();
-    if (!c || c.member_id === record.member_id) return [];
+    if (!c) return [];
     const name = await nameOf(record.member_id);
-    return [{
-      recipients: [c.member_id],
-      title: `${name} reacted ${record.emoji} to your comment`,
-      body: String(c.body ?? '').slice(0, 140),
-      url: `/?w=${c.workout_id}`,
-    }];
+    const snippet = String(c.body ?? '').slice(0, 140);
+    const groups: Group[] = [];
+    if (c.member_id !== record.member_id) {
+      groups.push({
+        recipients: [c.member_id],
+        title: `${name} reacted ${record.emoji} to your comment`,
+        body: snippet,
+        url: `/?w=${c.workout_id}`,
+      });
+    }
+    const { data: w } = await db.from('workouts').select('member_id').eq('id', c.workout_id).single();
+    if (w && w.member_id !== record.member_id && w.member_id !== c.member_id) {
+      const authorName = await nameOf(c.member_id);
+      groups.push({
+        recipients: [w.member_id],
+        title: `${name} reacted ${record.emoji} on your workout's thread`,
+        body: `${authorName}: ${snippet}`,
+        url: `/?w=${c.workout_id}`,
+      });
+    }
+    return groups;
   }
   if (table === 'comments') {
     const { data: w } = await db.from('workouts').select('member_id').eq('id', record.workout_id).single();
